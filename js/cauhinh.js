@@ -18,9 +18,9 @@
 
 const CAU_HINH = {
 
-  DIA_CHI: '',          // ví dụ: 'https://abcdxyz.supabase.co'
+  DIA_CHI: 'https://lppljfrnojbmrbnyhxrz.supabase.co',
 
-  KHOA_CONG_KHAI: '',   // ví dụ: 'eyJhbGciOiJIUzI1NiIsInR5cCI6...'
+  KHOA_CONG_KHAI: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwcGxqZnJub2pibXJibnloeHJ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU1NTQ2MDMsImV4cCI6MjEwMTEzMDYwM30.ivqlOssSPqKQz9AD4xXqS0mzt_MFsznHh7HRNsjov9U',
 
   TEN_TRUONG: 'Trường THCS Bạch Liêu',
   NAM_HOC: '2026-2027'
