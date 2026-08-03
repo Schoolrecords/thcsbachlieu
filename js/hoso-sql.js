@@ -152,7 +152,12 @@
   function coQuyenSua(hs) {
     const u = window.NGUOI_DUNG;
     if (!u || !hs) return false;
-    return laQuanTri() || hs.phu_trach_id === u.id;
+    if (laQuanTri() || hs.phu_trach_id === u.id) return true;
+    /* Phân quyền theo Gmail phụ trách hộp: nhiều người cách nhau dấu phẩy,
+       dấu '*' nghĩa là mọi tài khoản đã duyệt (Hộp 15 - Giáo viên) */
+    const ds = String(hs.phu_trach_email || '').toLowerCase();
+    if (ds === '*') return true;
+    return ds.split(',').map(s => s.trim()).includes(String(u.email || '').toLowerCase());
   }
 
   /* ========================================================================
