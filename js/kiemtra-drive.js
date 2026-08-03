@@ -15,7 +15,7 @@
   if (typeof CAU_HINH === 'undefined' || !CAU_HINH.DA_NOI) return;
 
   /* Dán đường dẫn Web app (kết thúc bằng /exec) vào giữa 2 dấu nháy */
-  var DUONG_DAN_KIEM_TRA = '';
+  var DUONG_DAN_KIEM_TRA = 'https://script.google.com/macros/s/AKfycbze6VXrgPkE3k6AbveOsibI2LvBDAn2lhSxPyZZw4z9BVb2IjeVgoJMMAo_Pnql5lisyg/exec';
 
   var dangChay = false;
 
