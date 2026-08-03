@@ -67,7 +67,7 @@
   var O = 'border:0.5pt solid #000;padding:3pt 5pt;font-family:\'Times New Roman\',serif;';
 
   function bangDanhMuc(coFontNho) {
-    var cs = coFontNho ? 'font-size:11pt;' : 'font-size:12pt;';
+    var cs = coFontNho ? 'font-size:11pt;' : 'font-size:13pt;';
     var h = '<table border="1" cellspacing="0" cellpadding="0" style="border-collapse:collapse;width:100%">';
     h += '<tr>'
       + '<th style="' + O + cs + 'width:9%;background:#eef1f6">TT</th>'
@@ -105,11 +105,12 @@
 
   function thanVanBan(coFontNho) {
     var TR = "font-family:'Times New Roman',serif;";
+    var donViChuQuan = (typeof CAU_HINH !== 'undefined' && CAU_HINH.DON_VI_CHU_QUAN) || 'UBND XÃ YÊN THÀNH';
     return ''
       + '<table style="width:100%;border-collapse:collapse"><tr>'
-      + '<td style="' + TR + 'width:42%;text-align:center;font-size:12pt;vertical-align:top">'
-      +   '<b>' + chan(tenTruong()).toUpperCase() + '</b><br>Xã Yên Thành, tỉnh Nghệ An<br>───────</td>'
-      + '<td style="' + TR + 'text-align:center;font-size:12pt;vertical-align:top">'
+      + '<td style="' + TR + 'width:42%;text-align:center;font-size:13pt;vertical-align:top">'
+      +   chan(donViChuQuan) + '<br><b>' + chan(tenTruong()).toUpperCase() + '</b><br>───────</td>'
+      + '<td style="' + TR + 'text-align:center;font-size:13pt;vertical-align:top">'
       +   '<b>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM<br>Độc lập – Tự do – Hạnh phúc</b><br>───────────────</td>'
       + '</tr></table>'
       + '<p style="' + TR + 'text-align:center;font-size:15pt;margin:14pt 0 2pt"><b>DANH MỤC HỒ SƠ SỐ</b></p>'
@@ -119,7 +120,7 @@
       + bangDanhMuc(coFontNho)
       + '<table style="width:100%;border-collapse:collapse;margin-top:16pt"><tr>'
       + '<td style="width:50%"></td>'
-      + '<td style="' + TR + 'text-align:center;font-size:12pt">'
+      + '<td style="' + TR + 'text-align:center;font-size:13pt">'
       +   '<i>' + chan(ngayThang()) + '</i><br><b>HIỆU TRƯỞNG</b><br><i>(Ký tên, đóng dấu)</i>'
       +   '<br><br><br><br></td>'
       + '</tr></table>';
@@ -150,7 +151,7 @@
       + '<head><meta charset="utf-8"><title>Danh mục hồ sơ số</title>'
       + '<!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View>'
       + '<w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]-->'
-      + '<style>@page{size:A4;margin:2cm 2cm 2cm 3cm}body{font-family:"Times New Roman",serif}</style>'
+      + '<style>@page{size:A4;margin:2cm 1.5cm 2cm 3cm}body{font-family:"Times New Roman",serif}</style>'
       + '</head><body>' + thanVanBan(false) + '</body></html>';
     taiTep(html, 'application/msword', 'danh-muc-ho-so-so-' + (namHoc() || '').replace(/\s|–/g, '') + '.doc');
     if (typeof notify === 'function') notify('Đã tải tệp Word — mở bằng Microsoft Word để chỉnh sửa và trình ký.');
@@ -185,11 +186,11 @@
       return;
     }
     w.document.write('<html><head><meta charset="utf-8"><title>Danh mục hồ sơ số — ' + chan(tenTruong()) + '</title>'
-      + '<style>@page{size:A4;margin:2cm 2cm 2cm 3cm}'
+      + '<style>@page{size:A4;margin:2cm 1.5cm 2cm 3cm}'
       + 'body{font-family:"Times New Roman",serif;color:#000;margin:0}'
       + 'table{page-break-inside:auto}tr{page-break-inside:avoid}'
       + '@media screen{body{background:#525659;padding:24px}'
-      + '.to-giay{background:#fff;max-width:21cm;margin:0 auto;padding:2cm 2cm 2cm 3cm;'
+      + '.to-giay{background:#fff;max-width:21cm;margin:0 auto;padding:2cm 1.5cm 2cm 3cm;'
       + 'box-shadow:0 4px 24px rgba(0,0,0,.4)}}'
       + '@media print{.to-giay{padding:0}}</style></head><body>'
       + '<div class="to-giay">' + thanVanBan(false) + '</div>'
