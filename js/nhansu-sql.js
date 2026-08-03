@@ -75,6 +75,9 @@
     /* Vẽ lại danh sách đang mở bên dưới — lúc trang khởi động nó được vẽ
        bằng dữ liệu mẫu (trước khi đăng nhập xong) nên phải thay bằng số thật */
     window.showTeam(NHOM_DANG_MO, false);
+    /* Cập nhật con số CBGVNV trên trang chủ */
+    var oCbgv = document.getElementById('hsCbgvTop');
+    if (oCbgv) oCbgv.textContent = ds.length;
     if (typeof notify === 'function') {
       notify('Đã tải danh sách ' + ds.length + ' cán bộ, giáo viên, nhân viên của trường.');
     }
