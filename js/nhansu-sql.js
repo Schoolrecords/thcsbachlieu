@@ -72,16 +72,23 @@
     if (nhomNv) nhomNv.role = 'Kế toán · Thư viện · Thiết bị · Y tế';
 
     renderTeam();
+    /* Vẽ lại danh sách đang mở bên dưới — lúc trang khởi động nó được vẽ
+       bằng dữ liệu mẫu (trước khi đăng nhập xong) nên phải thay bằng số thật */
+    window.showTeam(NHOM_DANG_MO, false);
     if (typeof notify === 'function') {
       notify('Đã tải danh sách ' + ds.length + ' cán bộ, giáo viên, nhân viên của trường.');
     }
   }
+
+  /* Nhóm đang mở trong phần danh sách (trang mở sẵn Ban giám hiệu) */
+  var NHOM_DANG_MO = 'bgh';
 
   /* ==========================================================================
      VẼ LẠI THẺ NGƯỜI — thay chỗ ngày sinh bằng thư điện tử
      Ghi đè hàm cùng tên trong index.html, không sửa tệp đó.
      ========================================================================== */
   window.showTeam = function (id, scroll) {
+    NHOM_DANG_MO = id;
     const n = NHOM_NS.find(x => x.id === id);
     const ds = NHAN_SU.filter(p => p[0] === id);
     document.getElementById('teamList').innerHTML = `
