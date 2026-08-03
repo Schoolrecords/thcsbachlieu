@@ -38,6 +38,7 @@
       var res = await fetch(DUONG_DAN_KIEM_TRA);
       if (!res.ok) throw new Error('Dịch vụ kiểm tra trả về lỗi ' + res.status);
       var soTep = await res.json();
+      if (soTep && soTep.loi) throw new Error(soTep.loi);
 
       var kq = await window.sbClient.rpc('cap_nhat_tu_drive', { du_lieu: soTep });
       if (kq.error) throw kq.error;
