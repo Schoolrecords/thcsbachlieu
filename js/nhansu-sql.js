@@ -42,7 +42,7 @@
     if (!sb) return;
 
     const { data, error } = await sb.from('moi_tai_khoan')
-      .select('email, ho_ten, chuc_vu, to_chuyen_mon, vai_tro, ghi_chu');
+      .select('email, ho_ten, chuc_vu, to_chuyen_mon, vai_tro, ghi_chu, link_drive');
 
     if (error || !data || !data.length) {
       console.error('[Nhân sự] Không tải được danh sách:', error);
@@ -63,9 +63,9 @@
       return tenGoi(a.ho_ten).localeCompare(tenGoi(b.ho_ten), 'vi');
     });
 
-    /* Đổ vào mảng NHAN_SU có sẵn: [nhóm, họ tên, mô tả, email, phụ trách hộp] */
+    /* Đổ vào mảng NHAN_SU có sẵn: [nhóm, họ tên, mô tả, email, phụ trách hộp, link Drive cá nhân] */
     NHAN_SU.length = 0;
-    ds.forEach(n => NHAN_SU.push([xepNhom(n), n.ho_ten, moTa(n), n.email, n.ghi_chu || '']));
+    ds.forEach(n => NHAN_SU.push([xepNhom(n), n.ho_ten, moTa(n), n.email, n.ghi_chu || '', n.link_drive || '']));
 
     /* Cập nhật dòng mô tả nhóm nhân viên cho khớp thực tế */
     const nhomNv = NHOM_NS.find(x => x.id === 'nv');
@@ -122,7 +122,9 @@
       <div class="pm-body">
         <div class="pm-row"><div class="pm-ic">✉</div><div><div class="lb">Thư điện tử (đăng nhập hệ thống)</div><div class="vl" style="font-size:13px">${p[3]}</div></div></div>
         ${p[4] ? `<div class="pm-row"><div class="pm-ic">🗂</div><div><div class="lb">Phân công hồ sơ</div><div class="vl">${p[4]}</div></div></div>` : ''}
-        <button class="pm-btn" onclick="openDrive('Hồ sơ cá nhân — ${String(p[1]).replace(/'/g, '')}');closePerson()">📂 Mở hồ sơ cá nhân trên Drive</button>
+        ${p[5]
+          ? `<button class="pm-btn" onclick="window.open('${p[5]}', '_blank', 'noopener');closePerson()">📂 Mở hồ sơ cá nhân trên Drive</button>`
+          : `<button class="pm-btn" onclick="openDrive('Hồ sơ cá nhân — ${String(p[1]).replace(/'/g, '')}');closePerson()">📂 Mở hồ sơ cá nhân trên Drive</button>`}
         <div class="pm-note">Hệ thống không lưu ngày sinh, số điện thoại hay thông tin cá nhân khác của thầy cô — chỉ dùng thư điện tử để đăng nhập, theo Nghị định 13/2023/NĐ-CP.</div>
       </div>
     </div>`;
