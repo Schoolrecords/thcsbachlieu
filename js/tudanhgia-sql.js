@@ -28,7 +28,27 @@
   let NAM_HOC = (CAU_HINH.NAM_HOC || '2026-2027');
   let TDG = {};          // mã tiêu chí -> bản ghi tu_danh_gia
   let MC_THEO_TC = {};   // mã tiêu chí -> danh sách minh chứng
+  let DGTC = {};         // số tiêu chuẩn -> bản ghi danh_gia_tieu_chuan
   let DANG_TAI = false;
+
+  const TEN_TIEU_CHUAN = {
+    1: 'Quản trị nhà trường và bảo đảm chất lượng',
+    2: 'Phát triển đội ngũ',
+    3: 'Thực hiện chương trình, đổi mới phương pháp giáo dục và phát triển người học',
+    4: 'Điều kiện giáo dục, môi trường an toàn và phối hợp xã hội'
+  };
+
+  /* Bốn mục bắt buộc của phần "Đánh giá chung về Tiêu chuẩn" trong Biểu 1 */
+  const MUC_DGTC = [
+    ['diem_manh', '1. Điểm mạnh nổi bật của tiêu chuẩn',
+     'Nêu những mặt làm tốt, có số liệu và mốc thời gian cụ thể.'],
+    ['han_che_nguyen_nhan', '2. Điểm hạn chế trọng tâm và nguyên nhân cốt lõi',
+     'Nêu hạn chế kèm nguyên nhân. Không có thì ghi rõ "Không có".'],
+    ['xu_huong_3_nam', '3a. Xu hướng chất lượng trong 03 năm học liên tiếp',
+     'Nội dung đã cải thiện, chưa cải thiện và biến động, so với hai năm học trước.'],
+    ['van_de_uu_tien', '3b. Các vấn đề trọng tâm cần ưu tiên cải tiến',
+     'Đây là căn cứ để lập Kế hoạch cải tiến chất lượng theo Biểu 2.']
+  ];
 
   /* ========================================================================
      KIỂU DÁNG
@@ -71,12 +91,16 @@
     if (!sb || DANG_TAI) return;
     DANG_TAI = true;
     try {
-      const [tc, tdg, hs] = await Promise.all([
+      const [tc, tdg, hs, dgtc] = await Promise.all([
         sb.from('tieu_chi').select('*').order('so_tt'),
         sb.from('tu_danh_gia').select('*').eq('nam_hoc', NAM_HOC),
-        sb.from('ho_so').select('ma, ten, tieu_chi, trang_thai, link_drive')
+        sb.from('ho_so').select('ma, ten, tieu_chi, trang_thai, link_drive'),
+        sb.from('danh_gia_tieu_chuan').select('*').eq('nam_hoc', NAM_HOC)
       ]);
       if (tc.error) throw tc.error;
+
+      DGTC = {};
+      (dgtc.data || []).forEach(r => { DGTC[r.tieu_chuan] = r; });
       if (!tc.data || !tc.data.length) {
         throw new Error('Cơ sở dữ liệu chưa có bộ tiêu chí. Kiểm tra đã chạy tệp sql/12 chưa.');
       }
@@ -236,6 +260,94 @@
     document.getElementById('kdGiaiThich').innerHTML = kq.vi
       ? `<b>Vì sao xếp mức này:</b> ${kq.vi}`
       : `<b>Vì sao xếp mức này:</b> Toàn bộ ${soBB} tiêu chí bắt buộc đạt Mức 2, ${kq.clM2}/7 tiêu chí còn lại đạt Mức 2 và không có tiêu chí nào chưa đạt Mức 1.`;
+
+    veDanhGiaChung(f);
+  };
+
+  /* ========================================================================
+     ĐÁNH GIÁ CHUNG VỀ TIÊU CHUẨN — Biểu 1 bắt buộc có, viết một lần cho cả
+     tiêu chuẩn chứ không viết ở từng tiêu chí như bảng mẫu cũ của trường.
+     Chỉ hiện khi đang lọc theo một tiêu chuẩn, để màn hình khỏi quá dài.
+     ======================================================================== */
+  function veDanhGiaChung(soTC) {
+    let hop = document.getElementById('kdDanhGiaChung');
+    if (!hop) {
+      hop = document.createElement('div');
+      hop.id = 'kdDanhGiaChung';
+      const ds = document.getElementById('kdList');
+      ds.parentNode.insertBefore(hop, ds.nextSibling);
+    }
+    if (!soTC) {
+      hop.innerHTML = `<div class="legal-note" style="margin-top:20px">
+        <b>Đánh giá chung về tiêu chuẩn.</b> Biểu 1 Phụ lục V yêu cầu mỗi tiêu chuẩn có phần
+        đánh giá chung gồm điểm mạnh, điểm hạn chế kèm nguyên nhân và định hướng cải tiến.
+        Chọn một tiêu chuẩn ở ô lọc phía trên để nhập phần này.
+        <br><br><i>Lưu ý: bảng mẫu cũ của nhà trường viết điểm mạnh, điểm yếu ở từng tiêu chí.
+        Thông tư 57 chuyển nội dung đó lên cấp tiêu chuẩn, còn kế hoạch cải tiến tách hẳn
+        sang Biểu 2 — đây là thay đổi của quy định, không phải phần mềm bỏ sót.</i>
+      </div>`;
+      return;
+    }
+
+    const so = parseInt(soTC, 10);
+    const r = DGTC[so] || {};
+    const chamDuoc = coQuyenCham();
+    hop.innerHTML = `
+      <div class="sub open" style="margin-top:22px">
+        <div class="sub-head" style="cursor:default">
+          <span class="fo">📝</span>
+          <b>Đánh giá chung về Tiêu chuẩn ${so} — ${TEN_TIEU_CHUAN[so] || ''}</b>
+        </div>
+        <div class="sub-body" style="padding:18px 16px">
+          ${MUC_DGTC.map(([cot, nhan, goi]) => `
+            <div class="tdg-ht" style="margin-bottom:16px">
+              <label>${nhan}
+                <span class="tdg-luu" id="luu-dgtc-${so}-${cot}">✓ đã lưu</span></label>
+              <textarea id="dgtc-${so}-${cot}" ${chamDuoc ? '' : 'disabled'}
+                onblur="luuDanhGiaChung(${so},'${cot}',this.value)"
+                placeholder="${chamDuoc ? 'Nhập nội dung…' : 'Chỉ ban giám hiệu và tổ trưởng nhập được'}"
+                >${(r[cot] || '').replace(/</g, '&lt;')}</textarea>
+              <div class="goi">${goi}</div>
+            </div>`).join('')}
+        </div>
+      </div>`;
+  }
+
+  window.luuDanhGiaChung = async function (soTC, cot, giaTri) {
+    if (!coQuyenCham()) return;
+    const cu = DGTC[soTC] || {};
+    const moi = String(giaTri || '').trim();
+    if ((cu[cot] || '') === moi) return;
+
+    const ban = {
+      nam_hoc: NAM_HOC, tieu_chuan: soTC,
+      diem_manh: cu.diem_manh || null,
+      han_che_nguyen_nhan: cu.han_che_nguyen_nhan || null,
+      xu_huong_3_nam: cu.xu_huong_3_nam || null,
+      van_de_uu_tien: cu.van_de_uu_tien || null,
+      cap_nhat_boi: window.NGUOI_DUNG ? window.NGUOI_DUNG.id : null
+    };
+    ban[cot] = moi || null;
+
+    try {
+      const { data, error } = await sb.from('danh_gia_tieu_chuan')
+        .upsert(ban, { onConflict: 'nam_hoc,tieu_chuan' }).select().single();
+      if (error) throw error;
+      DGTC[soTC] = data;
+      const nhan = document.getElementById('luu-dgtc-' + soTC + '-' + cot);
+      if (nhan) {
+        nhan.classList.add('hien');
+        setTimeout(function () { nhan.classList.remove('hien'); }, 2200);
+      }
+    } catch (e) {
+      console.error('[Đánh giá chung] Không lưu được:', e);
+      if (typeof notify === 'function') notify('Không lưu được đánh giá chung: ' + (e.message || e));
+    }
+  };
+
+  /* Cho tệp xuất báo cáo lấy dữ liệu đang có trên màn hình */
+  window.duLieuTuDanhGia = function () {
+    return { namHoc: NAM_HOC, tieuChi: TIEU_CHI, dgtc: DGTC, mcTheoTC: MC_THEO_TC, tdg: TDG };
   };
 
   function cat(s, n) {
