@@ -113,7 +113,10 @@
             name: c.ten,
             items: hoSo.data
               .filter(h => h.nhom_con_id === c.id)
-              .map(h => [h.ma, h.ten, h.nguoi_phu_trach || '—', h.trang_thai, h.tieu_chi || []])
+              /* [5] là mã cũ theo bảng mã TT 18/2018 — hiện cạnh mã mới để
+                 thầy cô đối chiếu với hồ sơ giấy đang dùng */
+              .map(h => [h.ma, h.ten, h.nguoi_phu_trach || '—', h.trang_thai,
+                         h.tieu_chi || [], h.ma_cu || ''])
           }))
       }));
 
@@ -165,14 +168,17 @@
      Ghi đè hàm cùng tên trong index.html, không sửa tệp đó.
      ======================================================================== */
   window.rowHtml = function (it) {
-    const [ma, ten, ng, st, crit] = it;
+    const [ma, ten, ng, st, crit, maCu] = it;
     const hs = ANH_XA[ma];
     const suaDuoc = coQuyenSua(hs);
     const coLink = hs && hs.link_drive;
     const tenSach = String(ten).replace(/'/g, '');
+    const cu = maCu || (hs && hs.ma_cu) || '';
 
     return `<tr>
-      <td class="code">${ma}</td>
+      <td class="code">${ma}${cu
+        ? `<span class="ma-cu" title="Mã theo bảng mã cũ, dùng để đối chiếu hồ sơ giấy">${cu}</span>`
+        : `<span class="ma-cu ma-moi" title="Minh chứng mới do Thông tư 57 yêu cầu">mục mới</span>`}</td>
       <td class="rname">${ten}<span class="crits">${(crit || []).map(c =>
         `<span class="tag-crit" onclick="event.stopPropagation();showCrit('${c}')">Tiêu chí ${c}</span>`).join('')}</span></td>
       <td class="owner tdow">${ng || '—'}</td>
@@ -186,6 +192,10 @@
       </td>
     </tr>`;
   };
+
+  /* Cho index.html tra bản ghi đầy đủ của một minh chứng theo mã.
+     Dùng cho nút "Hồ sơ của tôi" để biết ai phụ trách minh chứng nào. */
+  window.layHoSo = function (ma) { return ANH_XA[ma] || null; };
 
   /* Mở thư mục Drive thật thay vì chỉ hiện thông báo */
   window.openDrive = function (ma, ten) {

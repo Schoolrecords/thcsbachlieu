@@ -88,7 +88,7 @@ input,select{font-family:inherit;font-size:inherit}
 .legal-note{background:var(--gold-soft);border:1px solid #f0dfb4;border-left:4px solid var(--gold);border-radius:10px;padding:11px 15px;font-size:13.4px;color:#6b4e0d;margin-bottom:20px;line-height:1.6}
 
 /* ---------------- Trang chủ ---------------- */
-.hero{background:#0e2454;color:#fff;padding:32px 0 30px;position:relative;overflow:hidden}
+.hero{background:#0e2454;color:#fff;padding:32px 0 22px;position:relative;overflow:hidden}
 .hero::before{content:"";position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,.09) 1px,transparent 1px);background-size:22px 22px}
 .hero::after{content:"";position:absolute;right:-90px;top:-90px;width:340px;height:340px;border-radius:50%;background:radial-gradient(circle,rgba(229,177,58,.3),transparent 68%)}
 .hero-in{position:relative;z-index:2;display:block;text-align:left}
@@ -106,7 +106,7 @@ input,select{font-family:inherit;font-size:inherit}
 .hero-block .ic{width:52px;height:52px;flex:none;border-radius:50%;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);display:grid;place-items:center;font-size:24px}
 .hero-block b{display:block;color:var(--gold-2);font-size:16px;letter-spacing:1.5px;margin-bottom:4px}
 .hero-block p{font-size:14.8px;opacity:.92;margin:0;max-width:58ch}
-.hero-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:24px;background:linear-gradient(135deg,rgba(19,45,99,.97),rgba(10,26,60,.97));border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:13px 18px;box-shadow:0 10px 28px rgba(0,0,0,.3)}
+.hero-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:24px;background:linear-gradient(90deg,rgba(10,26,60,.97) 0%,rgba(19,45,99,.9) 45%,rgba(38,74,145,.72) 75%,rgba(59,101,180,.5) 100%);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:13px 18px;box-shadow:0 10px 28px rgba(0,0,0,.3)}
 .hstat{display:flex;align-items:center;gap:12px;padding:6px 4px 6px 18px}
 .hstat + .hstat{border-left:1px solid rgba(255,255,255,.15)}
 .hstat .ic{width:46px;height:46px;flex:none;border-radius:50%;background:linear-gradient(150deg,#3b82f6,#1d4ed8);display:grid;place-items:center;font-size:20px;box-shadow:0 3px 10px rgba(0,0,0,.25)}
@@ -214,6 +214,9 @@ input,select{font-family:inherit;font-size:inherit}
 .rec-tbl tbody tr:last-child td{border-bottom:none}
 .rec-tbl tbody tr:hover{background:#f8fbff}
 .code{font-weight:700;color:var(--navy-2);font-size:13.4px;white-space:nowrap}
+/* Mã cũ theo bảng mã TT 18/2018, hiện nhỏ dưới mã mới để thầy cô đối chiếu */
+.ma-cu{display:block;margin-top:3px;font-size:10.8px;font-weight:600;color:#8a94a6;letter-spacing:.02em}
+.ma-cu.ma-moi{color:#15803d;font-style:italic;font-weight:600}
 .code::before{content:"• ";color:var(--gold)}
 .rname{color:var(--ink);font-weight:500}
 .rname .crits{display:block;margin-top:4px}
@@ -329,6 +332,14 @@ td.tdst{white-space:nowrap;text-align:right}
 .lv-pick{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;align-items:center}
 .pick{padding:7px 15px;border-radius:8px;border:1px solid #cfd8e6;background:#fff;font-size:13px;font-weight:600;color:var(--muted);min-height:40px}
 .pick.on{background:var(--navy);border-color:var(--navy);color:#fff}
+/* Nhãn tiêu chí bắt buộc — điểm a khoản 1 Điều 5 Thông tư 57 */
+.tc-bb{font-size:10.6px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;background:#fdeceb;color:#a8352b;border:1px solid #f3c9c5;border-radius:999px;padding:2px 8px;white-space:nowrap;vertical-align:middle;margin-left:6px}
+/* Mức 2 bị khoá khi Mức 1 chưa được xác định đạt */
+.lv-khoa{opacity:.62;background:#f4f6fa}
+.lv-hoi{font-size:13px;color:var(--muted);font-weight:600;margin-right:4px}
+/* Dòng giải thích vì sao nhà trường được xếp mức đó */
+.kd-vi{background:#eef4fd;border:1px solid #cbdcf5;border-left:4px solid var(--navy-2);border-radius:10px;padding:11px 15px;font-size:13.4px;color:#22406b;margin-bottom:20px;line-height:1.6}
+.warn-note{background:#fdf3f2;border-color:#f3c9c5;border-left-color:#c0483b;color:#8a3428}
 .ev-box{margin-top:13px;background:#f7f9fd;border:1px dashed #c8d4e6;border-radius:11px;padding:13px}
 .ev-box b{font-size:12.5px;color:var(--navy);display:block;margin-bottom:8px}
 .ev-list{display:flex;flex-wrap:wrap;gap:6px}
@@ -387,7 +398,7 @@ footer .legal{border-top:1px solid rgba(255,255,255,.15);padding-top:15px;font-s
 }
 @media (min-width:900px){
   body{font-size:16.8px}
-  .hero{padding:60px 0 92px}
+  .hero{padding:60px 0 28px}
   .hero h1{font-size:44px}
   .hero p{font-size:16.5px}
   .sec-head h2{font-size:36px}
@@ -556,7 +567,7 @@ footer .legal{border-top:1px solid rgba(255,255,255,.15);padding-top:15px;font-s
         </div>
         <div class="why-item">
           <b>Bộ tiêu chuẩn rút gọn còn 4 tiêu chuẩn, 15 tiêu chí</b>
-          <p>Quy định về bảo đảm chất lượng giáo dục có hiệu lực từ 07/7/2026, bãi bỏ các Thông tư 17/2018, 18/2018, 19/2018 và 22/2024. Hồ sơ theo mẫu cũ không còn phù hợp.</p>
+          <p>Thông tư 57/2026/TT-BGDĐT có hiệu lực từ 07/7/2026, bãi bỏ các Thông tư 17/2018, 18/2018, 19/2018, 22/2024 và 42/2012. Hồ sơ theo mẫu cũ không còn phù hợp.</p>
         </div>
         <div class="why-item">
           <b>Tự đánh giá thành công việc hằng năm</b>
@@ -584,19 +595,24 @@ footer .legal{border-top:1px solid rgba(255,255,255,.15);padding-top:15px;font-s
     <div class="sec-head">
       <span class="eyebrow">Danh mục hồ sơ</span>
       <h2>Hồ sơ số</h2>
-      <p>Toàn bộ hệ thống hồ sơ quản lý hoạt động giáo dục của nhà trường, được mã hoá đến từng đầu mục. Chọn một nhóm để mở bảng danh mục chi tiết.</p>
+      <p>Toàn bộ hệ thống hồ sơ quản lý hoạt động giáo dục của nhà trường, được mã hoá đến từng đầu mục. Chọn một bộ phận để mở bảng danh mục chi tiết.</p>
+    </div>
+
+    <div class="legal-note">
+      <b>Mã hồ sơ đã đổi theo Thông tư 57/2026/TT-BGDĐT.</b> Mỗi minh chứng nay mang mã <b>MC.(Tiêu chuẩn).(Tiêu chí).(Số thứ tự)</b> — ví dụ <b>MC.1.1.01</b>. Mã cũ theo bảng mã trước đây được in nhỏ ngay bên dưới để thầy cô đối chiếu với hồ sơ giấy. Ô tìm kiếm nhận cả hai loại mã.
     </div>
 
     <div class="stats" id="hsStats"></div>
 
     <div class="toolbar">
-      <input type="search" id="hsSearch" placeholder="🔍 Tìm nhanh theo mã hồ sơ, tên hồ sơ hoặc người phụ trách…" oninput="searchHoSo()">
+      <input type="search" id="hsSearch" placeholder="🔍 Tìm theo mã mới, mã cũ, tên hồ sơ, người phụ trách hoặc tiêu chí…" oninput="searchHoSo()">
       <select id="hsFilter" onchange="searchHoSo()">
         <option value="">Tất cả trạng thái</option>
         <option value="co">Đã có</option>
         <option value="dang">Đang cập nhật</option>
         <option value="chua">Chưa có</option>
       </select>
+      <button class="btn btn-gold" id="btnHoSoCuaToi" onclick="hoSoCuaToi()">👤 Hồ sơ của tôi</button>
       <button class="btn btn-out" onclick="exportExcel()">📊 Xuất Excel</button>
       <button class="btn btn-pri" onclick="window.print()">🖨 In danh mục</button>
     </div>
@@ -641,23 +657,36 @@ footer .legal{border-top:1px solid rgba(255,255,255,.15);padding-top:15px;font-s
       <p>Bộ tiêu chuẩn hiện hành: 4 tiêu chuẩn, 15 tiêu chí, đánh giá theo Mức 1 và Mức 2.</p>
     </div>
     <div class="legal-note">
-      <b>Căn cứ:</b> Quy định về bảo đảm chất lượng giáo dục đối với cơ sở giáo dục mầm non, giáo dục phổ thông, giáo dục thường xuyên và công nhận đạt chuẩn quốc gia đối với trường mầm non, trường phổ thông (hiệu lực 07/7/2026), Phụ lục áp dụng cho cơ sở giáo dục phổ thông.
+      <b>Căn cứ:</b> Thông tư số 57/2026/TT-BGDĐT ngày 07/7/2026 của Bộ trưởng Bộ Giáo dục và Đào tạo quy định về bảo đảm chất lượng giáo dục đối với cơ sở giáo dục mầm non, giáo dục phổ thông, giáo dục thường xuyên và công nhận đạt chuẩn quốc gia đối với trường mầm non, trường phổ thông (hiệu lực 07/7/2026). Nội dung Mức 1, Mức 2 dưới đây là <b>nguyên văn Phụ lục II</b> — phụ lục áp dụng cho cơ sở giáo dục phổ thông.
     </div>
 
     <div class="stats" id="kdStats"></div>
+    <div class="kd-vi" id="kdGiaiThich"></div>
+
+    <div class="legal-note">
+      <b>Cách xếp mức (khoản 3 Điều 5):</b> Nhà trường <b>đạt Mức 1</b> khi tất cả 08 tiêu chí bắt buộc đạt Mức 1 <i>và</i> ít nhất 05 trong 07 tiêu chí còn lại đạt Mức 1 trở lên. <b>Đạt Mức 2</b> khi tất cả tiêu chí bắt buộc đạt Mức 2 <i>và</i> ít nhất 05 trong 07 tiêu chí còn lại đạt Mức 2, các tiêu chí còn lại đạt tối thiểu Mức 1. Tám tiêu chí bắt buộc: <b>1.3, 1.4, 2.1, 2.2, 3.1, 3.2, 4.1, 4.2</b>.
+    </div>
+
+    <div class="legal-note warn-note">
+      ⚠️ <b>Lưu ý khi dùng số liệu (khoản 4 Điều 27):</b> Từ ngày 07/7/2026 đến hết ngày 31/12/2028, dữ liệu định lượng chính chỉ dùng để theo dõi, phân tích, cảnh báo và hỗ trợ cải tiến; <b>không được sử dụng làm căn cứ duy nhất hoặc ngưỡng loại trừ</b> để kết luận nhà trường không đạt. Việc đánh giá phải căn cứ vào yêu cầu của tiêu chí, thông tin minh chứng và kết quả thực hiện. Phần mềm chỉ tổng hợp và gợi ý — quyền kết luận thuộc về Hội đồng tự đánh giá.
+    </div>
 
     <div class="toolbar">
       <select id="kdStd" onchange="renderKdcl()">
         <option value="">Tất cả 4 tiêu chuẩn</option>
         <option value="1">Tiêu chuẩn 1 — Quản trị nhà trường và bảo đảm chất lượng</option>
         <option value="2">Tiêu chuẩn 2 — Phát triển đội ngũ</option>
-        <option value="3">Tiêu chuẩn 3 — Thực hiện chương trình, đổi mới phương pháp giáo dục</option>
-        <option value="4">Tiêu chuẩn 4 — Điều kiện giáo dục, môi trường an toàn</option>
+        <option value="3">Tiêu chuẩn 3 — Thực hiện chương trình, đổi mới phương pháp giáo dục và phát triển người học</option>
+        <option value="4">Tiêu chuẩn 4 — Điều kiện giáo dục, môi trường an toàn và phối hợp xã hội</option>
       </select>
       <button class="btn btn-out" onclick="notify('Đang mở phiếu tự đánh giá của các thành viên hội đồng…')">👥 Phiếu hội đồng</button>
       <button class="btn btn-gold" onclick="notify('Đang kết xuất Báo cáo tự đánh giá theo Biểu 1, Phụ lục V…')">📄 Xuất báo cáo tự đánh giá</button>
     </div>
     <div id="kdList"></div>
+
+    <div class="legal-note" style="margin-top:20px">
+      <b>Ghi chú của Phụ lục II:</b> Kết quả đánh giá Mức 1 phản ánh các yêu cầu cơ bản để cơ sở giáo dục tổ chức hoạt động ổn định theo quy định; cơ sở giáo dục có hoạt động, hồ sơ, dữ liệu và phân công thực hiện phù hợp, không có rủi ro nghiêm trọng chưa được xử lý. Kết quả đánh giá Mức 2 phản ánh việc cơ sở giáo dục đã đạt Mức 1, đồng thời sử dụng dữ liệu, phản hồi và kết quả tự đánh giá để cải tiến hoạt động; có minh chứng về kết quả cải tiến chất lượng hoặc tác động thực chất của hoạt động cải tiến.
+    </div>
   </div>
 </section>
 
@@ -743,7 +772,7 @@ footer .legal{border-top:1px solid rgba(255,255,255,.15);padding-top:15px;font-s
     <div>
       <b>Căn cứ pháp lý</b>
       Thông tư 15/2026/TT-BGDĐT — hiệu lực 10/5/2026<br>
-      Quy định về bảo đảm chất lượng giáo dục — hiệu lực 07/7/2026
+      Thông tư 57/2026/TT-BGDĐT — hiệu lực 07/7/2026
     </div>
     <div class="legal">
       Thông tin cá nhân của cán bộ, giáo viên và học sinh được bảo vệ theo Nghị định 13/2023/NĐ-CP. Số điện thoại và địa chỉ thư điện tử chỉ hiển thị đầy đủ với tài khoản quản trị của nhà trường.
@@ -1046,65 +1075,65 @@ const CATS = [
 
 /* ---- 15 tiêu chí và nội dung Mức 1 / Mức 2 ---- */
 const TIEU_CHI = [
-  { code:'1.1', std:1, name:'Tầm nhìn, sứ mạng, mục tiêu và kế hoạch phát triển', self:2,
-    m1:'Nhà trường xác định tầm nhìn, sứ mạng, mục tiêu và xây dựng kế hoạch phát triển phù hợp với điều kiện thực tế; kế hoạch được phổ biến và tổ chức thực hiện.',
-    m2:'Kế hoạch phát triển được rà soát, điều chỉnh theo kết quả thực hiện; có minh chứng về mức độ đạt mục tiêu và tác động đến chất lượng giáo dục.',
+  { code:'1.1', std:1, bb:false, name:'Tầm nhìn, sứ mạng/mục tiêu và kế hoạch phát triển', self:2,
+    m1:'Nhà trường xác định mục tiêu, định hướng phát triển và xây dựng kế hoạch năm học/kế hoạch phát triển phù hợp với cấp học, Chương trình giáo dục phổ thông, quy mô học sinh, điều kiện thực tế của nhà trường và địa phương. Kế hoạch xác định rõ nhiệm vụ trọng tâm, chỉ tiêu chủ yếu, thời hạn thực hiện, phân công trách nhiệm và nguồn lực cần thiết.',
+    m2:'Nhà trường rà soát, điều chỉnh kế hoạch trên cơ sở kết quả thực hiện, dữ liệu về học sinh, đội ngũ, điều kiện bảo đảm, an toàn trường học và kết quả giáo dục. Việc điều chỉnh có tham khảo ý kiến phù hợp của đội ngũ, học sinh, cha mẹ học sinh và các bên liên quan; có minh chứng về chuyển biến trong thực hiện nhiệm vụ trọng tâm hoặc cải thiện điều kiện bảo đảm chất lượng giáo dục.',
     ev:['1.1.1 Kế hoạch chiến lược phát triển nhà trường','1.1.2 Kế hoạch giáo dục năm học','1.6.3 Báo cáo tổng kết năm học'] },
-  { code:'1.2', std:1, name:'Cơ cấu tổ chức, phân công nhiệm vụ và phối hợp nội bộ', self:2,
-    m1:'Nhà trường có cơ cấu tổ chức theo quy định; phân công nhiệm vụ rõ ràng; có quy chế làm việc và cơ chế phối hợp giữa các bộ phận.',
-    m2:'Cơ chế phối hợp được rà soát, điều chỉnh khi có phát sinh; hiệu quả phân công được đánh giá và có minh chứng cải tiến.',
+  { code:'1.2', std:1, bb:false, name:'Cơ cấu tổ chức, phân công nhiệm vụ và phối hợp nội bộ', self:2,
+    m1:'Nhà trường có cơ cấu tổ chức, các tổ chuyên môn, tổ văn phòng/bộ phận hỗ trợ và các hội đồng theo quy định, phù hợp với cấp học, quy mô và điều kiện thực tế. Nhiệm vụ của cán bộ quản lý cơ sở giáo dục, giáo viên, giáo viên chủ nhiệm, nhân viên và các bộ phận liên quan được phân công rõ người, rõ việc, rõ trách nhiệm và có cơ chế phối hợp trong thực hiện nhiệm vụ giáo dục.',
+    m2:'Nhà trường định kỳ rà soát cơ cấu tổ chức, phân công nhiệm vụ và hiệu quả phối hợp nội bộ; kịp thời điều chỉnh những nội dung chồng chéo, bỏ sót hoặc chưa phù hợp. Việc điều chỉnh góp phần nâng cao hiệu quả quản trị, thực hiện chương trình giáo dục, hỗ trợ học sinh và bảo đảm an toàn trường học.',
     ev:['1.2.4 Quyết định thành lập các tổ chuyên môn','1.3.1 Quy chế làm việc','1.2.6 Quyết định phân công nhiệm vụ'] },
-  { code:'1.3', std:1, name:'Quản lý kế hoạch, nguồn lực, thông tin và dữ liệu', self:1,
-    m1:'Nhà trường quản lý hồ sơ, dữ liệu về học sinh, đội ngũ, lớp học, chương trình giáo dục, cơ sở vật chất, tài chính và tài sản theo quy định; bảo đảm an toàn, bảo mật dữ liệu.',
-    m2:'Dữ liệu được cập nhật đầy đủ, đúng hạn, không sai lệch; được khai thác phục vụ công tác quản lý, điều hành và có minh chứng về hiệu quả sử dụng.',
+  { code:'1.3', std:1, bb:true, name:'Quản lý kế hoạch, nguồn lực, thông tin và dữ liệu', self:1,
+    m1:'Nhà trường có hồ sơ, thông tin và dữ liệu thiết yếu phục vụ quản lý hoạt động giáo dục, bao gồm dữ liệu về học sinh, đội ngũ, lớp học, khối lớp, chương trình giáo dục, cơ sở vật chất, thiết bị dạy học, tài chính, chuyên cần, an toàn và kết quả giáo dục. Hồ sơ, thông tin và dữ liệu được cập nhật, lưu trữ, quản lý, đối chiếu và sử dụng theo quy định, bảo đảm đầy đủ, đúng thời hạn, an toàn, bảo mật và phục vụ công tác điều hành của nhà trường.',
+    m2:'Nhà trường rà soát, đối chiếu, tổng hợp và phân tích dữ liệu để đánh giá thực trạng, dự báo nhu cầu, điều chỉnh kế hoạch, phân bổ nguồn lực, tổ chức lớp học, bồi dưỡng đội ngũ, hỗ trợ học sinh và cải thiện điều kiện giáo dục. Dữ liệu được theo dõi, so sánh theo chu kỳ phù hợp; được sử dụng làm căn cứ cho các quyết định quản lý, tự đánh giá, cải tiến chất lượng và công khai theo quy định.',
     ev:['4.1.1 Sổ đăng bộ','5.1.2 Sổ kế toán và chứng từ','4.3.2 Hồ sơ bảo vệ dữ liệu cá nhân'] },
-  { code:'1.4', std:1, name:'Tự đánh giá, cải tiến chất lượng, công khai và trách nhiệm giải trình', self:1,
-    m1:'Nhà trường thực hiện tự đánh giá hằng năm, xây dựng kế hoạch cải tiến chất lượng, thực hiện công khai theo quy định và tiếp nhận, xử lý phản hồi.',
-    m2:'Kế hoạch cải tiến được thực hiện đầy đủ, đúng tiến độ; kết quả cải tiến tác động tích cực đến chất lượng giáo dục và được minh chứng bằng dữ liệu.',
+  { code:'1.4', std:1, bb:true, name:'Tự đánh giá, cải tiến chất lượng, công khai và trách nhiệm giải trình', self:1,
+    m1:'Nhà trường thực hiện tự kiểm tra, tự đánh giá theo quy định hoặc theo kế hoạch của nhà trường để xác định điểm mạnh, hạn chế, nguyên nhân và nội dung cần cải tiến. Kết quả tự kiểm tra, tự đánh giá được sử dụng để xây dựng hoặc cập nhật kế hoạch cải tiến; thực hiện công khai thông tin và tiếp nhận, xử lý phản hồi theo quy định.',
+    m2:'Nhà trường triển khai kế hoạch cải tiến với nhiệm vụ, người phụ trách, thời hạn, nguồn lực và sản phẩm cụ thể; ưu tiên các nội dung cần khắc phục về chương trình giáo dục, đội ngũ, an toàn, hỗ trợ học sinh, dữ liệu và điều kiện bảo đảm chất lượng. Kết quả cải tiến được theo dõi, kiểm chứng bằng minh chứng hoặc dữ liệu phù hợp; được sử dụng để điều chỉnh hoạt động quản lý, dạy học, giáo dục, hỗ trợ học sinh và điều kiện bảo đảm chất lượng trong chu kỳ tiếp theo.',
     ev:['10.1.1 Quyết định thành lập hội đồng tự đánh giá','10.2.2 Báo cáo tự đánh giá 2025-2026','11.1.3 Kế hoạch cải tiến chất lượng'] },
-  { code:'2.1', std:2, name:'Cán bộ quản lý cơ sở giáo dục', self:2,
-    m1:'Nhà trường có cán bộ quản lý được bổ nhiệm, phân công nhiệm vụ phù hợp với vị trí việc làm và đáp ứng tiêu chuẩn chức danh; cán bộ quản lý thực hiện nhiệm vụ chỉ đạo, điều hành đối với chương trình giáo dục, đội ngũ, học sinh, tài chính, tài sản, an toàn trường học.',
-    m2:'Cán bộ quản lý sử dụng dữ liệu, kết quả tự đánh giá, kiểm tra nội bộ và phản hồi để điều chỉnh kế hoạch, phân công nhiệm vụ và cải tiến hoạt động của nhà trường.',
+  { code:'2.1', std:2, bb:true, name:'Cán bộ quản lý cơ sở giáo dục', self:2,
+    m1:'Nhà trường có cán bộ quản lý cơ sở giáo dục theo quy định; cán bộ quản lý cơ sở giáo dục được bổ nhiệm, phân công nhiệm vụ phù hợp với vị trí việc làm và đáp ứng tiêu chuẩn chức danh. Cán bộ quản lý cơ sở giáo dục thực hiện nhiệm vụ chỉ đạo, điều hành đối với chương trình giáo dục, đội ngũ, học sinh, tài chính, tài sản, an toàn trường học, quản lý hồ sơ, dữ liệu và bảo đảm chất lượng giáo dục.',
+    m2:'Cán bộ quản lý cơ sở giáo dục sử dụng dữ liệu, kết quả tự đánh giá, kiểm tra nội bộ và phản hồi phù hợp của đội ngũ, học sinh, cha mẹ học sinh để điều chỉnh kế hoạch, phân công nhiệm vụ và cải tiến hoạt động của nhà trường. Công tác quản trị, chỉ đạo, điều hành có chuyển biến tích cực; các hạn chế, tồn tại được phát hiện và có biện pháp khắc phục, góp phần nâng cao hiệu quả thực hiện chương trình giáo dục, phát triển đội ngũ, hỗ trợ học sinh và bảo đảm an toàn trường học.',
     ev:['9.1.1 Hồ sơ cán bộ quản lý','9.3.2 Hồ sơ đánh giá chuẩn hiệu trưởng','1.4.2 Hồ sơ kiểm tra, đánh giá cán bộ quản lý'] },
-  { code:'2.2', std:2, name:'Giáo viên', self:1,
-    m1:'Nhà trường có đội ngũ giáo viên đáp ứng yêu cầu thực hiện Chương trình giáo dục phổ thông về số lượng, cơ cấu môn học và hoạt động giáo dục, trình độ đào tạo, chuẩn nghề nghiệp.',
-    m2:'Nhà trường theo dõi, rà soát tình hình đội ngũ; duy trì hoặc nâng cao mức độ đáp ứng về số lượng, cơ cấu, trình độ; giáo viên được bồi dưỡng, sinh hoạt chuyên môn theo kế hoạch của nhà trường.',
+  { code:'2.2', std:2, bb:true, name:'Giáo viên', self:1,
+    m1:'Nhà trường có đội ngũ giáo viên đáp ứng yêu cầu thực hiện Chương trình giáo dục phổ thông về số lượng, cơ cấu môn học và hoạt động giáo dục, trình độ đào tạo, phẩm chất, đạo đức nghề nghiệp và chuẩn nghề nghiệp hoặc tiêu chuẩn chức danh theo quy định. Giáo viên được phân công nhiệm vụ phù hợp với chuyên môn, năng lực và điều kiện thực tế; thực hiện kế hoạch giáo dục, kế hoạch bài dạy, đánh giá học sinh, sinh hoạt chuyên môn và bồi dưỡng theo quy định hoặc kế hoạch của nhà trường.',
+    m2:'Nhà trường theo dõi, rà soát tình hình đội ngũ giáo viên để điều chỉnh phân công, bồi dưỡng, hỗ trợ chuyên môn; duy trì hoặc nâng cao mức độ đáp ứng về số lượng, cơ cấu, trình độ đào tạo và chuẩn nghề nghiệp của giáo viên. Giáo viên vận dụng kết quả bồi dưỡng, sinh hoạt chuyên môn, kết quả đánh giá học sinh, sản phẩm học tập và phản hồi phù hợp để điều chỉnh phương pháp dạy học, giáo dục, hỗ trợ học sinh và nâng cao hiệu quả thực hiện Chương trình giáo dục phổ thông.',
     ev:['9.1.2 Hồ sơ giáo viên','9.2.1 Hồ sơ bồi dưỡng thường xuyên','9.3.1 Hồ sơ đánh giá chuẩn nghề nghiệp'] },
-  { code:'2.3', std:2, name:'Nhân sự hỗ trợ giáo dục', self:1,
-    m1:'Nhà trường bố trí nhân sự hỗ trợ giáo dục theo quy định hoặc có phương án phân công, kiêm nhiệm, hợp đồng, phối hợp để thực hiện nhiệm vụ thiết yếu về y tế, thư viện, thiết bị, công nghệ thông tin, hành chính, tài chính, bảo vệ, tư vấn và hỗ trợ học sinh.',
-    m2:'Nhà trường theo dõi, rà soát chất lượng hoạt động hỗ trợ giáo dục; kịp thời phát hiện khó khăn, hạn chế hoặc rủi ro để có biện pháp điều chỉnh.',
+  { code:'2.3', std:2, bb:false, name:'Nhân sự hỗ trợ giáo dục', self:1,
+    m1:'Nhà trường bố trí nhân sự hỗ trợ giáo dục theo quy định hoặc có phương án phân công, kiêm nhiệm, hợp đồng, phối hợp để thực hiện các nhiệm vụ thiết yếu về y tế, thư viện, thiết bị, công nghệ thông tin, hành chính, tài chính, bảo vệ, tư vấn và hỗ trợ học sinh. Việc bố trí nhân sự hỗ trợ phù hợp với cấp học, quy mô, điều kiện thực tế của nhà trường; nhiệm vụ của từng vị trí hoặc bộ phận hỗ trợ được phân công cụ thể.',
+    m2:'Nhà trường theo dõi, rà soát chất lượng hoạt động hỗ trợ giáo dục; kịp thời phát hiện khó khăn, hạn chế hoặc rủi ro về sức khỏe, an toàn, thiết bị, học liệu, công nghệ thông tin, hành chính, tài chính, tư vấn và hỗ trợ học sinh để có biện pháp điều chỉnh. Hoạt động hỗ trợ giáo dục được cải thiện, góp phần phục vụ tốt hơn hoạt động dạy học, giáo dục, chăm sóc sức khỏe, bảo đảm an toàn và hỗ trợ học sinh.',
     ev:['9.1.3 Hồ sơ nhân viên và nhân sự hỗ trợ','3.7.3 Hồ sơ đánh giá nhân sự hỗ trợ giáo dục'] },
-  { code:'3.1', std:3, name:'Tổ chức thực hiện chương trình giáo dục', self:2,
-    m1:'Nhà trường xây dựng và thực hiện kế hoạch giáo dục theo Chương trình giáo dục phổ thông theo năm học, học kỳ, tháng/tuần; phù hợp với cấp học, đối tượng học sinh, điều kiện thực tế; kiểm tra và đánh giá học sinh được thực hiện đầy đủ, đúng quy định.',
-    m2:'Nhà trường sử dụng kết quả theo dõi tiến độ chương trình, dữ liệu chuyên cần, kết quả đánh giá học sinh, sinh hoạt chuyên môn và phản hồi để rà soát, điều chỉnh kế hoạch giáo dục kịp thời.',
+  { code:'3.1', std:3, bb:true, name:'Tổ chức thực hiện chương trình giáo dục', self:2,
+    m1:'Nhà trường xây dựng và thực hiện kế hoạch giáo dục theo Chương trình giáo dục phổ thông theo năm học, học kỳ, tháng/tuần; phù hợp với cấp học, đối tượng học sinh, điều kiện thực tế của nhà trường và địa phương. Việc tổ chức dạy học, giáo dục, hoạt động trải nghiệm, hướng nghiệp nếu có, kiểm tra và đánh giá học sinh được thực hiện đầy đủ, đúng quy định; có theo dõi tiến độ thực hiện chương trình, bảo đảm nội dung, thời lượng, môn học và hoạt động giáo dục theo kế hoạch.',
+    m2:'Nhà trường sử dụng kết quả theo dõi tiến độ chương trình, dữ liệu chuyên cần, kết quả đánh giá học sinh, sinh hoạt chuyên môn và phản hồi phù hợp của học sinh, cha mẹ học sinh để rà soát, điều chỉnh kế hoạch giáo dục, tổ chức dạy học, giáo dục và hỗ trợ học sinh. Việc thực hiện chương trình giáo dục được điều chỉnh kịp thời, linh hoạt, phù hợp hơn với bối cảnh địa phương, điều kiện nhà trường và nhu cầu học sinh; có minh chứng về kết quả cải tiến trong tổ chức thực hiện chương trình, học tập, rèn luyện hoặc phát triển của học sinh.',
     ev:['1.1.2 Kế hoạch giáo dục nhà trường','2.2.1 Thời khoá biểu','2.2.2 Sổ ghi đầu bài'] },
-  { code:'3.2', std:3, name:'Đổi mới phương pháp giáo dục và theo dõi, đánh giá sự tiến bộ của học sinh', self:1,
-    m1:'Nhà trường tổ chức dạy học, giáo dục và đánh giá học sinh phù hợp với mục tiêu Chương trình giáo dục phổ thông, đối tượng học sinh và điều kiện thực tế; giáo viên xây dựng kế hoạch bài dạy, lựa chọn phương pháp và hình thức kiểm tra, đánh giá phù hợp.',
-    m2:'Nhà trường sử dụng kết quả đánh giá học sinh, sản phẩm học tập, kết quả rèn luyện và sự tiến bộ của học sinh để điều chỉnh phương pháp dạy học, giáo dục và biện pháp hỗ trợ học sinh.',
+  { code:'3.2', std:3, bb:true, name:'Đổi mới phương pháp giáo dục và theo dõi, đánh giá sự phát triển, tiến bộ của học sinh', self:1,
+    m1:'Nhà trường tổ chức dạy học, giáo dục và đánh giá học sinh phù hợp với mục tiêu Chương trình giáo dục phổ thông, cấp học, đối tượng học sinh và điều kiện thực tế. Giáo viên xây dựng kế hoạch bài dạy; lựa chọn phương pháp dạy học, giáo dục và hình thức kiểm tra, đánh giá phù hợp; theo dõi sự phát triển, tiến bộ của học sinh; tham gia sinh hoạt chuyên môn, dự giờ và bồi dưỡng chuyên môn theo quy định hoặc kế hoạch của nhà trường.',
+    m2:'Nhà trường sử dụng kết quả đánh giá học sinh, sản phẩm học tập, kết quả sinh hoạt chuyên môn, phản hồi phù hợp của học sinh, cha mẹ học sinh và sự tiến bộ của học sinh để điều chỉnh phương pháp dạy học, giáo dục và biện pháp hỗ trợ học sinh. Giáo viên thực hiện các phương pháp dạy học phát triển phẩm chất, năng lực; hỗ trợ phù hợp với nhu cầu của học sinh, tôn trọng sự khác biệt và bảo đảm môi trường học tập an toàn, tích cực. Các giải pháp đổi mới được theo dõi, đánh giá, rút kinh nghiệm, duy trì hoặc chia sẻ phù hợp; có minh chứng về kết quả hoặc tác động tích cực đối với sự phát triển và tiến bộ của học sinh.',
     ev:['2.2.5 Hồ sơ sinh hoạt chuyên môn theo nghiên cứu bài học','2.3.3 Sổ theo dõi và đánh giá học sinh','2.2.4 Hồ sơ dự giờ, thao giảng'] },
-  { code:'3.3', std:3, name:'Tổ chức hoạt động giáo dục và phát triển toàn diện', self:2,
-    m1:'Nhà trường xây dựng và tổ chức các hoạt động giáo dục phát triển toàn diện học sinh phù hợp với Chương trình giáo dục phổ thông; hoạt động trải nghiệm, hướng nghiệp gắn với mục tiêu phát triển phẩm chất, năng lực, kỹ năng sống, thể chất, thẩm mỹ.',
-    m2:'Nhà trường theo dõi mức độ tham gia, kết quả, sản phẩm và phản hồi để điều chỉnh nội dung, hình thức tổ chức hoạt động; các hoạt động gắn với khoa học, công nghệ, đổi mới sáng tạo và tăng cường kết nối với gia đình, cộng đồng.',
+  { code:'3.3', std:3, bb:false, name:'Tổ chức hoạt động giáo dục và phát triển toàn diện', self:2,
+    m1:'Nhà trường xây dựng và tổ chức các hoạt động giáo dục phát triển toàn diện học sinh phù hợp với Chương trình giáo dục phổ thông, cấp học, điều kiện thực tế và nhu cầu của học sinh. Các hoạt động được thực hiện theo kế hoạch, gắn với mục tiêu phát triển phẩm chất, năng lực, kỹ năng sống, hoạt động trải nghiệm, hướng nghiệp nếu có, giáo dục văn hóa, thể chất, thẩm mỹ và các nội dung giáo dục phù hợp khác.',
+    m2:'Nhà trường theo dõi mức độ tham gia, kết quả, sản phẩm và phản hồi để điều chỉnh nội dung, hình thức tổ chức hoạt động giáo dục. Các hoạt động giáo dục được cải thiện theo hướng tăng tính trải nghiệm, sáng tạo, tích hợp, gắn với khoa học, công nghệ, đổi mới sáng tạo và thực tiễn; tăng cường kết nối học tập với gia đình, cộng đồng hoặc các tổ chức liên quan khi phù hợp; có minh chứng về kết quả hoặc tác động tích cực đối với sự phát triển toàn diện của học sinh. Số lượng, tần suất hoặc tỷ lệ tham gia hoạt động được xác định theo kế hoạch giáo dục của nhà trường hoặc hướng dẫn của cơ quan quản lý, phù hợp với loại hình, quy mô và điều kiện thực tế của cơ sở giáo dục.',
     ev:['2.4.1 Kế hoạch hoạt động trải nghiệm, hướng nghiệp','7.1.4 Hồ sơ hoạt động ngoài giờ lên lớp','2.4.4 Hồ sơ nghiên cứu khoa học kỹ thuật'] },
-  { code:'3.4', std:3, name:'Quản lý, theo dõi, hỗ trợ học sinh và giáo dục hoà nhập', self:1,
-    m1:'Nhà trường thực hiện tuyển sinh, tiếp nhận, quản lý hồ sơ học sinh và cập nhật thông tin về chuyên cần, học tập, rèn luyện, sức khoẻ, an toàn, tư vấn học đường theo quy định; phối hợp với gia đình khi cần.',
-    m2:'Nhà trường sử dụng dữ liệu về chuyên cần, học tập, rèn luyện, sức khoẻ, an toàn, tư vấn học đường để phát hiện sớm học sinh có nguy cơ hoặc cần hỗ trợ; các biện pháp hỗ trợ được theo dõi, đánh giá và điều chỉnh.',
+  { code:'3.4', std:3, bb:false, name:'Quản lý, theo dõi, hỗ trợ học sinh và giáo dục hòa nhập', self:1,
+    m1:'Nhà trường thực hiện tuyển sinh, tiếp nhận, quản lý hồ sơ học sinh và cập nhật thông tin về chuyên cần, học tập, rèn luyện, sức khỏe, an toàn, chuyển trường, nghỉ học kéo dài và nhu cầu hỗ trợ của học sinh theo quy định, bao gồm nhu cầu tư vấn học đường, hỗ trợ tâm lý hoặc công tác xã hội trường học khi cần. Nhà trường phối hợp với cha mẹ học sinh, giáo viên, nhân sự hỗ trợ, chuyên gia, cơ quan, tổ chức liên quan khi cần để hỗ trợ học sinh khó khăn, học sinh có nhu cầu đặc thù hoặc học sinh có nguy cơ bị bạo lực, bắt nạt, bắt nạt trực tuyến, khủng hoảng tâm lý, nguy cơ bị tổn thương; bảo đảm không phân biệt đối xử, tôn trọng, an toàn và bảo mật thông tin của học sinh.',
+    m2:'Nhà trường sử dụng dữ liệu về chuyên cần, học tập, rèn luyện, sức khỏe, an toàn, tư vấn học đường, hỗ trợ tâm lý, công tác xã hội trường học, phản ánh, thông tin về sự cố và kết quả hỗ trợ để phát hiện sớm học sinh có nguy cơ hoặc cần hỗ trợ. Các biện pháp hỗ trợ được theo dõi, đánh giá và điều chỉnh phù hợp với nhu cầu của học sinh hoặc nhóm học sinh; có phối hợp với cha mẹ học sinh, chuyên gia, cơ quan, tổ chức liên quan khi cần. Kết quả hỗ trợ được sử dụng để xây dựng môi trường giáo dục hòa nhập, an toàn, tôn trọng sự khác biệt, bảo vệ học sinh và phòng ngừa rủi ro đối với học sinh.',
     ev:['4.2.5 Hồ sơ tuyển sinh vào lớp 6','2.5.2 Sổ theo dõi phổ cập giáo dục','4.2.7 Hồ sơ giáo dục học sinh khuyết tật'] },
-  { code:'3.5', std:3, name:'Kết quả học tập, phát triển, rèn luyện và sự tiến bộ của học sinh', self:1,
-    m1:'Nhà trường thực hiện đánh giá, ghi nhận và quản lý kết quả học tập, rèn luyện, phẩm chất, năng lực và sự tiến bộ của học sinh theo quy định; theo dõi mức độ đạt yêu cầu theo lớp, khối lớp, môn học.',
-    m2:'Nhà trường phân tích kết quả học tập, rèn luyện, chuyên cần, sự tiến bộ để điều chỉnh kế hoạch giáo dục, phương pháp dạy học và biện pháp hỗ trợ; kết quả cải thiện được minh chứng và không thấp hơn mức trung bình của địa phương.',
+  { code:'3.5', std:3, bb:false, name:'Kết quả học tập, phát triển, rèn luyện và sự tiến bộ của học sinh', self:1,
+    m1:'Nhà trường thực hiện đánh giá, ghi nhận và quản lý kết quả học tập, rèn luyện, phẩm chất, năng lực và sự tiến bộ của học sinh theo quy định; theo dõi mức độ đạt yêu cầu về học tập, rèn luyện và phát triển của học sinh theo cấp học. Kết quả được theo dõi theo lớp, khối lớp, môn học/hoạt động giáo dục và nhóm học sinh khi cần; được sử dụng để trao đổi với học sinh, cha mẹ học sinh và điều chỉnh hoạt động dạy học, giáo dục.',
+    m2:'Nhà trường phân tích kết quả học tập, rèn luyện, chuyên cần, sự tiến bộ, sản phẩm học tập, phản hồi phù hợp, kết quả hỗ trợ và nhu cầu của học sinh để điều chỉnh kế hoạch giáo dục, phương pháp dạy học, kiểm tra, đánh giá và biện pháp hỗ trợ. Kết quả theo dõi cho thấy sự tiến bộ của học sinh, sự cải thiện về kết quả học tập, rèn luyện hoặc hiệu quả hỗ trợ đối với học sinh cần hỗ trợ. Việc xem xét kết quả chú trọng đánh giá vì sự tiến bộ của học sinh, không yêu cầu mọi trường phải cao hơn mức trung bình của địa phương.',
     ev:['4.2.1 Học bạ học sinh','2.3.4 Bảng tổng hợp kết quả học tập, rèn luyện','11.3.1 Hồ sơ học sinh giỏi các cấp'] },
-  { code:'4.1', std:4, name:'Cơ sở vật chất, thiết bị, học liệu và hạ tầng kỹ thuật', self:1,
-    m1:'Nhà trường có cơ sở vật chất, phòng học, phòng chức năng, thư viện, khu vệ sinh, sân chơi, bãi tập, thiết bị dạy học, học liệu và hạ tầng công nghệ thông tin đáp ứng yêu cầu tối thiểu thực hiện Chương trình giáo dục phổ thông.',
-    m2:'Nhà trường sử dụng dữ liệu về tình trạng cơ sở vật chất, thiết bị để lập kế hoạch sửa chữa, bảo trì, bổ sung, khai thác hiệu quả hơn; từng bước phát triển học liệu số, thiết bị số.',
+  { code:'4.1', std:4, bb:true, name:'Cơ sở vật chất, thiết bị, học liệu và hạ tầng kỹ thuật phục vụ hoạt động giáo dục', self:1,
+    m1:'Nhà trường có cơ sở vật chất, phòng học, phòng chức năng nếu có, thiết bị dạy học, học liệu, thư viện hoặc nguồn học liệu, khu vệ sinh, sân chơi/bãi tập, hạ tầng công nghệ thông tin và kết nối mạng phục vụ hoạt động quản lý, dạy học, giáo dục theo quy định, phù hợp với cấp học, Chương trình giáo dục phổ thông và điều kiện thực tế. Các điều kiện này được quản lý, sử dụng, bảo trì, bảo quản và rà soát định kỳ để bảo đảm an toàn, hiệu quả và đáp ứng yêu cầu tổ chức hoạt động giáo dục.',
+    m2:'Nhà trường sử dụng dữ liệu về tình trạng cơ sở vật chất, thiết bị dạy học, học liệu, thư viện, hạ tầng công nghệ thông tin, kết nối mạng và nhu cầu dạy học để lập kế hoạch sửa chữa, bảo trì, bổ sung, sắp xếp hoặc khai thác hiệu quả hơn. Nhà trường từng bước phát triển, sử dụng học liệu số, thiết bị công nghệ, công cụ số hoặc nền tảng hỗ trợ dạy học phù hợp với điều kiện thực tế; không áp dụng cứng các mô hình phòng học thông minh, thiết bị thông minh hoặc không gian học tập số như điều kiện tối thiểu đối với mọi trường. Việc cải thiện điều kiện giáo dục góp phần tạo môi trường học tập an toàn, thân thiện, linh hoạt, hòa nhập và hỗ trợ tốt hơn cho hoạt động dạy học, giáo dục.',
     ev:['5.2.3 Danh mục thiết bị dạy học tối thiểu','5.3.1 Sổ đăng ký tổng quát sách','5.3.4 Hồ sơ thư viện số, học liệu số'] },
-  { code:'4.2', std:4, name:'Môi trường giáo dục an toàn, sức khoẻ và hạnh phúc', self:2,
-    m1:'Nhà trường bảo đảm các điều kiện tối thiểu về vệ sinh, nước sạch, ánh sáng, thông gió, an toàn thiết bị, phòng cháy chữa cháy, an toàn thực phẩm; thực hiện chăm sóc sức khoẻ, phòng ngừa tai nạn thương tích, phòng chống bạo lực học đường, bắt nạt trực tuyến.',
-    m2:'Nhà trường phân tích dữ liệu về sức khoẻ, an toàn, sự cố, phản ánh, khảo sát để cải thiện môi trường; xây dựng nền nếp bảo đảm an toàn, phòng ngừa rủi ro; học sinh được tôn trọng, lắng nghe, bảo vệ, hỗ trợ.',
+  { code:'4.2', std:4, bb:true, name:'Môi trường giáo dục an toàn, tích cực, hỗ trợ phát triển học sinh', self:2,
+    m1:'Nhà trường bảo đảm các điều kiện tối thiểu về vệ sinh, nước sạch, khu vệ sinh, ánh sáng, thông gió, sân chơi/bãi tập, an toàn thiết bị, phòng cháy chữa cháy, an toàn thực phẩm nếu có, an toàn số và bảo mật thông tin học sinh. Nhà trường thực hiện chăm sóc sức khỏe, phòng ngừa bạo lực học đường, xâm hại, bắt nạt, bắt nạt trực tuyến, tai nạn thương tích, khủng hoảng tâm lý và các rủi ro ảnh hưởng đến an toàn, sức khỏe, tinh thần của học sinh; có hồ sơ kiểm soát điều kiện an toàn, kiểm tra định kỳ, kênh tiếp nhận phản ánh, quy trình xử lý sự cố, hồ sơ xử lý sự cố và phối hợp với gia đình, cơ quan, tổ chức liên quan khi cần. Việc tiếp nhận, xử lý, hỗ trợ học sinh bảo đảm nguyên tắc bảo mật thông tin, tôn trọng, không kỳ thị và bảo vệ học sinh.',
+    m2:'Nhà trường phân tích dữ liệu về sức khỏe, an toàn, sự cố, phản ánh, khảo sát hoặc phản hồi phù hợp của học sinh, cha mẹ học sinh và đội ngũ để nhận diện nguy cơ, cải thiện môi trường giáo dục và giảm rủi ro. Việc khảo sát phản hồi, an toàn hoặc hài lòng nếu được thực hiện phải phù hợp với lứa tuổi học sinh, bảo đảm khách quan, bảo mật thông tin và không gây áp lực cho người trả lời. Nhà trường xây dựng nền nếp bảo đảm an toàn, chăm sóc sức khỏe, phòng ngừa bạo lực học đường, xâm hại, bắt nạt, bắt nạt trực tuyến, rủi ro trên môi trường số và hỗ trợ sức khỏe tinh thần của học sinh. Học sinh được tôn trọng, lắng nghe, bảo vệ, hỗ trợ phù hợp và tham gia xây dựng môi trường giáo dục an toàn, tích cực, hòa nhập. Nhà trường theo dõi kết quả sau khắc phục, sử dụng dữ liệu và phản hồi để điều chỉnh biện pháp phòng ngừa, xử lý, hỗ trợ và phòng ngừa tái diễn.',
     ev:['8.2.2 Hồ sơ phối hợp với y tế, công an địa phương','11.2.4 Số liệu an toàn trường học'] },
-  { code:'4.3', std:4, name:'Phối hợp với gia đình, cộng đồng và tổ chức liên quan', self:1,
-    m1:'Nhà trường duy trì kênh thông tin hai chiều với cha mẹ học sinh hoặc người giám hộ; thông báo kịp thời về chuyên cần, kết quả học tập, rèn luyện, sự tiến bộ, sức khoẻ, an toàn và nhu cầu hỗ trợ của học sinh.',
-    m2:'Nhà trường sử dụng phản hồi của cha mẹ học sinh, dữ liệu chuyên cần, kết quả học tập, rèn luyện, sức khoẻ, an toàn để điều chỉnh hoạt động phối hợp; huy động nguồn lực cộng đồng phù hợp.',
+  { code:'4.3', std:4, bb:false, name:'Phối hợp với gia đình, cộng đồng và tổ chức liên quan', self:1,
+    m1:'Nhà trường duy trì kênh thông tin hai chiều với cha mẹ học sinh hoặc người giám hộ; thông báo kịp thời về chuyên cần, kết quả học tập, rèn luyện, sự tiến bộ, sức khỏe, an toàn và nhu cầu hỗ trợ của học sinh. Nhà trường tiếp nhận, phân loại, xử lý phản hồi theo phạm vi trách nhiệm; có kế hoạch hoặc chương trình phối hợp với gia đình, chính quyền, y tế, công an, cơ sở giáo dục nghề nghiệp, doanh nghiệp, tổ chức xã hội và các bên liên quan để chăm sóc sức khỏe, bảo đảm an toàn, giáo dục kỹ năng, hướng nghiệp, phân luồng, hỗ trợ học sinh và huy động nguồn lực hợp pháp theo quy định.',
+    m2:'Nhà trường sử dụng phản hồi của cha mẹ học sinh, dữ liệu chuyên cần, kết quả học tập, rèn luyện, sức khỏe, an toàn và hồ sơ hỗ trợ học sinh để điều chỉnh hoạt động phối hợp với gia đình, cộng đồng và tổ chức liên quan. Cha mẹ học sinh tham gia phù hợp vào hoạt động giáo dục, bảo vệ an toàn, hướng nghiệp khi phù hợp và hỗ trợ học sinh. Nhà trường đánh giá hiệu quả phối hợp; sử dụng kết quả phối hợp để cải thiện chăm sóc sức khỏe, bảo đảm an toàn, giáo dục kỹ năng, hướng nghiệp, phân luồng, giáo dục hòa nhập, năng lực số, đổi mới sáng tạo khi phù hợp và môi trường giáo dục. Nguồn lực huy động được quản lý, sử dụng minh bạch, hợp pháp và có tác động tích cực đến an toàn, sự tiến bộ và phát triển của học sinh.',
     ev:['8.1.1 Quyết định công nhận Ban đại diện CMHS','8.1.3 Biên bản họp cha mẹ học sinh','8.2.3 Kênh thông tin hai chiều'] }
 ];
 
@@ -1335,9 +1364,9 @@ function renderCats(){
 }
 
 function rowHtml(it){
-  const [ma,ten,ng,st,crit] = it;
+  const [ma,ten,ng,st,crit,maCu] = it;
   return `<tr>
-    <td class="code">${ma}</td>
+    <td class="code">${ma}${maCu?`<span class="ma-cu">${maCu}</span>`:''}</td>
     <td class="rname">${ten}<span class="crits">${crit.map(c=>`<span class="tag-crit" onclick="event.stopPropagation();showCrit('${c}')">Tiêu chí ${c}</span>`).join('')}</span></td>
     <td class="owner tdow">${ng}</td>
     <td class="tdst"><span class="st st-${st}">${ST_LABEL[st]}</span><button class="drive" title="Mở thư mục trên Drive" onclick="event.stopPropagation();openDrive('${ma} ${ten.replace(/'/g,'')}')">📂</button></td>
@@ -1372,7 +1401,7 @@ function openCat(id){
         </button>
         <div class="sub-body">
           <table class="rec-tbl">
-            <thead><tr><th style="width:110px">Mã hồ sơ</th><th>Danh mục hồ sơ</th><th style="width:190px">Người phụ trách</th><th style="width:200px;text-align:right">Trạng thái</th></tr></thead>
+            <thead><tr><th style="width:126px">Mã minh chứng<br><span style="font-weight:400;font-size:10.6px;opacity:.7">mã mới / mã cũ</span></th><th>Tên minh chứng</th><th style="width:190px">Người phụ trách</th><th style="width:200px;text-align:right">Trạng thái</th></tr></thead>
             <tbody>${sub.items.map(rowHtml).join('')}</tbody>
           </table>
         </div>
@@ -1385,31 +1414,81 @@ function closeSheet(){
   document.body.style.overflow='';
 }
 
+/* ---- Hồ sơ của tôi ----
+   Lọc ra những minh chứng mà người đang đăng nhập được giao phụ trách.
+   Nhận biết bằng địa chỉ Gmail đăng nhập, không cần quản trị gán từng người. */
+let CHI_HO_SO_CUA_TOI = false;
+
+function hoSoCuaToi(){
+  const u = window.NGUOI_DUNG;
+  if(!u){
+    notify('Chức năng này cần đăng nhập để biết thầy cô là ai.');
+    return;
+  }
+  CHI_HO_SO_CUA_TOI = !CHI_HO_SO_CUA_TOI;
+  const nut = document.getElementById('btnHoSoCuaToi');
+  nut.classList.toggle('btn-gold', !CHI_HO_SO_CUA_TOI);
+  nut.classList.toggle('btn-pri', CHI_HO_SO_CUA_TOI);
+  nut.textContent = CHI_HO_SO_CUA_TOI ? '👥 Xem lại tất cả' : '👤 Hồ sơ của tôi';
+  searchHoSo();
+}
+
+/* Minh chứng này có phải phần việc của người đang đăng nhập không */
+function laCuaToi(ma){
+  const u = window.NGUOI_DUNG;
+  if(!u) return false;
+  const hs = (typeof window.layHoSo === 'function') ? window.layHoSo(ma) : null;
+  if(!hs) return false;
+  if(hs.phu_trach_id && hs.phu_trach_id === u.id) return true;
+  const ds = String(hs.phu_trach_email||'').toLowerCase();
+  if(!ds) return false;
+  if(ds === '*') return true;   /* Hộp Giáo viên: mọi thầy cô đều phụ trách */
+  return ds.split(',').map(s=>s.trim()).includes(String(u.email||'').toLowerCase());
+}
+
 function searchHoSo(){
   const kw = (document.getElementById('hsSearch').value||'').toLowerCase().trim();
   const flt = document.getElementById('hsFilter').value;
   const box = document.getElementById('hsSearchResult');
-  if(!kw && !flt){ box.innerHTML=''; document.getElementById('hsCats').style.display=''; return; }
+  if(!kw && !flt && !CHI_HO_SO_CUA_TOI){ box.innerHTML=''; document.getElementById('hsCats').style.display=''; return; }
   document.getElementById('hsCats').style.display='none';
 
   const hits=[];
   CATS.forEach(c=>c.subs.forEach(s=>s.items.forEach(i=>{
-    const okKw = !kw || i[0].toLowerCase().includes(kw) || i[1].toLowerCase().includes(kw) || i[2].toLowerCase().includes(kw);
+    /* Tìm được cả bằng mã mới, tên, người phụ trách, mã cũ và mã tiêu chí —
+       thầy cô quen mã nào thì gõ mã đó */
+    const okKw = !kw
+      || i[0].toLowerCase().includes(kw)
+      || i[1].toLowerCase().includes(kw)
+      || i[2].toLowerCase().includes(kw)
+      || String(i[5]||'').toLowerCase().includes(kw)
+      || (i[4]||[]).some(c => String(c).includes(kw));
     const okSt = !flt || i[3]===flt;
-    if(okKw && okSt) hits.push({c,s,i});
+    const okToi = !CHI_HO_SO_CUA_TOI || laCuaToi(i[0]);
+    if(okKw && okSt && okToi) hits.push({c,s,i});
   })));
+
+  const u = window.NGUOI_DUNG;
+  const tieuDe = CHI_HO_SO_CUA_TOI
+    ? `<span class="fo">👤</span><b>Hồ sơ của ${u && u.ho_ten ? u.ho_ten : 'tôi'}</b>`
+    : `<span class="fo">🔍</span><b>Kết quả tìm kiếm</b>`;
+  const khongCo = CHI_HO_SO_CUA_TOI
+    ? 'Thầy cô chưa được giao phụ trách minh chứng nào. Nếu có nhầm lẫn, đề nghị báo lại quản trị hệ thống.'
+    : 'Không tìm thấy hồ sơ phù hợp.';
 
   box.innerHTML = `
     <div class="sub open">
       <div class="sub-head" style="cursor:default">
-        <span class="fo">🔍</span><b>Kết quả tìm kiếm</b>
-        <span class="sub-cnt">${hits.length} hồ sơ</span>
+        ${tieuDe}
+        <span class="sub-cnt">${hits.length} minh chứng</span>
       </div>
       <div class="sub-body">
         ${hits.length ? `<table class="rec-tbl">
-          <thead><tr><th style="width:110px">Mã hồ sơ</th><th>Danh mục hồ sơ</th><th style="width:190px">Người phụ trách</th><th style="width:200px;text-align:right">Trạng thái</th></tr></thead>
-          <tbody>${hits.map(h=>rowHtml(h.i)).join('')}</tbody></table>`
-        : '<div style="padding:26px;text-align:center;color:var(--muted)">Không tìm thấy hồ sơ phù hợp.</div>'}
+          <thead><tr><th style="width:126px">Mã minh chứng<br><span style="font-weight:400;font-size:10.6px;opacity:.7">mã mới / mã cũ</span></th><th>Tên minh chứng</th><th style="width:190px">${CHI_HO_SO_CUA_TOI?'Hộp hồ sơ':'Người phụ trách'}</th><th style="width:200px;text-align:right">Trạng thái</th></tr></thead>
+          <tbody>${hits.map(h=>rowHtml(CHI_HO_SO_CUA_TOI
+              ? [h.i[0], h.i[1], h.s.name, h.i[3], h.i[4], h.i[5]]
+              : h.i)).join('')}</tbody></table>`
+        : `<div style="padding:26px;text-align:center;color:var(--muted)">${khongCo}</div>`}
       </div>
     </div>`;
 }
@@ -1587,28 +1666,77 @@ function showDsHs(lop, si, gvIdx){
 /* ============================================================
    KIỂM ĐỊNH CHẤT LƯỢNG
    ============================================================ */
+/* Xác định mức thực hiện hoạt động bảo đảm chất lượng của nhà trường.
+   Căn cứ khoản 3 Điều 5 Thông tư 57/2026/TT-BGDĐT:
+   - Đạt Mức 1: tất cả tiêu chí bắt buộc đạt Mức 1
+                VÀ ít nhất 05 trong 07 tiêu chí còn lại đạt Mức 1 trở lên.
+   - Đạt Mức 2: tất cả tiêu chí bắt buộc đạt Mức 2
+                VÀ ít nhất 05 trong 07 tiêu chí còn lại đạt Mức 2;
+                các tiêu chí còn lại đạt tối thiểu Mức 1.
+   08 tiêu chí bắt buộc (điểm a khoản 1 Điều 5): 1.3, 1.4, 2.1, 2.2, 3.1, 3.2, 4.1, 4.2 */
+function xepMucNhaTruong(){
+  const bb = TIEU_CHI.filter(c=>c.bb), cl = TIEU_CHI.filter(c=>!c.bb);
+  const t = {
+    bbThieuM1: bb.filter(c=>c.self < 1),
+    bbThieuM2: bb.filter(c=>c.self < 2),
+    clM1: cl.filter(c=>c.self >= 1).length,
+    clM2: cl.filter(c=>c.self >= 2).length,
+    clChuaDat: cl.filter(c=>c.self === 0).length
+  };
+  if(t.bbThieuM2.length === 0 && t.clM2 >= 5 && t.clChuaDat === 0){
+    t.ketLuan = 'Đạt Mức 2'; t.vi = '';
+  } else if(t.bbThieuM1.length === 0 && t.clM1 >= 5){
+    t.ketLuan = 'Đạt Mức 1';
+    /* Nói rõ còn thiếu đúng cái gì để lên Mức 2 */
+    const thieu = [];
+    if(t.bbThieuM2.length) thieu.push('tiêu chí bắt buộc '+t.bbThieuM2.map(c=>c.code).join(', ')+' chưa đạt Mức 2');
+    if(t.clM2 < 5) thieu.push('mới có '+t.clM2+'/7 tiêu chí còn lại đạt Mức 2 (cần ít nhất 5)');
+    if(t.clChuaDat) thieu.push('còn '+t.clChuaDat+' tiêu chí chưa đạt Mức 1');
+    t.vi = 'Chưa lên được Mức 2 vì '+thieu.join('; ')+'.';
+  } else {
+    t.ketLuan = 'Không đạt Mức 1';
+    const thieu = [];
+    if(t.bbThieuM1.length) thieu.push('tiêu chí bắt buộc '+t.bbThieuM1.map(c=>c.code).join(', ')+' chưa đạt Mức 1');
+    if(t.clM1 < 5) thieu.push('mới có '+t.clM1+'/7 tiêu chí còn lại đạt Mức 1 (cần ít nhất 5)');
+    t.vi = 'Nguyên nhân: '+thieu.join('; ')+'.';
+  }
+  return t;
+}
+
 function renderKdcl(){
   const f = document.getElementById('kdStd').value;
   const list = TIEU_CHI.filter(c=>!f || String(c.std)===f);
   let m2=0,m1=0,no=0;
   TIEU_CHI.forEach(c=>{ if(c.self===2) m2++; else if(c.self===1) m1++; else no++; });
 
-  document.getElementById('kdList').innerHTML = list.map(c=>`
+  document.getElementById('kdList').innerHTML = list.map(c=>{
+    const datM1 = c.self >= 1, datM2 = c.self >= 2;
+    return `
     <div class="crit">
       <button class="crit-head" onclick="this.parentNode.classList.toggle('open')">
         <span class="crit-code">${c.code}</span>
-        <span class="crit-ttl">${c.name}</span>
-        <span class="badge ${c.self===2?'badge-m2':(c.self===1?'badge-m1':'badge-no')}">${c.self===2?'Đạt Mức 2':(c.self===1?'Đạt Mức 1':'Chưa đạt')}</span>
+        <span class="crit-ttl">${c.name}${c.bb?' <span class="tc-bb">Bắt buộc</span>':''}</span>
+        <span class="badge ${datM2?'badge-m2':(datM1?'badge-m1':'badge-no')}">${datM2?'Đạt Mức 2':(datM1?'Đạt Mức 1':'Không đạt Mức 1')}</span>
         <span class="sub-arrow">▶</span>
       </button>
       <div class="crit-body">
-        <div class="lv"><span class="lv-tag">MỨC 1</span><p>${c.m1}</p></div>
-        <div class="lv"><span class="lv-tag m2">MỨC 2</span><p>${c.m2}</p></div>
-        <div class="lv-pick">
-          <span style="font-size:13px;color:var(--muted);font-weight:600;margin-right:4px">Nhà trường tự đánh giá:</span>
-          <button class="pick${c.self===0?' on':''}" onclick="setSelf('${c.code}',0)">Chưa đạt</button>
-          <button class="pick${c.self===1?' on':''}" onclick="setSelf('${c.code}',1)">Đạt Mức 1</button>
-          <button class="pick${c.self===2?' on':''}" onclick="setSelf('${c.code}',2)">Đạt Mức 2</button>
+        <div class="lv">
+          <span class="lv-tag">MỨC 1</span><p>${c.m1}</p>
+          <div class="lv-pick">
+            <span class="lv-hoi">Nhà trường tự đánh giá Mức 1:</span>
+            <button class="pick${datM1?' on':''}" onclick="setMuc('${c.code}',1,true)">Đạt</button>
+            <button class="pick${!datM1?' on':''}" onclick="setMuc('${c.code}',1,false)">Không đạt</button>
+          </div>
+        </div>
+        <div class="lv${datM1?'':' lv-khoa'}">
+          <span class="lv-tag m2">MỨC 2</span><p>${c.m2}</p>
+          <div class="lv-pick">
+            ${datM1
+              ? `<span class="lv-hoi">Nhà trường tự đánh giá Mức 2:</span>
+                 <button class="pick${datM2?' on':''}" onclick="setMuc('${c.code}',2,true)">Đạt</button>
+                 <button class="pick${!datM2?' on':''}" onclick="setMuc('${c.code}',2,false)">Không đạt</button>`
+              : `<span class="lv-hoi">Chỉ xem xét Mức 2 khi Mức 1 đã được xác định đạt (Biểu 1, Phụ lục V).</span>`}
+          </div>
         </div>
         <div class="ev-box">
           <b>📎 Minh chứng lấy từ kho Hồ sơ số (${c.ev.length})</b>
@@ -1618,24 +1746,30 @@ function renderKdcl(){
           </div>
         </div>
       </div>
-    </div>`).join('');
+    </div>`;}).join('');
 
-  const overall = no>0?'Không đạt':(m2===15?'Đạt Mức 2':'Đạt Mức 1');
+  const kq = xepMucNhaTruong();
+  const bbDat2 = TIEU_CHI.filter(c=>c.bb && c.self>=2).length;
   document.getElementById('kdStats').innerHTML = `
-    <div class="stat"><b style="font-size:22px">${overall}</b><span>Mức thực hiện hoạt động đảm bảo chất lượng</span></div>
-    <div class="stat ok"><b>${m2}/15</b><span>tiêu chí đạt Mức 2</span><div class="prog"><i style="width:${Math.round(m2/15*100)}%"></i></div></div>
-    <div class="stat warn"><b>${m1}/15</b><span>tiêu chí đạt Mức 1</span></div>
-    <div class="stat miss"><b>${no}</b><span>tiêu chí chưa đạt</span></div>`;
+    <div class="stat"><b style="font-size:22px">${kq.ketLuan}</b><span>Mức thực hiện hoạt động đảm bảo chất lượng</span></div>
+    <div class="stat ok"><b>${bbDat2}/8</b><span>tiêu chí bắt buộc đạt Mức 2</span><div class="prog"><i style="width:${Math.round(bbDat2/8*100)}%"></i></div></div>
+    <div class="stat warn"><b>${kq.clM2}/7</b><span>tiêu chí còn lại đạt Mức 2 <i>(cần ≥ 5)</i></span></div>
+    <div class="stat miss"><b>${no}</b><span>tiêu chí chưa đạt Mức 1</span></div>`;
+  document.getElementById('kdGiaiThich').innerHTML = kq.vi
+    ? `<b>Vì sao xếp mức này:</b> ${kq.vi}`
+    : `<b>Vì sao xếp mức này:</b> Toàn bộ 08 tiêu chí bắt buộc đạt Mức 2, ${kq.clM2}/7 tiêu chí còn lại đạt Mức 2 và không có tiêu chí nào chưa đạt Mức 1.`;
 }
 
-function setSelf(code, lv){
+/* Chấm tuần tự: bỏ đạt Mức 1 thì Mức 2 cũng không còn; chỉ đạt Mức 2 khi đã đạt Mức 1 */
+function setMuc(code, muc, dat){
   const c = TIEU_CHI.find(x=>x.code===code);
   if(!c) return;
-  c.self = lv;
+  if(muc===1) c.self = dat ? Math.max(c.self,1) : 0;
+  else        c.self = dat ? 2 : 1;
   const open = [...document.querySelectorAll('#kdList .crit')].map(e=>e.classList.contains('open'));
   renderKdcl();
   [...document.querySelectorAll('#kdList .crit')].forEach((e,i)=>{ if(open[i]) e.classList.add('open'); });
-  notify('Đã lưu mức tự đánh giá tiêu chí '+code+' — người đánh giá và thời điểm được ghi vào nhật ký.');
+  notify('Đã lưu đánh giá Mức '+muc+' của tiêu chí '+code+' — người đánh giá và thời điểm được ghi vào nhật ký.');
 }
 
 /* ============================================================

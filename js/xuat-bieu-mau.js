@@ -199,9 +199,125 @@
     w.document.close();
   }
 
+  /* ============================================================
+     4. DANH MỤC MINH CHỨNG THEO PHỤ LỤC IV THÔNG TƯ 57/2026
+
+     Đúng mẫu tại mục II khoản 4 Phụ lục IV:
+       TT | Mã minh chứng | Tên minh chứng
+          | Định dạng, vị trí lưu trữ hoặc đường dẫn điện tử | Ghi chú
+
+     Phụ lục IV khuyến khích mã minh chứng đặt dưới dạng liên kết điện tử
+     tới thư mục lưu trữ — nên cột thứ tư là đường dẫn bấm được, hội đồng
+     thẩm định mở thẳng thư mục mà không phải hỏi nhà trường.
+     ============================================================ */
+
+  /* Gom toàn bộ minh chứng đang hiển thị, sắp theo mã minh chứng */
+  function dsMinhChung() {
+    var ra = [];
+    layCats().forEach(function (c) {
+      (c.subs || []).forEach(function (s) {
+        (s.items || []).forEach(function (it) {
+          var hs = (typeof window.layHoSo === 'function') ? window.layHoSo(it[0]) : null;
+          ra.push({
+            ma: it[0],
+            ten: it[1],
+            maCu: it[5] || (hs && hs.ma_cu) || '',
+            dinhDang: (hs && hs.dinh_dang) || '',
+            link: (hs && hs.link_drive) || '',
+            viTri: s.name || '',
+            trangThai: it[3]
+          });
+        });
+      });
+    });
+    ra.sort(function (a, b) { return a.ma.localeCompare(b.ma, 'vi'); });
+    return ra;
+  }
+
+  function bangMinhChung() {
+    var TR = "font-family:'Times New Roman',serif;";
+    var O = TR + 'border:1px solid #000;padding:4pt 6pt;font-size:11.5pt;';
+    var ds = dsMinhChung();
+    var h = '<table style="width:100%;border-collapse:collapse">'
+      + '<tr>'
+      + '<td style="' + O + 'text-align:center;font-weight:bold;width:5%">TT</td>'
+      + '<td style="' + O + 'text-align:center;font-weight:bold;width:14%">Mã minh chứng</td>'
+      + '<td style="' + O + 'text-align:center;font-weight:bold;width:38%">Tên minh chứng</td>'
+      + '<td style="' + O + 'text-align:center;font-weight:bold;width:29%">Định dạng, vị trí lưu trữ<br>hoặc đường dẫn điện tử</td>'
+      + '<td style="' + O + 'text-align:center;font-weight:bold;width:14%">Ghi chú</td>'
+      + '</tr>';
+
+    ds.forEach(function (m, i) {
+      var viTri = chan(m.viTri);
+      var oViTri = m.link
+        ? (chan(m.dinhDang || 'Thư mục điện tử') + ' — <a href="' + m.link + '">' + viTri + '</a>')
+        : (chan(m.dinhDang || '') + (m.dinhDang ? ' — ' : '') + viTri);
+      var ghiChu = m.maCu
+        ? 'Mã cũ: ' + chan(m.maCu)
+        : 'Lập mới theo Thông tư 57';
+      h += '<tr>'
+        + '<td style="' + O + 'text-align:center">' + (i + 1) + '</td>'
+        + '<td style="' + O + 'font-weight:bold">' + chan(m.ma) + '</td>'
+        + '<td style="' + O + '">' + chan(m.ten) + '</td>'
+        + '<td style="' + O + 'font-size:10.5pt">' + oViTri + '</td>'
+        + '<td style="' + O + 'font-size:10.5pt">' + ghiChu + '</td>'
+        + '</tr>';
+    });
+
+    var daCo = ds.filter(function (m) { return m.trangThai === 'co'; }).length;
+    h += '<tr><td colspan="5" style="' + O + 'font-weight:bold">TỔNG CỘNG: ' + ds.length
+      + ' minh chứng — đã có tệp: ' + daCo + ' · chưa có: ' + (ds.length - daCo) + '</td></tr>';
+    return h + '</table>';
+  }
+
+  function thanMinhChung() {
+    var TR = "font-family:'Times New Roman',serif;";
+    var donViChuQuan = (typeof CAU_HINH !== 'undefined' && CAU_HINH.DON_VI_CHU_QUAN) || 'UBND XÃ YÊN THÀNH';
+    return ''
+      + '<table style="width:100%;border-collapse:collapse"><tr>'
+      + '<td style="' + TR + 'width:42%;text-align:center;font-size:13pt;vertical-align:top">'
+      +   chan(donViChuQuan) + '<br><b>' + chan(tenTruong()).toUpperCase() + '</b><br>───────</td>'
+      + '<td style="' + TR + 'text-align:center;font-size:13pt;vertical-align:top">'
+      +   '<b>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM<br>Độc lập – Tự do – Hạnh phúc</b><br>───────────────</td>'
+      + '</tr></table>'
+      + '<p style="' + TR + 'text-align:center;font-size:15pt;margin:14pt 0 2pt"><b>DANH MỤC MINH CHỨNG</b></p>'
+      + '<p style="' + TR + 'text-align:center;font-size:13pt;margin:0"><b>Năm học ' + chan(namHoc()) + '</b></p>'
+      + '<p style="' + TR + 'text-align:center;font-size:11pt;font-style:italic;margin:4pt 0 12pt">'
+      +   'Lập theo mục II khoản 4 Phụ lục IV Thông tư số 57/2026/TT-BGDĐT ngày 07/7/2026<br>'
+      +   'của Bộ trưởng Bộ Giáo dục và Đào tạo</p>'
+      + bangMinhChung()
+      + '<p style="' + TR + 'font-size:11pt;font-style:italic;margin:10pt 0 0">'
+      +   'Ghi chú: mã minh chứng được thiết lập dưới dạng liên kết điện tử tới thư mục lưu trữ '
+      +   'trên hệ thống hồ sơ số của nhà trường. Một minh chứng dùng cho nhiều tiêu chí vẫn giữ '
+      +   'một mã duy nhất.</p>'
+      + '<table style="width:100%;border-collapse:collapse;margin-top:16pt"><tr>'
+      + '<td style="width:50%"></td>'
+      + '<td style="' + TR + 'text-align:center;font-size:13pt">'
+      +   '<i>' + chan(ngayThang()) + '</i><br><b>HIỆU TRƯỞNG</b><br><i>(Ký tên, đóng dấu)</i>'
+      +   '<br><br><br><br></td>'
+      + '</tr></table>';
+  }
+
+  function xuatMinhChung() {
+    if (chuaCoDuLieu()) return;
+    var html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" '
+      + 'xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">'
+      + '<head><meta charset="utf-8"><title>Danh mục minh chứng</title>'
+      + '<!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View>'
+      + '<w:Zoom>100</w:Zoom></w:WordDocument></xml><![endif]-->'
+      + '<style>@page{size:A4;margin:2cm 1.5cm 2cm 3cm}body{font-family:"Times New Roman",serif}</style>'
+      + '</head><body>' + thanMinhChung() + '</body></html>';
+    taiTep(html, 'application/msword',
+      'danh-muc-minh-chung-' + (namHoc() || '').replace(/\s|–/g, '') + '.doc');
+    if (typeof notify === 'function') {
+      notify('Đã tải Danh mục minh chứng theo Phụ lục IV — mã minh chứng là liên kết bấm được tới thư mục Drive.');
+    }
+  }
+
   /* ---------------- gắn vào các nút của màn hình Hồ sơ số ---------------- */
 
   window.exportExcel = xuatExcelThat;   // nút "Xuất Excel" cũ gọi hàm này
+  window.xuatDanhMucMinhChung = xuatMinhChung;
 
   function ganNut() {
     var nutExcel = document.querySelector('button[onclick="exportExcel()"]');
@@ -214,8 +330,16 @@
     nutWord.addEventListener('click', xuatWord);
     nutExcel.insertAdjacentElement('afterend', nutWord);
 
-    var nutIn = nutWord.nextElementSibling;
-    if (nutIn && nutIn.textContent.indexOf('In danh mục') >= 0) {
+    var nutMC = document.createElement('button');
+    nutMC.id = 'nutDanhMucMinhChung';
+    nutMC.className = 'btn btn-gold';
+    nutMC.textContent = '📋 Danh mục minh chứng (Phụ lục IV)';
+    nutMC.title = 'Kết xuất danh mục minh chứng đúng mẫu Phụ lục IV Thông tư 57 để nộp Sở';
+    nutMC.addEventListener('click', xuatMinhChung);
+    nutWord.insertAdjacentElement('afterend', nutMC);
+
+    var nutIn = document.querySelector('#view-hoso button[onclick="window.print()"]');
+    if (nutIn) {
       nutIn.removeAttribute('onclick');
       nutIn.addEventListener('click', inDanhMuc);
     }
