@@ -663,6 +663,11 @@ footer .tacgia a{color:inherit;text-decoration:none}
   .rec-tbl tbody td.tdst{text-align:left;padding-top:9px}
   .rec-tbl tbody td.tdow::before{content:"Phụ trách: ";color:var(--muted);font-size:12.4px}
   .rec-tbl tbody td.rname{font-size:15px;font-weight:600}
+  /* Ở đây mỗi ô đã là một dòng riêng, không còn cột nào để phân định nữa.
+     Không tắt thì kẻ dọc của quy tắc chung biến thành một vạch đứt treo bên
+     phải từng ô, chẳng ngăn cách gì mà chỉ làm rối. Phải !important vì bên
+     kia cũng !important. */
+  .rec-tbl td,.rec-tbl th{border-right:0!important}
 }
 @media (max-width:520px){
   .sec-head h2{font-size:26px}
@@ -710,6 +715,68 @@ footer .tacgia a{color:inherit;text-decoration:none}
   /* Bảng dài phải lặp tiêu đề mỗi trang và không cắt đôi dòng học sinh */
   .overlay.on thead{display:table-header-group}
   .overlay.on tr{page-break-inside:avoid;break-inside:avoid}
+}
+
+/* ============================================================================
+   ĐƯỜNG KẺ DỌC PHÂN ĐỊNH CỘT — quy tắc chung cho MỌI bảng của hệ thống
+
+   Trước đây các bảng chỉ có kẻ ngang giữa các dòng, không có kẻ dọc. Bảng
+   bốn năm cột chữ dài, lại có ô xuống dòng hai ba hàng, thì mắt đọc ngang
+   rất dễ trượt sang cột khác — nhất là cột "Người phụ trách" và "Trạng thái"
+   nằm xa cột "Tên minh chứng". Thêm kẻ dọc nét đứt là mỗi cột thành một
+   khối riêng, đọc tới đâu biết mình đang ở cột nào.
+
+   VÌ SAO GOM VÀO MỘT CHỖ, KHÔNG SỬA RẢI RÁC
+   Mười một lớp bảng của hệ thống nằm ở mười một tệp khác nhau. Sửa từng nơi
+   thì vừa dễ sót, vừa chắc chắn lệch nhau dần theo thời gian — mỗi tệp một
+   sắc xanh, một độ dày. Gom vào đây thì sửa một chỗ là cả hệ thống đổi
+   theo, và bảng nào thêm sau này cũng tự có kẻ mà không phải nhớ.
+
+   VÌ SAO PHẢI !important
+   CSS của các bảng kia nằm trong tệp .js, được chèn vào đầu trang lúc chạy,
+   tức là SAU khối này. Không đánh dấu ưu tiên thì quy tắc chung bị đè mất.
+
+   Nét ĐỨT chứ không liền: bảng nhiều cột mà kẻ liền hết thì thành ô lưới
+   kín, nặng mắt. Nét đứt đủ để phân định mà vẫn nhẹ.
+   ============================================================================ */
+.rec-tbl td,   .rec-tbl th,
+.qt-bang td,   .qt-bang th,
+.vn-bang td,   .vn-bang th,
+.vh-bang td,   .vh-bang th,
+.ns-bang td,   .ns-bang th,
+.db-tbl  td,   .db-tbl  th,
+.tt-bang td,   .tt-bang th,
+.qh-bang td,   .qh-bang th,
+.pc-bang td,   .pc-bang th,
+.hs-bang td,   .hs-bang th,
+.hd-bang td,   .hd-bang th{
+  border-right:1.5px dashed #9db4d6!important;
+}
+/* Ô cuối hàng không kẻ — kẻ nữa thành viền ngoài, thừa và làm bảng chật */
+.rec-tbl td:last-child,   .rec-tbl th:last-child,
+.qt-bang td:last-child,   .qt-bang th:last-child,
+.vn-bang td:last-child,   .vn-bang th:last-child,
+.vh-bang td:last-child,   .vh-bang th:last-child,
+.ns-bang td:last-child,   .ns-bang th:last-child,
+.db-tbl  td:last-child,   .db-tbl  th:last-child,
+.tt-bang td:last-child,   .tt-bang th:last-child,
+.qh-bang td:last-child,   .qh-bang th:last-child,
+.pc-bang td:last-child,   .pc-bang th:last-child,
+.hs-bang td:last-child,   .hs-bang th:last-child,
+.hd-bang td:last-child,   .hd-bang th:last-child{
+  border-right:0!important;
+}
+/* Bảng Hướng dẫn có dòng tiêu đề nền navy — kẻ xanh sẫm chìm mất trên đó,
+   phải đổi sang nét sáng mới nhìn ra. */
+.hd-bang th{border-right-color:rgba(255,255,255,.42)!important}
+/* In ra giấy: mực xanh nhạt gần như mất, đổi sang xám đậm cho rõ */
+@media print{
+  .rec-tbl td,.rec-tbl th,.qt-bang td,.qt-bang th,.vn-bang td,.vn-bang th,
+  .vh-bang td,.vh-bang th,.ns-bang td,.ns-bang th,.db-tbl td,.db-tbl th,
+  .tt-bang td,.tt-bang th,.qh-bang td,.qh-bang th,.pc-bang td,.pc-bang th,
+  .hs-bang td,.hs-bang th,.hd-bang td,.hd-bang th{
+    border-right-color:#666!important;
+  }
 }
 </style>
 </head>
@@ -2395,14 +2462,14 @@ renderDbcl();
      Ba tệp dưới đây chỉ hoạt động khi js/cauhinh.js đã được điền địa chỉ
      cơ sở dữ liệu. Chưa điền thì trang chạy y như trước, không đòi đăng nhập. -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/cauhinh.js?v=202608080412"></script>
-<script src="js/dangnhap.js?v=202608080412"></script>
-<script src="js/hoso-sql.js?v=202608080412"></script>
-<script src="js/tudanhgia-sql.js?v=202608080412"></script>
-<script src="js/nhansu-sql.js?v=202608080412"></script>
-<script src="js/kiemtra-drive.js?v=202608080412"></script>
-<script src="js/xuat-bieu-mau.js?v=202608080412"></script>
-<script src="js/xuat-bao-cao-tdg.js?v=202608080412"></script>
+<script src="js/cauhinh.js?v=202608080417"></script>
+<script src="js/dangnhap.js?v=202608080417"></script>
+<script src="js/hoso-sql.js?v=202608080417"></script>
+<script src="js/tudanhgia-sql.js?v=202608080417"></script>
+<script src="js/nhansu-sql.js?v=202608080417"></script>
+<script src="js/kiemtra-drive.js?v=202608080417"></script>
+<script src="js/xuat-bieu-mau.js?v=202608080417"></script>
+<script src="js/xuat-bao-cao-tdg.js?v=202608080417"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <!-- ExcelJS chỉ dùng để TẠO mẫu có trang trí: bản miễn phí của xlsx ở trên
      không viết được màu nền, khung viền hay khổ giấy A4 ngang. Phần ĐỌC tệp
@@ -2410,27 +2477,27 @@ renderDbcl();
 <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 <!-- Bộ tạo mẫu dùng chung: mọi mẫu Excel của hệ thống đi qua đây nên trông
      giống nhau và in ra dùng được ngay. Phải nạp TRƯỚC các màn hình gọi nó. -->
-<script src="js/mau-excel.js?v=202608080412"></script>
-<script src="js/dbcl-sql.js?v=202608080412"></script>
-<script src="js/xuat-phu-luc-dbcl.js?v=202608080412"></script>
-<script src="js/dbcl-excel.js?v=202608080412"></script>
-<script src="js/dbcl-vanhanh.js?v=202608080412"></script>
-<script src="js/dbcl-hocsinh.js?v=202608080412"></script>
+<script src="js/mau-excel.js?v=202608080417"></script>
+<script src="js/dbcl-sql.js?v=202608080417"></script>
+<script src="js/xuat-phu-luc-dbcl.js?v=202608080417"></script>
+<script src="js/dbcl-excel.js?v=202608080417"></script>
+<script src="js/dbcl-vanhanh.js?v=202608080417"></script>
+<script src="js/dbcl-hocsinh.js?v=202608080417"></script>
 <!-- Nạp SAU dbcl-hocsinh.js: dùng lại window.hsChuanNgay và window.hsVeLai -->
-<script src="js/vnedu-nhap.js?v=202608080412"></script>
+<script src="js/vnedu-nhap.js?v=202608080417"></script>
 <!-- Nối màn hình "Quản lý học sinh" với dữ liệu thật, thay bản xem thử -->
-<script src="js/hocsinh-that.js?v=202608080412"></script>
-<script src="js/tinhtien-lop.js?v=202608080412"></script>
-  <script src="js/quy-mo.js?v=202608080412"></script>
-<script src="js/dbcl-phancong.js?v=202608080412"></script>
-<script src="js/dbcl-camket-hs.js?v=202608080412"></script>
+<script src="js/hocsinh-that.js?v=202608080417"></script>
+<script src="js/tinhtien-lop.js?v=202608080417"></script>
+  <script src="js/quy-mo.js?v=202608080417"></script>
+<script src="js/dbcl-phancong.js?v=202608080417"></script>
+<script src="js/dbcl-camket-hs.js?v=202608080417"></script>
 <!-- Các tab thêm vào bảng Quản trị hệ thống. Phải nạp SAU dbcl-hocsinh.js vì
      tab "Danh sách học sinh" dùng lại đúng màn hình của tệp đó, và nạp sau
      dangnhap.js vì chúng tự đăng ký vào window.qtTabPhu. -->
-<script src="js/quantri-nhansu.js?v=202608080412"></script>
-<script src="js/quantri-hocsinh.js?v=202608080412"></script>
-<script src="js/quantri-hoso.js?v=202608080412"></script>
+<script src="js/quantri-nhansu.js?v=202608080417"></script>
+<script src="js/quantri-hocsinh.js?v=202608080417"></script>
+<script src="js/quantri-hoso.js?v=202608080417"></script>
 <!-- Nạp SAU cùng: hướng dẫn lọc nội dung theo vai trò nên cần window.NGUOI_DUNG -->
-<script src="js/huong-dan.js?v=202608080412"></script>
+<script src="js/huong-dan.js?v=202608080417"></script>
 </body>
 </html>
