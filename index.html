@@ -112,6 +112,12 @@ input,select{font-family:inherit;font-size:inherit}
 /* Mục đang mở: đảo hẳn màu — nền trắng chữ navy, nổi hẳn lên khỏi hàng */
 .nav-links button.on{background:#fff;color:var(--navy);font-weight:700;
   border-color:#fff;box-shadow:0 5px 14px rgba(4,12,34,.42)}
+/* Hướng dẫn không phải một nghiệp vụ như năm mục kia — viền vàng và tách ra
+   một quãng để mắt phân biệt được ngay, khỏi đếm nhầm thành sáu nghiệp vụ. */
+.nav-hd{margin-left:9px;border-color:rgba(229,177,58,.5)!important;
+  color:var(--gold-2)!important}
+.nav-hd:hover{background:rgba(229,177,58,.18)!important;
+  border-color:var(--gold-2)!important;color:#fff!important}
 .nav-burger{display:none;width:42px;height:42px;border-radius:10px;font-size:21px;color:#fff}
 .nav-drawer{display:none;background:var(--navy-2)}
 .nav-drawer.open{display:block}
@@ -694,6 +700,7 @@ footer .legal{border-top:1px solid rgba(255,255,255,.15);padding-top:15px;font-s
       <button data-go="hocsinh">Quản lý học sinh</button>
       <button data-go="kdcl">Kiểm định chất lượng</button>
       <button data-go="dbcl">Đảm bảo chất lượng</button>
+      <button data-go="huongdan" class="nav-hd" title="Hướng dẫn sử dụng">? Hướng dẫn</button>
     </nav>
     <button class="nav-burger" onclick="toggleDrawer()">☰</button>
   </div>
@@ -704,6 +711,7 @@ footer .legal{border-top:1px solid rgba(255,255,255,.15);padding-top:15px;font-s
     <button data-go="hocsinh">🎒 Quản lý học sinh</button>
     <button data-go="kdcl">✅ Kiểm định chất lượng</button>
     <button data-go="dbcl">📈 Đảm bảo chất lượng</button>
+    <button data-go="huongdan">❓ Hướng dẫn sử dụng</button>
   </div>
 </header>
 
@@ -1010,6 +1018,21 @@ footer .legal{border-top:1px solid rgba(255,255,255,.15);padding-top:15px;font-s
         <tbody id="kpiBody"></tbody>
       </table>
     </div>
+  </div>
+</section>
+
+<!-- ============ HƯỚNG DẪN SỬ DỤNG ============
+     Nội dung do js/huong-dan.js đổ vào. Để trống ở đây chứ không gõ sẵn:
+     hướng dẫn phải đổi theo vai trò người đang đăng nhập, mà lúc trang vừa
+     tải thì chưa biết ai đăng nhập. -->
+<section class="view" id="view-huongdan">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">Cầm tay chỉ việc</span>
+      <h2>Hướng dẫn sử dụng</h2>
+      <p>Từng việc một, theo đúng thứ tự bấm trên màn hình. Thầy cô gõ vào ô tìm kiếm để nhảy thẳng tới việc đang cần.</p>
+    </div>
+    <div id="hdNoiDung"></div>
   </div>
 </section>
 
@@ -2363,5 +2386,7 @@ renderDbcl();
 <script src="js/quantri-nhansu.js"></script>
 <script src="js/quantri-hocsinh.js"></script>
 <script src="js/quantri-hoso.js"></script>
+<!-- Nạp SAU cùng: hướng dẫn lọc nội dung theo vai trò nên cần window.NGUOI_DUNG -->
+<script src="js/huong-dan.js"></script>
 </body>
 </html>
