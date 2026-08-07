@@ -364,17 +364,19 @@ td.tdst{white-space:nowrap;text-align:right}
   font-size:16px;line-height:1.7}
 .hs-mau-canh b{color:#6b4409}
 @media(min-width:900px){.hs-mau-canh{font-size:17px}}
-/* Bản in: đóng dấu chìm lên danh sách mẫu để tờ giấy in ra không bị nhầm là
-   hồ sơ thật. Bám vào class .la-mau chứ KHÔNG bám vào #shBody — lớp phủ đó
-   dùng chung cho ba màn hình (danh sách HS mẫu, danh mục minh chứng, nội dung
-   tiêu chí TT57), đóng dấu vào #shBody là in danh mục minh chứng thật cũng
-   dính chữ "KHÔNG DÙNG LÀM HỒ SƠ". */
+/* Dòng nhắc "DỮ LIỆU MẪU" trong thead của bảng danh sách minh hoạ.
+   Trên màn hình để nhạt cho đỡ chói; khi IN thì đậm lên và in đủ mực.
+
+   Vì sao đặt trong thead chứ không dùng dấu chìm CSS: lớp phủ là position
+   fixed có cuộn, dấu chìm ::after neo theo khung nên danh sách 40 em tràn
+   nhiều trang thì chỉ trang đầu có dấu. Còn thead thì trình duyệt tự lặp
+   lại ở đầu mọi trang in — trang nào cũng mang dấu hiệu, không phải thử. */
+tr.in-nhac th{background:#fff4e5!important;color:#8a5410!important;
+  font-size:12px;letter-spacing:1.4px;text-align:center;font-weight:800}
 @media print{
-  #shBody.la-mau{position:relative}
-  #shBody.la-mau::after{content:'DỮ LIỆU MẪU — KHÔNG DÙNG LÀM HỒ SƠ';
-    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-    font-size:34px;font-weight:800;color:rgba(200,60,40,.16);
-    transform:rotate(-24deg);pointer-events:none;letter-spacing:2px;text-align:center}
+  tr.in-nhac th{background:#f7d9a8!important;color:#6b3f08!important;
+    font-size:13px;border:1.5px solid #c98d2e!important;
+    -webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
 .khoi-grid{display:grid;gap:13px;grid-template-columns:repeat(2,1fr)}
 .khoi{background:#fff;border:1px solid var(--line);border-radius:15px;border-left:5px solid var(--navy);padding:18px 16px;text-align:center;box-shadow:var(--shadow);transition:transform .16s,box-shadow .16s}
@@ -1513,7 +1515,6 @@ function openCat(id){
   shIc.className = 'ic num';
   document.getElementById('shTitle').textContent = c.name;
   document.getElementById('shSub').textContent = c.desc;
-  document.getElementById('shBody').classList.remove('la-mau');
   document.getElementById('shBody').innerHTML = `
     <div class="sheet-sum">
       <div>
@@ -1632,7 +1633,6 @@ function showCrit(code){
   document.getElementById('shIc').textContent='✅';
   document.getElementById('shTitle').textContent='Tiêu chí '+c.code;
   document.getElementById('shSub').textContent=c.name;
-  document.getElementById('shBody').classList.remove('la-mau');
   document.getElementById('shBody').innerHTML = `
     <div class="lv"><span class="lv-tag">MỨC 1</span><p>${c.m1}</p></div>
     <div class="lv"><span class="lv-tag m2">MỨC 2</span><p>${c.m2}</p></div>
@@ -1776,18 +1776,24 @@ function showDsHs(lop, si, gvIdx){
   document.getElementById('shIc').textContent='🎒';
   document.getElementById('shTitle').textContent='Lớp '+lop;
   document.getElementById('shSub').textContent='Giáo viên chủ nhiệm: '+GVCN[gvIdx%GVCN.length];
-  /* Chi rieng man hinh nay la du lieu mau -> bat co de ban in co dau chim */
-  document.getElementById('shBody').classList.add('la-mau');
   document.getElementById('shBody').innerHTML = `
     <div class="hs-mau-canh" style="margin-bottom:14px"><b>⚠ Danh sách minh hoạ.</b>
       Những họ tên dưới đây do trang tự sinh ra để xem thử bố cục — không phải học sinh có thật
       của nhà trường. Danh sách thật nằm ở <b>Đảm bảo chất lượng → Học sinh</b>.</div>
     <div class="sheet-sum">
       <div><div class="big">${si} học sinh</div><div class="sub">Nam: ${nam} · Nữ: ${si-nam} · số minh hoạ</div></div>
+      <div class="sp"></div>
+      <button class="btn btn-pri" onclick="window.print()">🖨 In danh sách</button>
     </div>
     <div class="tbl-wrap">
       <table class="data">
-        <thead><tr><th style="width:60px">STT</th><th>Họ và tên</th><th style="width:120px">Ngày sinh</th><th style="width:90px">Giới tính</th></tr></thead>
+        <!-- Dòng nhắc nằm TRONG thead: trình duyệt lặp lại thead ở đầu MỌI
+             trang in, nên danh sách 40 em tràn 2-3 trang thì trang nào cũng
+             mang dấu hiệu. Dấu chìm CSS chỉ ra một trang nên không đủ. -->
+        <thead>
+          <tr class="in-nhac"><th colspan="4">DỮ LIỆU MẪU — KHÔNG DÙNG LÀM HỒ SƠ</th></tr>
+          <tr><th style="width:60px">STT</th><th>Họ và tên</th><th style="width:120px">Ngày sinh</th><th style="width:90px">Giới tính</th></tr>
+        </thead>
         <tbody>${ds.map(h=>`<tr>
           <td class="num">${h.stt}</td>
           <td>${h.ten}</td>
