@@ -187,6 +187,7 @@
     });
 
     html += '</tbody></table></div>'
+      + '<p class="db-goi" id="dbclDem"></p>'
       + '<p class="db-goi">Cách nhập: chỉ tiêu dạng <b>số / tỉ lệ</b> gõ "138/90.8" hoặc "90.8%" · '
       + 'chỉ tiêu <b>điểm</b> gõ "8.86" · chỉ tiêu <b>Đạt</b> gõ "Đ" hoặc "CĐ". '
       + 'Ô tự lưu khi thầy cô bấm ra chỗ khác.'
@@ -194,12 +195,34 @@
       + '</p>';
 
     hop.innerHTML = html;
+    veBoDem();
     if (sua) {
       hop.querySelectorAll('input').forEach(inp => {
         inp.addEventListener('blur', function () { luuO(this); });
         inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') this.blur(); });
       });
     }
+  }
+
+  /* Cho thầy cô thấy ngay số ô đã lưu vào cơ sở dữ liệu của đúng bảng đang mở.
+     Nếu con số này không tăng khi gõ thì biết là chưa lưu được, không phải đoán. */
+  function veBoDem() {
+    const o1 = document.getElementById('dbclDem');
+    if (!o1) return;
+    let daNhap = 0, tong = 0;
+    CHI_TIEU.forEach(ct => {
+      KHOI.forEach(k => {
+        if (ct.chi_khoi_9 && k !== 9) return;
+        tong++;
+        const r = o(k, ct.ma);
+        if (r && r.gia_tri && String(r.gia_tri).trim() !== '') daNhap++;
+      });
+    });
+    o1.innerHTML = daNhap
+      ? 'Bảng <b>' + chan(TEN_LOAI[LOAI]) + '</b> năm học ' + chan(NAM_HOC)
+        + ' đã lưu <b style="color:#15803d">' + daNhap + '/' + tong + ' ô</b>.'
+      : 'Bảng <b>' + chan(TEN_LOAI[LOAI]) + '</b> năm học ' + chan(NAM_HOC)
+        + ' <b style="color:#b45309">chưa có ô nào</b> — nhập số rồi mới kết xuất được phụ lục.';
   }
 
   function goiY(ct) {
@@ -235,6 +258,7 @@
     SO_LIEU[key] = kq.data;
     inp.classList.add('vua-luu');
     setTimeout(() => inp.classList.remove('vua-luu'), 900);
+    veBoDem();
     veDoiSanh();
   }
 

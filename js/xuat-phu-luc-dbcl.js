@@ -168,11 +168,35 @@
       notify('Chưa tải được số liệu. Thầy cô đăng nhập và chờ bảng hiện lên rồi xuất lại.');
   }
 
+  /* Đếm số ô đã có dữ liệu của một bảng. Dùng để chặn việc xuất ra tờ mẫu rỗng —
+     trước đây bấm nút lúc bảng còn trắng vẫn tải về một tệp không có số nào. */
+  function demODaNhap(d, loai, ky) {
+    let n = 0;
+    d.chiTieu.forEach(ct => {
+      d.khoi.forEach(k => {
+        if (ct.chi_khoi_9 && k !== 9) return;
+        const r = d.lay(loai, ky, k, ct.ma);
+        if (r && r.gia_tri && String(r.gia_tri).trim() !== '') n++;
+      });
+    });
+    return n;
+  }
+
+  function bangTrong(d, loai, ky, tenBang) {
+    if (demODaNhap(d, loai, ky) > 0) return false;
+    if (typeof notify === 'function') {
+      notify('Bảng "' + tenBang + '" của năm học ' + d.namHoc + ' chưa có ô nào được nhập, '
+        + 'nên chưa xuất được. Thầy cô chọn đúng bảng ở ô "Bảng số liệu", nhập số rồi xuất lại.');
+    }
+    return true;
+  }
+
   /* ========================================================================
      PHỤ LỤC 1 — THỰC TRẠNG NHÀ TRƯỜNG
      ======================================================================== */
   function xuat1() {
     const d = duLieu(); if (!d) return thieuDuLieu();
+    if (bangTrong(d, 'thuc_trang', 'ca_nam', 'Thực trạng đầu năm')) return;
     const than = tieuDe()
       + tenPhuLuc('1', 'Thực trạng nhà trường năm học ' + d.namHoc)
       + '<p style="' + TR + 'font-size:12pt;font-weight:bold;margin:10pt 0 5pt">'
@@ -195,6 +219,7 @@
      ======================================================================== */
   function xuat2() {
     const d = duLieu(); if (!d) return thieuDuLieu();
+    if (bangTrong(d, 'chuan_dau_ra', 'ca_nam', 'Chuẩn đầu ra phấn đấu')) return;
     const than = tieuDe()
       + tenPhuLuc('2', 'Chuẩn đầu ra chất lượng học tập của học sinh năm học ' + d.namHoc,
           'Chỉ tiêu nhà trường phấn đấu đạt được trong năm học')
@@ -212,6 +237,7 @@
   function xuat5() {
     const d = duLieu(); if (!d) return thieuDuLieu();
     const tenKy = d.ky === 'hoc_ki_1' ? 'học kì I' : 'cả năm học';
+    if (bangTrong(d, 'ket_qua', d.ky, 'Kết quả thực hiện — ' + tenKy)) return;
 
     /* Bảng đối chiếu với chuẩn đã cam kết — thứ bản giấy không có */
     let doiChieu = '';
@@ -337,6 +363,7 @@
      ======================================================================== */
   function xuat16() {
     const d = duLieu(); if (!d) return thieuDuLieu();
+    if (bangTrong(d, 'chuan_dau_ra', 'ca_nam', 'Chuẩn đầu ra phấn đấu')) return;
     const ht = 'Nguyễn Phúc Lộc';
 
     const than = tieuDe()
