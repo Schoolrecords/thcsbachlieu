@@ -222,7 +222,7 @@
       notify('Bảng Chuẩn đầu ra của năm học ' + NAM + ' chưa có ô nào, chưa công bố được.');
       return;
     }
-    if (!window.confirm('Công bố chuẩn đầu ra năm học ' + NAM + ' lên trang công khai?\n\n'
+    if (!await xacNhan('Công bố chuẩn đầu ra năm học ' + NAM + ' lên trang công khai?\n\n'
       + dong.length + ' chỉ tiêu có số liệu sẽ được đăng.\n'
       + 'Ai cũng xem được, kể cả người chưa đăng nhập.\n\n'
       + 'Đây là việc bắt buộc theo mục 2.3 Công văn 2180 của Sở.')) return;
@@ -394,7 +394,8 @@
         }));
       hop.querySelectorAll('[data-xoa-tv]').forEach(b =>
         b.addEventListener('click', async function () {
-          if (!window.confirm('Xoá thành viên này khỏi Tổ đảm bảo chất lượng?')) return;
+          if (!await xacNhan('Xoá thành viên này khỏi Tổ đảm bảo chất lượng?',
+            { nguyHiem: true, nutOk: 'Xoá' })) return;
           await sb.from('dbcl_to_thanh_vien').delete().eq('id', this.dataset.xoaTv);
           veTo(hop);
         }));

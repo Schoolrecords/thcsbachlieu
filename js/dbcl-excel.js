@@ -231,7 +231,7 @@
         + 'Thầy cô tự kiểm: số trong tệp có đúng là của bảng "' + t.tenBang
         + '", năm học ' + t.namHoc + ', ' + (t.ky === 'hoc_ki_1' ? 'Học kì I' : 'Cả năm học')
         + ' không?\n\nĐúng thì bấm OK để nạp tiếp.';
-      if (!window.confirm(canh)) return;
+      if (!await xacNhan(canh)) return;
     }
     if (maBang && maBang !== t.loai) {
       /* Hiện TÊN TIẾNG VIỆT, không hiện mã trong cơ sở dữ liệu. Bản cũ in ra
@@ -240,12 +240,12 @@
       const ten = (t.tenTheoLoai && t.tenTheoLoai[maBang]) || maBang;
       const canh = 'Tệp này là bảng "' + ten + '" nhưng thầy cô đang mở bảng "'
         + t.tenBang + '" (Phụ lục ' + t.maPhuLuc + ').\n\nVẫn nạp vào bảng đang mở chứ?';
-      if (!window.confirm(canh)) return;
+      if (!await xacNhan(canh)) return;
     }
     if (namTep && namTep !== t.namHoc) {
       const canh = 'Tệp ghi năm học ' + namTep + ' nhưng thầy cô đang mở năm học '
         + t.namHoc + '.\n\nVẫn nạp vào năm học đang mở chứ?';
-      if (!window.confirm(canh)) return;
+      if (!await xacNhan(canh)) return;
     }
     /* Mẫu ghi cả ô Kỳ ở dòng 3 nhưng bản cũ không đối chiếu. Tải mẫu lúc đang
        chọn "Học kì I" rồi nạp lên lúc đang chọn "Cả năm học" là số vào nhầm
@@ -255,7 +255,7 @@
       const canh = 'Tệp này là số liệu ' + (TEN_KY[kyTep] || kyTep)
         + ' nhưng thầy cô đang mở ' + (TEN_KY[t.ky] || t.ky)
         + '.\n\nVẫn nạp vào kỳ đang mở chứ?';
-      if (!window.confirm(canh)) return;
+      if (!await xacNhan(canh)) return;
     }
 
     /* Dò theo cột Mã, không theo vị trí dòng.
@@ -332,7 +332,7 @@
       + '⚠ Ô của các chỉ tiêu này trong hệ thống sẽ bị GHI ĐÈ theo tệp, kể cả ô '
       + 'để trống trong tệp — trừ cột "Đối sánh toàn tỉnh" và những khối tệp không có.'
       + '\n\nThầy cô đồng ý chứ?';
-    if (!window.confirm(hoi)) return;
+    if (!await xacNhan(hoi)) return;
 
     const kq = await window.dbclGhiHangLoat(rows);
     if (kq.loi) { notify('Chưa nạp được: ' + kq.loi); return; }

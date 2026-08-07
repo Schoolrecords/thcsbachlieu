@@ -534,7 +534,7 @@
       + 'Mức nâng: ' + muc[1] + '\n'
       + (deLen ? '\n⚠ Sẽ GHI ĐÈ ' + deLen + ' ô đang có số liệu.\n' : '')
       + '\nThầy cô đồng ý chứ?';
-    if (!window.confirm(hoi)) return;
+    if (!await xacNhan(hoi)) return;
 
     const nguoi = window.NGUOI_DUNG ? window.NGUOI_DUNG.id : null;
     const luc = new Date().toISOString();

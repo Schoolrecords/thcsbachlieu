@@ -368,7 +368,7 @@
     }).length;
 
     const nt = namTruoc(NAM);
-    if (!window.confirm('Đặt chuẩn đầu ra môn ' + mon.ten + ' cho cả lớp ' + LOP + ' chứ?\n\n'
+    if (!await xacNhan('Đặt chuẩn đầu ra môn ' + mon.ten + ' cho cả lớp ' + LOP + ' chứ?\n\n'
       + 'Lấy kết quả cả năm ' + (nt || '(năm trước)') + ' cộng thêm ' + buoc + ' điểm.\n'
       + co.length + ' em có thực trạng sẽ được đặt.\n'
       + (loc.length - co.length ? (loc.length - co.length) + ' em chưa có thực trạng sẽ bỏ qua.\n' : '')

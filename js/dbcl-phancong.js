@@ -272,18 +272,21 @@
   }
 
   async function xoaDong(id) {
-    if (!window.confirm('Xoá dòng phân công này?\n\n'
-      + 'Giáo viên sẽ mất quyền xem và sửa dữ liệu của lớp, môn tương ứng.')) return;
+    if (!await xacNhan('Xoá dòng phân công này?\n\n'
+      + 'Giáo viên sẽ mất quyền xem và sửa dữ liệu của lớp, môn tương ứng.',
+      { nguyHiem: true, nutOk: 'Xoá' })) return;
     const kq = await sb.from('phan_cong_day').delete().eq('id', id);
     if (kq.error) { notify('Chưa xoá được: ' + kq.error.message); return; }
     ve(document.getElementById('dbclKhac'));
   }
 
   async function xoaHet() {
-    if (!window.confirm('XOÁ TOÀN BỘ ' + PC.length + ' dòng phân công của năm học ' + NAM + '?\n\n'
+    if (!await xacNhan('XOÁ TOÀN BỘ ' + PC.length + ' dòng phân công của năm học ' + NAM + '?\n\n'
       + '⚠ Sau khi xoá, mọi giáo viên đều mất quyền xem dữ liệu học sinh và đặt chuẩn đầu ra, '
-      + 'cho tới khi nhập phân công lại.\n\nViệc này không hoàn tác được.')) return;
-    if (!window.confirm('Xác nhận lần nữa: xoá hết phân công năm học ' + NAM + '?')) return;
+      + 'cho tới khi nhập phân công lại.\n\nViệc này không hoàn tác được.',
+      { nguyHiem: true, nutOk: 'Xoá toàn bộ' })) return;
+    if (!await xacNhan('Xác nhận lần nữa: xoá hết phân công năm học ' + NAM + '?',
+      { nguyHiem: true, nutOk: 'Xoá, tôi chắc chắn' })) return;
     const kq = await sb.from('phan_cong_day').delete().eq('nam_hoc', NAM);
     if (kq.error) { notify('Chưa xoá được: ' + kq.error.message); return; }
     notify('Đã xoá toàn bộ phân công của năm học ' + NAM + '.');
@@ -446,7 +449,7 @@
         + (emailLa.length ? ' Có ' + emailLa.length + ' email không khớp tài khoản nào.' : ''));
       return;
     }
-    if (!window.confirm(hoi)) return;
+    if (!await xacNhan(hoi)) return;
 
     const kq = await sb.from('phan_cong_day').insert(rows).select();
     if (kq.error) { notify('Chưa nạp được: ' + kq.error.message); return; }

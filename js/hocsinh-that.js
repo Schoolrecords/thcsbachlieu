@@ -128,8 +128,6 @@
     const pill = document.getElementById('stuPill');
     if (pill) pill.textContent = 'Năm học ' + NAM + ' · ' + tongLop + ' lớp · ' + tongHS + ' học sinh';
 
-    const khac = NAM !== CAU_HINH.NAM_HOC;
-
     /* Ô chọn năm học chuyển vào khối tiêu đề, ngay dưới dòng sĩ số. Trước đây
        nó nằm nhờ trong dải cảnh báo; bỏ dòng "Số liệu thật" đi thì dải ấy chỉ
        còn mỗi ô xổ, teo lại lệch hẳn so với khối bên dưới.
@@ -169,20 +167,15 @@
       });
     }
 
-    /* Dải trên cùng nay chỉ còn một nhiệm vụ: CẢNH BÁO khi đang xem năm khác
-       năm hiện hành. Xem đúng năm thì ẩn hẳn — thông báo "số liệu thật" hiện
-       ở mọi lần mở màn hình là thứ thầy cô đọc một lần rồi thôi, để mãi chỉ
-       chiếm chỗ. Việc bình thường thì không cần báo; báo là để chặn cái sai. */
+    /* Dải trên cùng ẩn hẳn khi đã nối được dữ liệu thật. Trước đây nó giải
+       thích "đang xem năm nào, đừng dùng làm số của năm nay" — thầy Chung
+       bảo bỏ: ô chọn năm ngay trong khối tiêu đề đã ghi rõ năm đang xem, nói
+       thêm một đoạn dài trên màn hình chỉ là giải thích thừa. */
     const canh = document.querySelector('#view-hocsinh .hs-mau-canh');
     if (canh) {
       canh.className = 'hs-mau-canh';
-      canh.style.display = khac ? '' : 'none';
-      canh.innerHTML = khac
-        ? '<b>⚠ Đang xem năm học ' + chan(NAM) + '</b> — đọc trực tiếp từ cơ sở '
-          + 'dữ liệu của nhà trường. Năm hiện hành của hệ thống là <b>'
-          + chan(CAU_HINH.NAM_HOC) + '</b>. Con số dưới đây là của năm '
-          + chan(NAM) + ', <b>đừng dùng làm số của năm nay</b>.'
-        : '';
+      canh.style.display = 'none';
+      canh.innerHTML = '';
     }
 
     const grid = document.getElementById('khoiGrid');

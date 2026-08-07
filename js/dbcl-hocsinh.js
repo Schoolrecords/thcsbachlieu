@@ -786,7 +786,7 @@
       return;
     }
 
-    if (!window.confirm('Nạp ' + hs.length + ' học sinh vào năm học ' + NAM
+    if (!await xacNhan('Nạp ' + hs.length + ' học sinh vào năm học ' + NAM
       + ' từ tệp "' + tenTep + '"?\n\n'
       + 'Em nào đã có thì cập nhật lại thông tin và lớp.\n'
       + 'Kết quả học tập đã nhập trước đó không bị đụng tới.'
@@ -958,7 +958,7 @@
       /* Cột điền DỞ là chỗ nguy nhất: điền 20 ô thì 616 em còn lại thành ở
          lại lớp. Phải hỏi riêng một câu, đừng để lẫn trong hộp thoại dài. */
       if (soODaDien < ll.length) {
-        if (!window.confirm('⚠ Cột "Lên lớp" mới điền ' + soODaDien + '/' + ll.length + ' ô.\n\n'
+        if (!await xacNhan('⚠ Cột "Lên lớp" mới điền ' + soODaDien + '/' + ll.length + ' ô.\n\n'
           + (ll.length - soODaDien) + ' em còn lại để trống sẽ được ghi là Ở LẠI LỚP, '
           + 'và con số đó vào thẳng chỉ tiêu CT10, CT11 gửi Sở.\n\n'
           + 'Nếu trường chưa xét lên lớp xong thì bấm Huỷ, xoá trắng cả cột rồi tải lại — '
@@ -996,7 +996,7 @@
     hoi += '\nThầy cô đồng ý nạp chứ?';
 
     if (!kq.length) { notify('Không có ô điểm nào hợp lệ trong tệp.'); return; }
-    if (!window.confirm(hoi)) return;
+    if (!await xacNhan(hoi)) return;
 
     const a = await sb.from('hs_ket_qua')
       .upsert(kq, { onConflict: 'nam_hoc,ky,hoc_sinh_ma,mon_ma' });
@@ -1079,11 +1079,12 @@
     const sel = (HOP_HS ? HOP_HS.querySelector('#hsTinhKy') : null)
               || document.getElementById('hsTinhKy');
     const ky = sel ? sel.value : 'ca_nam';
-    if (!window.confirm('Tính lại 33 chỉ tiêu của năm học ' + NAM + ' từ dữ liệu từng học sinh?\n\n'
+    if (!await xacNhan('Tính lại 33 chỉ tiêu của năm học ' + NAM + ' từ dữ liệu từng học sinh?\n\n'
       + 'Kỳ: ' + (ky === 'hoc_ki_1' ? 'Học kỳ I' : 'Cả năm') + '\n\n'
       + '⚠ Bảng "Kết quả thực hiện" sẽ bị GHI ĐÈ theo số máy tính ra.\n'
       + 'Cột đối sánh toàn tỉnh nhập tay vẫn giữ nguyên.\n\n'
-      + 'Học sinh diện hoà nhập không tính vào mẫu số các tỉ lệ, theo Thông tư 22.')) return;
+      + 'Học sinh diện hoà nhập không tính vào mẫu số các tỉ lệ, theo Thông tư 22.',
+      { nguyHiem: true, nutOk: 'Tính lại và ghi đè' })) return;
 
     const kq = await sb.rpc('dbcl_tinh_tu_hoc_sinh', {
       p_nam_hoc: NAM, p_ky: ky, p_loai: 'ket_qua'

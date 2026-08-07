@@ -807,7 +807,7 @@
       bao('Không có câu nhiệm vụ nào đọc được. Nạp danh sách có cột "Nhiệm vụ phân công" trước đã.');
       return;
     }
-    if (!window.confirm('Gán lại ' + pcMoi.length + ' dòng phân công cho năm học '
+    if (!await xacNhan('Gán lại ' + pcMoi.length + ' dòng phân công cho năm học '
       + CAU_HINH.NAM_HOC + '?\n\nLấy từ câu nhiệm vụ đã lưu trong danh sách.\n'
       + 'Dòng phân công cũ trùng lớp và môn thì ghi đè, không nhân đôi.')) return;
     const kq = await ganPhanCong(pcMoi);
@@ -835,7 +835,7 @@
            + ' → ' + (TEN_VAI[d.vai_tro] || d.vai_tro);
     }).join('\n');
 
-    if (!window.confirm('Đổi quyền THẬT của ' + lech.length + ' tài khoản?\n\n' + mo
+    if (!await xacNhan('Đổi quyền THẬT của ' + lech.length + ' tài khoản?\n\n' + mo
       + '\n\n⚠ Đây là quyền dùng hệ thống, không phải chữ in ra văn bản. '
       + 'Nâng nhầm ai lên tổ trưởng là người đó chấm được tự đánh giá và xem hồ sơ toàn trường.'
       + '\n\nThầy cô đồng ý chứ?')) return;

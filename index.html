@@ -253,11 +253,22 @@ input,select{font-family:inherit;font-size:inherit}
 
 /* ---------------- Thẻ thống kê ---------------- */
 .stats{display:grid;grid-template-columns:repeat(2,1fr);gap:11px;margin-bottom:20px}
-.stat{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:15px;box-shadow:var(--shadow)}
-.stat b{display:block;font-size:26px;color:var(--navy);line-height:1.12;font-family:var(--serif)}
-.stat span{font-size:12.4px;color:var(--muted)}
-.stat.ok b{color:var(--ok)} .stat.warn b{color:var(--warn)} .stat.miss b{color:var(--miss)}
+/* Bốn thẻ thống kê để nền navy chấm trắng, cùng tông với khối tiêu đề các
+   màn hình khác. Chữ trên nền tối nên bốn màu trạng thái phải sáng hẳn lên —
+   giữ nguyên màu cũ (vốn chọn cho nền trắng) là đọc không ra. */
+.stat{background:linear-gradient(140deg,#0e2454,var(--navy) 60%,#22488c);
+  border:1px solid rgba(255,255,255,.09);border-radius:13px;padding:15px;
+  box-shadow:var(--shadow);position:relative;overflow:hidden}
+.stat::before{content:"";position:absolute;inset:0;
+  background-image:radial-gradient(rgba(255,255,255,.10) 1px,transparent 1px);
+  background-size:18px 18px;pointer-events:none}
+.stat>*{position:relative;z-index:2}
+.stat b{display:block;font-size:26px;color:#fff;line-height:1.12;font-family:var(--serif)}
+.stat span{font-size:12.4px;color:rgba(255,255,255,.78)}
+.stat.ok b{color:#6ee7a8} .stat.warn b{color:#fcd34d} .stat.miss b{color:#fca5a5}
 .prog{height:8px;background:#e8edf5;border-radius:999px;overflow:hidden;margin-top:9px}
+/* Trong thẻ navy thì nền rãnh phải tối lại, không thì vệt trắng chói mắt */
+.stat .prog{background:rgba(255,255,255,.16)}
 .prog i{display:block;height:100%;background:linear-gradient(90deg,var(--ok),#31a97b);border-radius:999px;transition:width .6s}
 
 /* ---------------- Lưới thẻ nhóm hồ sơ ---------------- */
@@ -528,6 +539,49 @@ td.num{text-align:center;font-variant-numeric:tabular-nums;white-space:nowrap}
 .toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(96px);background:var(--ink);color:#fff;padding:13px 22px;border-radius:11px;font-size:13.8px;font-weight:600;box-shadow:0 12px 36px rgba(0,0,0,.34);z-index:9999;transition:transform .3s;max-width:90vw;text-align:center}
 .toast.on{transform:translateX(-50%) translateY(0)}
 
+/* ---- CỬA SỔ HỎI - ĐÁP ----
+   z-index 10000: phải nằm trên cả cửa sổ Quản trị (9200) lẫn dải toast
+   (9999), vì nhiều câu hỏi bật ra từ chính trong cửa sổ Quản trị. */
+.hoi-nen{position:fixed;inset:0;z-index:10000;display:none;
+  align-items:center;justify-content:center;padding:20px;
+  background:rgba(10,20,42,.55);backdrop-filter:blur(3px)}
+.hoi-nen.on{display:flex}
+.hoi-hop{background:#fff;border-radius:16px;width:min(560px,100%);
+  max-height:86vh;display:flex;flex-direction:column;overflow:hidden;
+  box-shadow:0 26px 70px rgba(6,16,40,.42);animation:hoiVao .18s ease-out}
+@keyframes hoiVao{from{opacity:0;transform:translateY(14px) scale(.98)}
+  to{opacity:1;transform:none}}
+.hoi-dau{background:linear-gradient(140deg,#0e2454,var(--navy) 62%,#22488c);
+  color:#fff;padding:16px 22px;display:flex;align-items:center;gap:12px;flex:none}
+.hoi-ic{font-size:21px;line-height:1}
+.hoi-dau h4{font-family:var(--serif);font-size:19px;font-weight:700;
+  letter-spacing:.3px;margin:0;color:#fff}
+.hoi-than{padding:20px 22px;font-size:14.6px;line-height:1.72;color:var(--ink);
+  overflow-y:auto;white-space:pre-wrap}
+.hoi-than b{color:var(--navy)}
+/* Dòng mở đầu bằng ⚠ là lời cảnh báo — tách ra thành khối vàng cho nổi,
+   đừng để nó trôi lẫn giữa các dòng khác rồi thầy cô đọc lướt qua. */
+.hoi-than .hoi-canh{display:block;background:#fff8e8;border:1px solid #f0d089;
+  border-left:4px solid #e0a72e;color:#7a5410;border-radius:9px;
+  padding:11px 14px;margin:11px 0;font-weight:600}
+.hoi-chan{padding:15px 22px 19px;display:flex;gap:11px;justify-content:flex-end;
+  flex-wrap:wrap;border-top:1px solid var(--line);background:#fbfcfe;flex:none}
+.hoi-nut{padding:11px 24px;border-radius:10px;font-size:14.4px;font-weight:700;
+  font-family:inherit;cursor:pointer;border:1.5px solid transparent;transition:.15s}
+.hoi-huy{background:#fff;border-color:#d7dde8;color:var(--muted)}
+.hoi-huy:hover{background:#f1f5fb;color:var(--ink)}
+.hoi-ok{background:var(--navy);color:#fff}
+.hoi-ok:hover{background:#1b3f86}
+.hoi-ok:focus-visible,.hoi-huy:focus-visible{outline:3px solid rgba(229,177,58,.55);outline-offset:2px}
+/* Việc không đảo ngược được — xoá dữ liệu, ghi đè bảng — thì nút chính đỏ.
+   Cùng một hình nút cho mọi việc thì thầy cô bấm quen tay lúc nào không hay. */
+.hoi-hop.nguy .hoi-ok{background:#a02c1f}
+.hoi-hop.nguy .hoi-ok:hover{background:#87241a}
+.hoi-hop.nguy .hoi-dau{background:linear-gradient(140deg,#7d2318,#a02c1f 62%,#c2402f)}
+@media(max-width:520px){.hoi-chan{flex-direction:column-reverse}
+  .hoi-nut{width:100%}}
+@media print{.hoi-nen{display:none!important}}
+
 /* ---------------- Chân trang ---------------- */
 footer{background:var(--navy);color:#c2d1ea;padding:30px 0;margin-top:44px;font-size:13px}
 footer .fgrid{display:grid;gap:16px}
@@ -589,9 +643,34 @@ footer .legal{border-top:1px solid rgba(255,255,255,.15);padding-top:15px;font-s
 }
 @media print{
   .topbar,.toolbar,.nav-drawer,.btn,footer,.sheet-x,.drive{display:none!important}
-  body{background:#fff}
+  /* Mở cửa sổ danh sách thì JS đặt body.style.overflow='hidden' để khoá cuộn
+     nền. Kiểu nội tuyến đó theo sang cả bản in và cắt cụt trang giấy — phải
+     gỡ, mà gỡ kiểu nội tuyến thì chỉ !important mới đè được. */
+  body{background:#fff;overflow:visible!important}
   .view{display:block!important}
   .sub-body{display:block!important}
+
+  /* ---- IN CỬA SỔ DANH SÁCH LỚP ----
+     Cửa sổ này là .overlay — position:fixed, inset:0, có thanh cuộn riêng.
+     Khối fixed thì trình duyệt CHỈ in được phần đang nhìn thấy, phần cuộn
+     bên dưới bị cắt sạch: bấm "In danh sách" ra tờ giấy cụt mấy dòng đầu
+     hoặc trắng trơn. Khi in phải trả nó về dòng chảy bình thường.
+     Đặt SAU quy tắc .view{display:block} ở trên để đè được nó. */
+  .overlay.on{position:static!important;inset:auto!important;height:auto!important;
+    max-height:none!important;overflow:visible!important;z-index:auto!important;
+    background:#fff!important;backdrop-filter:none!important}
+  .overlay.on .sheet{box-shadow:none!important;min-height:0!important;
+    max-width:none!important;background:#fff!important}
+  /* Tiêu đề dính (sticky) in ra sẽ đè lên bảng ở mỗi trang */
+  .overlay.on .sheet-head{position:static!important;box-shadow:none!important}
+  /* Lớp phủ mở thì chỉ in nó — giấu hết trang nền phía sau, không thì ra
+     thêm cả chục trang giấy của màn hình đang đứng đằng sau cửa sổ. */
+  body:has(.overlay.on) .view,
+  body:has(.overlay.on) .topbar,
+  body:has(.overlay.on) footer{display:none!important}
+  /* Bảng dài phải lặp tiêu đề mỗi trang và không cắt đôi dòng học sinh */
+  .overlay.on thead{display:table-header-group}
+  .overlay.on tr{page-break-inside:avoid;break-inside:avoid}
 }
 </style>
 </head>
@@ -757,10 +836,6 @@ footer .legal{border-top:1px solid rgba(255,255,255,.15);padding-top:15px;font-s
       <span class="eyebrow">Danh mục hồ sơ</span>
       <h2>Hồ sơ số</h2>
       <p>Toàn bộ hệ thống hồ sơ quản lý hoạt động giáo dục của nhà trường, được mã hoá đến từng đầu mục. Chọn một bộ phận để mở bảng danh mục chi tiết.</p>
-    </div>
-
-    <div class="legal-note">
-      <b>Mã hồ sơ đã đổi theo Thông tư 57/2026/TT-BGDĐT.</b> Mỗi minh chứng nay mang mã <b>MC.(Tiêu chuẩn).(Tiêu chí).(Số thứ tự)</b> — ví dụ <b>MC.1.1.01</b>. Mã cũ theo bảng mã trước đây được in nhỏ ngay bên dưới để thầy cô đối chiếu với hồ sơ giấy. Ô tìm kiếm nhận cả hai loại mã.
     </div>
 
     <div class="stats" id="hsStats"></div>
@@ -955,6 +1030,26 @@ footer .legal{border-top:1px solid rgba(255,255,255,.15);padding-top:15px;font-s
 </div>
 
 <div class="toast" id="toast"></div>
+
+<!-- ============================================================
+     CỬA SỔ HỎI - ĐÁP CỦA HỆ THỐNG
+
+     Thay cho window.confirm của trình duyệt. Hộp của trình duyệt in dòng
+     "schoolrecords.github.io cho biết" ở đầu — thầy cô đọc thấy tên miền lạ
+     giữa lúc đang định xoá dữ liệu thì mất tin tưởng, mà dòng ấy không sửa
+     được vì do trình duyệt vẽ. Hộp này của nhà trường, tiêu đề tự đặt.
+     ============================================================ -->
+<div class="hoi-nen" id="hoiNen" aria-hidden="true">
+  <div class="hoi-hop" role="dialog" aria-modal="true" aria-labelledby="hoiTieuDe">
+    <div class="hoi-dau"><span class="hoi-ic" id="hoiIc">🔔</span>
+      <h4 id="hoiTieuDe">Thông báo!</h4></div>
+    <div class="hoi-than" id="hoiThan"></div>
+    <div class="hoi-chan">
+      <button type="button" class="hoi-nut hoi-huy" id="hoiHuy">Huỷ</button>
+      <button type="button" class="hoi-nut hoi-ok" id="hoiOk">Đồng ý</button>
+    </div>
+  </div>
+</div>
 
 <footer>
   <div class="wrap fgrid">
@@ -1520,6 +1615,84 @@ function notify(msg){
   clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('on'),3600);
 }
 function openDrive(ten){ notify('Đang mở thư mục “'+ten+'” trên Google Drive…'); }
+
+/* ============================================================
+   xacNhan(noiDung, tuyChon) — hỏi thầy cô trước khi làm việc hệ trọng
+
+   Trả về Promise<boolean>. MỌI chỗ gọi PHẢI có await, vì Promise là giá trị
+   truthy: viết thiếu await thì `if (!xacNhan(...)) return;` không bao giờ
+   chặn, việc xoá dữ liệu cứ thế chạy mà không ai được hỏi.
+
+   tuyChon: { tieuDe, nutOk, nutHuy, nguyHiem, ic }
+   ============================================================ */
+let hoiDangCho = null;
+function xacNhan(noiDung, tuyChon){
+  const o = tuyChon || {};
+  const nen = document.getElementById('hoiNen');
+  const hop = nen.querySelector('.hoi-hop');
+  const than = document.getElementById('hoiThan');
+  const ok  = document.getElementById('hoiOk');
+  const huy = document.getElementById('hoiHuy');
+
+  document.getElementById('hoiTieuDe').textContent = o.tieuDe || 'Thông báo!';
+  document.getElementById('hoiIc').textContent = o.ic || (o.nguyHiem ? '⚠' : '🔔');
+  hop.classList.toggle('nguy', !!o.nguyHiem);
+  ok.textContent  = o.nutOk  || 'Đồng ý';
+  huy.textContent = o.nutHuy || 'Huỷ';
+  huy.style.display = o.chiBao ? 'none' : '';
+
+  /* Nội dung vào bằng văn bản thuần, KHÔNG bằng innerHTML: câu hỏi hay ghép
+     tên tệp, tên học sinh do người dùng đặt — nhét thẳng vào HTML là mở đường
+     cho dấu ngoặc nhọn phá vỡ cửa sổ. Riêng dòng bắt đầu bằng ⚠ thì bọc lại
+     cho nổi lên, vì đó là chỗ dễ bấm bừa nhất. */
+  than.innerHTML = '';
+  String(noiDung == null ? '' : noiDung).split('\n').forEach(dong => {
+    const d = dong.trim();
+    if (d.charAt(0) === '⚠') {
+      const s = document.createElement('span');
+      s.className = 'hoi-canh';
+      s.textContent = d;
+      than.appendChild(s);
+    } else {
+      than.appendChild(document.createTextNode(dong + '\n'));
+    }
+  });
+  than.scrollTop = 0;
+  nen.classList.add('on');
+  nen.setAttribute('aria-hidden','false');
+  setTimeout(() => ok.focus(), 30);
+
+  return new Promise(giaiQuyet => {
+    hoiDangCho = function(dongY){
+      nen.classList.remove('on');
+      nen.setAttribute('aria-hidden','true');
+      hoiDangCho = null;
+      giaiQuyet(dongY);
+    };
+  });
+}
+
+/* Chỉ báo một điều rồi thôi, không hỏi — dùng thay cho alert() */
+function baoTin(noiDung, tuyChon){
+  const o = Object.assign({ chiBao:true, nutOk:'Đã hiểu' }, tuyChon || {});
+  return xacNhan(noiDung, o);
+}
+
+document.addEventListener('DOMContentLoaded', function(){
+  const nen = document.getElementById('hoiNen');
+  if (!nen) return;
+  document.getElementById('hoiOk').addEventListener('click', () => hoiDangCho && hoiDangCho(true));
+  document.getElementById('hoiHuy').addEventListener('click', () => hoiDangCho && hoiDangCho(false));
+  /* Bấm ra nền tối = huỷ. Bấm vào trong hộp thì không, kẻo lỡ tay mất việc. */
+  nen.addEventListener('click', e => { if (e.target === nen && hoiDangCho) hoiDangCho(false); });
+  document.addEventListener('keydown', e => {
+    if (!hoiDangCho) return;
+    if (e.key === 'Escape') { e.preventDefault(); hoiDangCho(false); }
+    else if (e.key === 'Enter') { e.preventDefault(); hoiDangCho(true); }
+  });
+});
+window.xacNhan = xacNhan;
+window.baoTin  = baoTin;
 
 /* ============================================================
    HỒ SƠ SỐ
