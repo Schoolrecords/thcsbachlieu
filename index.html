@@ -186,6 +186,7 @@ input,select{font-family:inherit;font-size:inherit}
 .mod.m-hocsinh {--m:#b45309;--m-nen:#fdf3e5}
 .mod.m-kdcl    {--m:#15803d;--m-nen:#eaf8ef}
 .mod.m-dbcl    {--m:#6d28d9;--m-nen:#f3eefd}
+.mod.m-qtri    {--m:#475569;--m-nen:#eef1f6}
 
 .home-sec{margin-bottom:40px}
 .why{display:grid;gap:13px}
@@ -616,6 +617,16 @@ footer .legal{border-top:1px solid rgba(255,255,255,.15);padding-top:15px;font-s
         <p>Nhập một bộ chỉ tiêu, tự sinh Phụ lục 1, 2, 5, 15, 16 và tự đối chiếu kết quả với chuẩn đầu ra đã cam kết. Kèm kế hoạch cải tiến và bộ chỉ số nhiều năm.</p>
         <span class="mod-go">Xem theo dõi</span>
               <span class="mod-hinh" aria-hidden="true"><svg viewBox="0 0 64 64"><path d="M8 52V34M20 52V24M32 52V38M44 52V14"/><path d="M6 56h50"/><path d="M10 26l12-10 10 8 14-14"/></svg></span>
+      </button>
+      <!-- Thẻ Quản trị chỉ hiện với quản trị và ban giám hiệu.
+           dangnhap.js bỏ display:none sau khi xác định vai trò. -->
+      <button class="mod m-qtri" id="modQuanTri" style="display:none">
+        <div class="mod-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/><circle cx="12" cy="12" r="8.5"/></svg></div>
+        <h3>Quản trị hệ thống</h3>
+        <div class="chips"><span class="chip">Duyệt tài khoản</span><span class="chip">Phân quyền</span><span class="chip">Sổ nhật ký</span></div>
+        <p>Duyệt tài khoản mới đăng nhập, đặt vai trò cho từng người, quản lý danh sách mời và tra sổ nhật ký mọi thao tác trên hệ thống.</p>
+        <span class="mod-go">Mở quản trị</span>
+        <span class="mod-hinh" aria-hidden="true"><svg viewBox="0 0 64 64"><circle cx="25" cy="25" r="9"/><path d="M25 7v7M25 36v7M7 25h7M36 25h7M12 12l5 5M33 33l5 5M38 12l-5 5M17 33l-5 5"/><circle cx="46" cy="46" r="6"/><path d="M46 37v3M46 52v3M37 46h3M52 46h3"/></svg></span>
       </button>
     </div>
 

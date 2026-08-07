@@ -259,8 +259,19 @@
         menu.classList.remove('hien');
         moBangQuanTri();
       });
+      /* Mở thêm một cửa vào ngay trang chủ. Trước đây chức năng quản trị chỉ
+         nấp trong menu thả xuống ở góc, ít người biết là có. Thẻ này chỉ hiện
+         với quản trị và ban giám hiệu — người khác không thấy gì. */
+      const the = document.getElementById('modQuanTri');
+      if (the) {
+        the.style.display = '';
+        the.addEventListener('click', () => moBangQuanTri());
+      }
     }
   }
+
+  /* Cho phần khác của trang gọi tới, ví dụ thẻ Quản trị hệ thống ở trang chủ */
+  window.moQuanTri = function () { moBangQuanTri(); };
 
   /* ========================================================================
      BẢNG QUẢN TRỊ — người dùng, danh sách mời, nhật ký
