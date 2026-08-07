@@ -97,22 +97,43 @@
   .dn-menu button.thoat{color:#b91c1c;border-top:1px solid #eef1f6}
 
   /* Bảng quản trị */
+  /* Bảng quản trị — KÍCH THƯỚC CỐ ĐỊNH.
+     Bản cũ dùng max-height nên chiều cao chạy theo nội dung: đổi tab một cái
+     là cả cửa sổ co giãn, thanh menu nhảy lên nhảy xuống, nhìn hoa mắt. Nay
+     đặt height cứng, phần nội dung tự cuộn bên trong; thanh tiêu đề và hàng
+     tab đứng yên một chỗ. Bề ngang lấy đúng 1320px bằng bề ngang nội dung
+     trang, để bảng biểu bên trong có chỗ mà thở. */
   .qt-lop{position:fixed;inset:0;z-index:9200;background:rgba(10,20,45,.55);
     display:none;align-items:flex-end;justify-content:center;padding:0}
-  .qt-lop.hien{display:flex}
-  @media(min-width:820px){.qt-lop{align-items:center;padding:26px}}
-  .qt-hop{background:#fff;width:100%;max-width:1040px;max-height:92vh;border-radius:18px 18px 0 0;
-    display:flex;flex-direction:column;overflow:hidden}
-  @media(min-width:820px){.qt-hop{border-radius:18px;max-height:88vh}}
-  .qt-dau{padding:18px 20px;background:#14306b;color:#fff;display:flex;align-items:center;gap:12px;flex:none}
+  .qt-lop.hien{display:flex;animation:qtHienDan .16s ease-out}
+  .qt-lop.hien .qt-hop{animation:qtTroiLen .24s cubic-bezier(.2,.8,.3,1)}
+  @keyframes qtHienDan{from{opacity:0}to{opacity:1}}
+  @keyframes qtTroiLen{from{opacity:0;transform:translateY(16px) scale(.985)}
+                       to{opacity:1;transform:none}}
+  @media(prefers-reduced-motion:reduce){
+    .qt-lop.hien,.qt-lop.hien .qt-hop{animation:none}
+  }
+  @media(min-width:820px){.qt-lop{align-items:center;padding:24px}}
+  .qt-hop{background:#fff;width:100%;max-width:1320px;height:94vh;border-radius:18px 18px 0 0;
+    display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 60px rgba(6,16,40,.4)}
+  @media(min-width:820px){.qt-hop{border-radius:18px;height:88vh}}
+  .qt-dau{padding:16px 20px;background:#14306b;color:#fff;display:flex;align-items:center;
+    gap:12px;flex:none}
   .qt-dau h3{margin:0;font-size:17px;flex:1}
   .qt-dau button{background:rgba(255,255,255,.15);border:0;color:#fff;width:34px;height:34px;
     border-radius:9px;cursor:pointer;font-size:16px;font-family:inherit}
-  .qt-tab{display:flex;gap:4px;padding:10px 14px 0;background:#f8fafc;flex:none;overflow-x:auto}
+  /* Hàng tab đứng yên: flex:none nên không cuộn theo nội dung. Thêm đường kẻ
+     và bóng nhẹ cho thấy rõ đây là thanh cố định, nội dung trượt bên dưới. */
+  .qt-tab{display:flex;gap:4px;padding:10px 14px 0;background:#f8fafc;flex:none;
+    overflow-x:auto;border-bottom:1px solid #e2e8f2;box-shadow:0 2px 6px rgba(15,32,70,.05)}
   .qt-tab button{border:0;background:transparent;padding:11px 15px;cursor:pointer;font-size:14px;
     color:#64748b;border-bottom:2.5px solid transparent;font-family:inherit;white-space:nowrap}
+  .qt-tab button:hover{color:#14306b;background:#eef3fb;border-radius:8px 8px 0 0}
   .qt-tab button.on{color:#14306b;font-weight:600;border-bottom-color:#c8901c}
-  .qt-than{padding:16px;overflow:auto;flex:1;-webkit-overflow-scrolling:touch}
+  /* scrollbar-gutter giữ chỗ sẵn cho thanh cuộn: tab nào nội dung ngắn thì
+     nội dung cũng không bị xê ngang khi thanh cuộn hiện ra rồi mất đi. */
+  .qt-than{padding:16px 18px;overflow:auto;flex:1;-webkit-overflow-scrolling:touch;
+    scrollbar-gutter:stable}
   .qt-bang{width:100%;border-collapse:collapse;font-size:13.5px;min-width:640px}
   .qt-bang th{text-align:left;padding:9px 10px;background:#f1f5f9;color:#475569;font-weight:600;
     font-size:12px;text-transform:uppercase;letter-spacing:.03em;position:sticky;top:0}
@@ -349,6 +370,9 @@
   const than = () => document.getElementById('qtThan');
 
   async function veTab(tab) {
+    /* Về đầu trang mỗi khi đổi tab — không thì tab mới mở ra ở lưng chừng
+       đúng chỗ đang cuộn của tab cũ, thầy cô tưởng thiếu nội dung. */
+    than().scrollTop = 0;
     than().innerHTML = '<div class="qt-trong">Đang tải…</div>';
     if (tab === 'tq') return veTabTongQuan();
     if (tab === 'nd') return veTabNguoiDung();

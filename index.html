@@ -74,8 +74,14 @@ input,select{font-family:inherit;font-size:inherit}
 .serif{font-family:var(--serif)}
 
 /* ---------------- Thanh điều hướng ---------------- */
-.topbar{position:sticky;top:0;z-index:60;background:#fff;color:var(--navy);box-shadow:0 2px 14px rgba(16,32,64,.1)}
-.topbar-in{max-width:1320px;margin:0 auto;padding:9px 14px;display:flex;align-items:center;gap:12px}
+/* Thanh trên: nền navy có chấm trắng, cùng lối với các thẻ mô-đun trong trang.
+   Nền trắng cũ làm nút điều hướng chìm vào nền, khó nhìn thấy đang ở mục nào. */
+.topbar{position:sticky;top:0;z-index:60;background:var(--navy-fill);color:#fff;
+  box-shadow:0 3px 18px rgba(8,20,48,.3)}
+.topbar::before{content:"";position:absolute;inset:0;background-image:var(--navy-dot);
+  background-size:15px 15px;pointer-events:none}
+.topbar-in{position:relative;z-index:1;max-width:1320px;margin:0 auto;padding:9px 14px;
+  display:flex;align-items:center;gap:12px}
 .brand{display:flex;align-items:center;gap:10px;flex:none;cursor:pointer}
 /* Logo trường là hình TRÒN nên khung phải tròn theo. Để bo góc vuông thì
    bốn góc trắng của tệp ảnh lộ ra, trông như dán nhãn lệch. */
@@ -83,17 +89,21 @@ input,select{font-family:inherit;font-size:inherit}
   box-shadow:0 2px 10px rgba(0,0,0,.28)}
 .brand-mark img{width:100%;height:100%;object-fit:contain;display:block}
 .brand-txt b{display:block;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.brand-txt span{display:block;font-size:11.5px;color:#5d6b81;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand-txt span{display:block;font-size:11.5px;color:rgba(255,255,255,.72);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .nav-spacer{flex:1}
 .nav-links{display:flex;gap:3px}
-.nav-links button{padding:8px 10px;border-radius:9px;font-size:13.2px;font-weight:600;color:#1f3f77;white-space:nowrap;transition:background .15s,color .15s}
-.topbar-in .dn-the{flex:none;border:1px solid #d7dfee;background:#f2f6fd;color:var(--navy)}
-.topbar-in .dn-the:hover{background:#e8f0fe}
+.nav-links button{padding:8px 12px;border-radius:9px;font-size:13.4px;font-weight:600;
+  color:#d7e4fa;white-space:nowrap;transition:background .15s,color .15s,box-shadow .15s}
+.topbar-in .dn-the{flex:none;border:1px solid rgba(255,255,255,.26);
+  background:rgba(255,255,255,.13);color:#fff}
+.topbar-in .dn-the:hover{background:rgba(255,255,255,.22)}
 .topbar-in .dn-the .tt b{max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block}
-.topbar-in .dn-the .tt span{color:#5d6b81}
-.nav-burger{color:var(--navy)}
-.nav-links button:hover{background:#eaf1ff;color:var(--navy)}
-.nav-links button.on{background:#e8f0fe;color:#1d4ed8;box-shadow:0 1px 6px rgba(29,78,216,.18)}
+.topbar-in .dn-the .tt span{color:rgba(255,255,255,.72)}
+.nav-burger{color:#fff}
+.nav-links button:hover{background:rgba(255,255,255,.15);color:#fff}
+/* Mục đang mở: đảo hẳn màu — nền trắng chữ navy, nhìn phát ra ngay */
+.nav-links button.on{background:#fff;color:var(--navy);font-weight:700;
+  box-shadow:0 2px 10px rgba(5,15,40,.3)}
 .nav-burger{display:none;width:42px;height:42px;border-radius:10px;font-size:21px;color:#fff}
 .nav-drawer{display:none;background:var(--navy-2)}
 .nav-drawer.open{display:block}
