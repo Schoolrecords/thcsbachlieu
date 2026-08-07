@@ -365,9 +365,59 @@
   ];
 
   /* ==========================================================================
+     ĐOẠN MỞ ĐẦU — hệ thống này giúp được gì
+
+     Viết cho người đọc lần đầu: hiệu trưởng, thầy cô mới, đoàn kiểm tra của
+     Sở. Nói bằng VIỆC CỤ THỂ chứ không bằng tính từ — "thả thẳng sổ VnEdu,
+     không phải chép sang mẫu" thì người ta hình dung ra được, còn "hiện đại,
+     tối ưu, thân thiện" thì ai cũng viết được và không nói lên điều gì.
+     Mọi con số trong đoạn này đều là số thật của hệ thống.
+     ========================================================================== */
+  const GIOI_THIEU = `
+  <div class="hd-mo">
+    <h3>Hệ thống này giúp nhà trường việc gì</h3>
+    <p>Hệ thống gom ba việc trước đây phải làm rời rạc trên Word và Excel:
+    <b>quản lý minh chứng · tự đánh giá kiểm định · đảm bảo chất lượng</b>.
+    Chạy thẳng trên trình duyệt, không phải cài đặt gì.</p>
+
+    <p>Khác biệt lớn nhất là <b>máy làm thay phần tính toán</b>. Sổ điểm tải
+    từ VnEdu về thả thẳng vào hệ thống, vào cả danh sách học sinh lẫn điểm
+    mười hai môn, không phải chép sang mẫu. Điểm cả năm, mức rèn luyện và
+    kết luận lên lớp do máy tính theo đúng Thông tư 22, rồi tự đổ vào
+    <b>33 chỉ tiêu dùng chung cho bốn phụ lục</b>.</p>
+
+    <p>Hệ thống còn <b>tự xếp loại rồi đối chiếu ngược với sổ VnEdu</b>. Hai
+    nguồn tính độc lập: khớp nhau là bằng chứng số liệu đúng, lệch nhau thì
+    chỉ ra đúng em nào để nhà trường soát lại trước khi con số ấy đi vào báo
+    cáo gửi Sở.</p>
+
+    <p>Mỗi minh chứng gắn thẳng thư mục Google Drive, bấm một cái là mở.
+    <b>28 nội dung tự soát</b> lấy từ Quyết định của Sở, mỗi nội dung gắn với
+    một tiêu chí Thông tư 57 nên hồ sơ làm một lần dùng cho cả hai việc. Dữ
+    liệu học sinh phân quyền tới từng lớp, từng môn; mọi thao tác sửa xoá đều
+    ghi sổ nhật ký.</p>
+  </div>`;
+
+  /* ==========================================================================
      VẼ MÀN HÌNH
      ========================================================================== */
   const css = `
+  .hd-mo{background:linear-gradient(140deg,#0e2454,var(--navy) 60%,#22488c);
+    color:#fff;border-radius:15px;padding:24px 26px;margin:0 0 20px;
+    position:relative;overflow:hidden}
+  .hd-mo::before{content:"";position:absolute;inset:0;pointer-events:none;
+    background-image:radial-gradient(rgba(255,255,255,.09) 1px,transparent 1px);
+    background-size:19px 19px}
+  .hd-mo>*{position:relative;z-index:2}
+  .hd-mo h3{font-family:var(--serif);font-size:20.5px;color:#fff;margin:0 0 12px}
+  .hd-mo p{font-size:14.8px;line-height:1.82;margin:0 0 11px;color:rgba(255,255,255,.9)}
+  .hd-mo p:last-child{margin-bottom:0}
+  .hd-mo b{color:var(--gold-2);font-weight:700}
+  @media(max-width:640px){.hd-mo{padding:19px 18px}
+    .hd-mo h3{font-size:18.5px}.hd-mo p{font-size:14.2px}}
+  @media print{.hd-mo{background:#fff!important;color:#000;border:1px solid #999}
+    .hd-mo p{color:#000}.hd-mo b{color:#000}.hd-mo h3{color:#000}
+    .hd-mo::before{display:none}}
   .hd-tim{position:relative;margin:0 0 20px}
   .hd-tim input{width:100%;padding:15px 17px 15px 46px;border:1.5px solid #d7dde8;
     border-radius:13px;font-size:15.5px;font-family:inherit;background:#fff;color:var(--ink)}
@@ -480,7 +530,13 @@
     const vt = vaiTro();
     const tim = khongDau(TU_TIM).trim();
 
-    let h = '<div class="hd-tim"><span class="ic">🔍</span>'
+    /* Đoạn mở đầu đặt TRƯỚC ô tìm kiếm: người lần đầu vào thì đọc để biết hệ
+       thống làm được gì, người đã quen thì lướt qua xuống ô tìm. Đang tìm thì
+       ẩn đi — lúc ấy thầy cô cần kết quả, không cần đọc lời giới thiệu. */
+    let h = '';
+    if (!tim) h += GIOI_THIEU;
+
+    h += '<div class="hd-tim"><span class="ic">🔍</span>'
       + '<input type="search" id="hdTim" placeholder="Tìm việc cần làm — ví dụ: nạp sổ điểm, in danh sách, tính lại chỉ tiêu…" '
       + 'value="' + chan(TU_TIM) + '"></div>';
 
