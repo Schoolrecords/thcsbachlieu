@@ -129,6 +129,27 @@
   .qt-xoa{border:0;background:#fef2f2;color:#b91c1c;padding:6px 11px;border-radius:7px;
     cursor:pointer;font-size:12.5px;font-family:inherit}
   .qt-trong{padding:34px;text-align:center;color:#94a3b8;font-size:14px}
+  /* ---- Tab Tổng quan ---- */
+  .qt-viec{border-radius:11px;padding:13px 16px;margin-bottom:16px;font-size:13.6px;line-height:1.6;
+    background:#fef6f5;border:1px solid #f3c9c5;color:#8a3428}
+  .qt-viec.ok{background:#f2fdf6;border-color:#bfe8cd;color:#1a6437}
+  .qt-viec ul{margin:8px 0 0 18px;padding:0}
+  .qt-viec li{margin-bottom:5px}
+  .qt-muc{font-size:12.4px;font-weight:700;color:#1e4593;text-transform:uppercase;
+    letter-spacing:.05em;margin:18px 0 9px;padding-bottom:6px;border-bottom:1px solid #e6ebf4}
+  .qt-luoi{display:grid;grid-template-columns:repeat(auto-fit,minmax(168px,1fr));gap:10px}
+  .qt-o{background:#fff;border:1px solid #e4e9f2;border-radius:11px;padding:12px 14px}
+  .qt-o .n{display:block;font-size:12.2px;color:#64748b;font-weight:600;margin-bottom:4px}
+  .qt-o .v{display:block;font-size:19px;font-weight:700;color:#14306b;line-height:1.25;
+    word-break:break-word}
+  .qt-o .p{display:block;font-size:11.6px;color:#94a3b8;margin-top:3px}
+  .qt-o.canh{background:#fef6f5;border-color:#f3c9c5}
+  .qt-o.canh .v{color:#b3261e}
+  .qt-o.luu{background:#fff8ec;border-color:#f2ddb4}
+  .qt-o.luu .v{color:#96660f}
+  .qt-o.tot{background:#f2fdf6;border-color:#bfe8cd}
+  .qt-o.tot .v{color:#15803d}
+  .qt-ghi{font-size:12px;color:#94a3b8;line-height:1.6;margin-top:14px}
   .qt-nhac{padding:12px 14px;border-radius:10px;background:#eff6ff;border:1px solid #bfdbfe;
     color:#1e40af;font-size:13px;line-height:1.6;margin-bottom:14px}
   `;
@@ -289,9 +310,11 @@
             <button id="qtDong">✕</button>
           </div>
           <div class="qt-tab">
-            <button class="on" data-tab="nd">Người dùng</button>
+            <button class="on" data-tab="tq">Tổng quan</button>
+            <button data-tab="nd">Người dùng</button>
             <button data-tab="moi">Danh sách mời</button>
             <button data-tab="nk">Nhật ký</button>
+            <button data-tab="sl">Sao lưu</button>
           </div>
           <div class="qt-than" id="qtThan"></div>
         </div>`;
@@ -308,7 +331,7 @@
     }
     bangQT.classList.add('hien');
     document.body.style.overflow = 'hidden';
-    veTab('nd');
+    veTab('tq');
   }
 
   function dongBangQuanTri() {
@@ -320,9 +343,93 @@
 
   async function veTab(tab) {
     than().innerHTML = '<div class="qt-trong">Đang tải…</div>';
+    if (tab === 'tq') return veTabTongQuan();
     if (tab === 'nd') return veTabNguoiDung();
     if (tab === 'moi') return veTabMoi();
     if (tab === 'nk') return veTabNhatKy();
+    if (tab === 'sl') return veTabSaoLuu();
+  }
+
+  /* --- Tab 0: TỔNG QUAN — sức khoẻ hệ thống trong một màn hình ---
+     Trước đây muốn biết có việc gì cần xử lý thì phải bấm từng tab rồi tự
+     nhẩm. Nay mở ra là thấy ngay, và những chỗ cần xử lý thì hiện màu cảnh
+     báo chứ không nằm lẫn trong số liệu bình thường. */
+  async function veTabTongQuan() {
+    const { data, error } = await sb.rpc('qt_tong_quan');
+    if (error) {
+      return than().innerHTML = `<div class="qt-trong">Không đọc được tổng quan: ${error.message}
+        <br><br>Nếu báo thiếu hàm <b>qt_tong_quan</b> thì chạy tệp <b>sql/21</b> trong Supabase.</div>`;
+    }
+    const d = data || {};
+    const so = v => (v == null ? '—' : Number(v).toLocaleString('vi-VN'));
+    const ngay = v => v ? new Date(v).toLocaleString('vi-VN') : '—';
+
+    /* Nhịp tim: Supabase gói miễn phí tạm ngưng dự án nếu 7 ngày không ai gọi */
+    const nt = Number(d.tim_so_ngay);
+    const timXau = !isFinite(nt) || nt > 6;
+    const timLo  = isFinite(nt) && nt > 3 && nt <= 6;
+
+    const viec = [];
+    if (d.tk_cho_duyet > 0)
+      viec.push(`<b>${d.tk_cho_duyet}</b> tài khoản đang chờ duyệt — sang tab Người dùng đổi trạng thái sang <b>Đang hoạt động</b>.`);
+    if (timXau)
+      viec.push(`Nhịp tim cơ sở dữ liệu <b>${isFinite(nt) ? nt + ' ngày' : 'không đọc được'}</b> — lịch cron-job.org có thể đã hỏng. Supabase tạm ngưng dự án nếu 7 ngày không ai truy cập.`);
+    else if (timLo)
+      viec.push(`Nhịp tim <b>${nt} ngày</b> — vẫn an toàn nhưng nên để ý.`);
+    if (d.hs_chua_gan > 0)
+      viec.push(`<b>${d.hs_chua_gan}</b> hồ sơ chưa gán người phụ trách — sau khi siết quyền thì không giáo viên nào xem được.`);
+    if (d.tk_admin < 2)
+      viec.push(`Chỉ có <b>${d.tk_admin}</b> tài khoản quản trị. Nên có ít nhất hai người, phòng khi một người không truy cập được.`);
+
+    const o = (nhan, gt, phu, mau) => `
+      <div class="qt-o${mau ? ' ' + mau : ''}">
+        <span class="n">${nhan}</span>
+        <span class="v">${gt}</span>
+        ${phu ? `<span class="p">${phu}</span>` : ''}
+      </div>`;
+
+    than().innerHTML = `
+      ${viec.length
+        ? `<div class="qt-viec"><b>⚠ Có ${viec.length} việc cần xử lý</b><ul>${viec.map(v => `<li>${v}</li>`).join('')}</ul></div>`
+        : '<div class="qt-viec ok"><b>✅ Hệ thống bình thường, không có việc nào cần xử lý ngay.</b></div>'}
+
+      <div class="qt-muc">Tài khoản</div>
+      <div class="qt-luoi">
+        ${o('Đang hoạt động', so(d.tk_hoat_dong))}
+        ${o('Chờ duyệt', so(d.tk_cho_duyet), 'cần xử lý', d.tk_cho_duyet > 0 ? 'canh' : '')}
+        ${o('Bị khoá', so(d.tk_khoa))}
+        ${o('Quản trị, ban giám hiệu', so(d.tk_admin), '', d.tk_admin < 2 ? 'canh' : '')}
+        ${o('Đã mời, chưa vào lần nào', so(d.moi_chua_vao))}
+      </div>
+
+      <div class="qt-muc">Hồ sơ số</div>
+      <div class="qt-luoi">
+        ${o('Tổng đầu mục', so(d.hs_tong))}
+        ${o('Đã có hồ sơ', so(d.hs_da_co),
+            d.hs_tong ? Math.round(d.hs_da_co * 100 / d.hs_tong) + '% tổng số' : '')}
+        ${o('Chưa gán người phụ trách', so(d.hs_chua_gan), '', d.hs_chua_gan > 0 ? 'canh' : 'tot')}
+        ${o('Chưa có đường dẫn Drive', so(d.hs_chua_link))}
+      </div>
+
+      <div class="qt-muc">Học sinh và phân công</div>
+      <div class="qt-luoi">
+        ${o('Học sinh đã khai báo', so(d.ths_tong))}
+        ${o('Đang học', so(d.ths_dang_hoc))}
+        ${o('Số lớp', so(d.ths_so_lop))}
+        ${o('Dòng phân công giảng dạy', so(d.ths_phan_cong), '', d.ths_phan_cong == 0 ? 'canh' : '')}
+      </div>
+
+      <div class="qt-muc">Tình trạng hệ thống</div>
+      <div class="qt-luoi">
+        ${o('Nhịp tim gần nhất', ngay(d.tim_lan_cuoi),
+            isFinite(nt) ? nt + ' ngày trước' : '', timXau ? 'canh' : (timLo ? 'luu' : 'tot'))}
+        ${o('Nhật ký 30 ngày qua', so(d.nk_30_ngay), 'trên tổng ' + so(d.nk_tong))}
+        ${o('Hoạt động gần nhất', ngay(d.nk_moi_nhat))}
+      </div>
+
+      <p class="qt-ghi">Nhịp tim là lần cuối có ai đó gọi tới cơ sở dữ liệu. Supabase gói miễn phí
+        <b>tạm ngưng dự án nếu 7 ngày liền không ai truy cập</b>. Lịch tự động chạy 07:00 hằng ngày
+        trên cron-job.org; nếu con số vượt quá 6 ngày thì lịch đã hỏng, phải vào kiểm tra ngay.</p>`;
   }
 
   /* --- Tab 1: danh sách người dùng đã đăng nhập --- */
@@ -418,11 +525,23 @@
     });
   }
 
-  /* --- Tab 3: nhật ký truy cập và thay đổi --- */
+  /* --- Tab 3: nhật ký truy cập và thay đổi ---
+     Có bộ lọc theo người, bảng dữ liệu và hành động. Nghị định 13/2023 đòi
+     truy vết được "ai đã đụng vào dữ liệu nào"; 200 dòng gần nhất không lọc
+     được thì đến lúc cần giải trình sẽ không tra ra. */
+  let nkLoc = { email: '', bang: '', hd: '' };
+
   async function veTabNhatKy() {
-    const { data, error } = await sb.from('nhat_ky')
-      .select('*').order('thoi_gian', { ascending: false }).limit(200);
+    let q = sb.from('nhat_ky').select('*');
+    if (nkLoc.email) q = q.ilike('email', '%' + nkLoc.email + '%');
+    if (nkLoc.bang) q = q.eq('bang', nkLoc.bang);
+    if (nkLoc.hd) q = q.eq('hanh_dong', nkLoc.hd);
+    const { data, error } = await q.order('thoi_gian', { ascending: false }).limit(300);
     if (error) return than().innerHTML = `<div class="qt-trong">Lỗi: ${error.message}</div>`;
+
+    /* Danh sách bảng để lọc — lấy từ chính dữ liệu đang có */
+    const dsBang = Array.from(new Set((data || []).map(n => n.bang).filter(Boolean))).sort();
+    if (nkLoc.bang && dsBang.indexOf(nkLoc.bang) < 0) dsBang.push(nkLoc.bang);
 
     const TEN_HD = {
       INSERT: 'Thêm mới', UPDATE: 'Sửa', DELETE: 'Xoá',
@@ -431,6 +550,20 @@
     than().innerHTML = `
       <div class="qt-nhac">Sổ nhật ký ghi lại mọi thay đổi dữ liệu, phục vụ yêu cầu
         của Nghị định 13/2023/NĐ-CP. Không ai sửa hay xoá được nhật ký, kể cả quản trị.</div>
+      <div class="qt-them">
+        <input id="nkEmail" placeholder="Lọc theo người, gõ một phần địa chỉ Gmail" value="${nkLoc.email}">
+        <select id="nkBang">
+          <option value="">Tất cả bảng dữ liệu</option>
+          ${dsBang.map(b => `<option value="${b}" ${b === nkLoc.bang ? 'selected' : ''}>${b}</option>`).join('')}
+        </select>
+        <select id="nkHd">
+          <option value="">Tất cả hành động</option>
+          ${Object.entries(TEN_HD).map(([k, v]) =>
+            `<option value="${k}" ${k === nkLoc.hd ? 'selected' : ''}>${v}</option>`).join('')}
+        </select>
+        <button id="nkLoc">🔍 Lọc</button>
+        <button id="nkXoaLoc" class="qt-xoa">Bỏ lọc</button>
+      </div>
       <div class="qt-cuon"><table class="qt-bang">
         <thead><tr><th style="width:150px">Thời gian</th><th>Người thực hiện</th>
           <th style="width:130px">Hành động</th><th>Bảng dữ liệu</th></tr></thead>
@@ -440,8 +573,118 @@
             <td style="word-break:break-all">${n.email || '—'}</td>
             <td>${TEN_HD[n.hanh_dong] || n.hanh_dong}</td>
             <td style="color:#64748b">${n.bang || '—'}${n.ban_ghi ? ` <span style="font-size:11px">#${n.ban_ghi}</span>` : ''}</td>
-          </tr>`).join('') : '<tr><td colspan="4" class="qt-trong">Chưa có hoạt động nào.</td></tr>'}
-        </tbody></table></div>`;
+          </tr>`).join('') : '<tr><td colspan="4" class="qt-trong">Không có dòng nào khớp bộ lọc.</td></tr>'}
+        </tbody></table></div>
+      <p class="qt-ghi">Hiện ${data.length} dòng gần nhất${data.length >= 300 ? ' (đã đạt giới hạn 300 dòng, thu hẹp bộ lọc để xem sâu hơn)' : ''}.</p>`;
+
+    document.getElementById('nkLoc').addEventListener('click', () => {
+      nkLoc.email = document.getElementById('nkEmail').value.trim();
+      nkLoc.bang = document.getElementById('nkBang').value;
+      nkLoc.hd = document.getElementById('nkHd').value;
+      veTabNhatKy();
+    });
+    document.getElementById('nkXoaLoc').addEventListener('click', () => {
+      nkLoc = { email: '', bang: '', hd: '' };
+      veTabNhatKy();
+    });
+    document.getElementById('nkEmail').addEventListener('keydown', e => {
+      if (e.key === 'Enter') document.getElementById('nkLoc').click();
+    });
+  }
+
+  /* --- Tab 4: SAO LƯU DỮ LIỆU ---
+     Toàn bộ dữ liệu của trường nằm trên Supabase gói miễn phí. Dự án bị tạm
+     ngưng, xoá nhầm hoặc mất tài khoản là mất sạch. Nút này kết xuất mọi bảng
+     ra MỘT tệp Excel nhiều trang tính để nhà trường giữ bản riêng.
+
+     Tệp chứa dữ liệu cá nhân của học sinh và cán bộ, nên phải cảnh báo rõ về
+     nghĩa vụ bảo quản theo Nghị định 13/2023/NĐ-CP. */
+  const BANG_SAO_LUU = [
+    ['nguoi_dung', 'Tai khoan'], ['moi_tai_khoan', 'Danh sach moi'],
+    ['nhom_ho_so', 'Nhom ho so'], ['nhom_con', 'Hop ho so'], ['ho_so', 'Ho so so'],
+    ['tieu_chi', 'Tieu chi TT57'], ['tu_danh_gia', 'Tu danh gia'],
+    ['danh_gia_tieu_chuan', 'Danh gia tieu chuan'], ['ke_hoach_cai_tien', 'Ke hoach cai tien'],
+    ['chi_so', 'Chi so nhieu nam'],
+    ['dbcl_chi_tieu', 'DBCL chi tieu'], ['dbcl_so_lieu', 'DBCL so lieu'],
+    ['dbcl_cam_ket', 'DBCL cam ket GV'], ['dbcl_cam_ket_dong', 'DBCL cam ket dong'],
+    ['dbcl_moc', 'DBCL moc cong viec'], ['dbcl_tu_soat_kq', 'DBCL tu soat'],
+    ['dbcl_to', 'To DBCL'], ['dbcl_to_thanh_vien', 'To DBCL thanh vien'],
+    ['dbcl_phan_cong', 'To DBCL phan cong'],
+    ['mon_hoc', 'Mon hoc'], ['hoc_sinh', 'Hoc sinh'], ['hoc_sinh_lop', 'Hoc sinh lop'],
+    ['phan_cong_day', 'Phan cong giang day'],
+    ['hs_ket_qua', 'Ket qua tung mon'], ['hs_ren_luyen', 'Ren luyen'],
+    ['hs_cam_ket', 'Cam ket tung hoc sinh']
+  ];
+
+  async function docHet(bang) {
+    const BUOC = 1000;
+    let tuDau = 0, gom = [];
+    for (;;) {
+      const r = await sb.from(bang).select('*').range(tuDau, tuDau + BUOC - 1);
+      if (r.error) return { loi: r.error.message, data: gom };
+      const d = r.data || [];
+      gom = gom.concat(d);
+      if (d.length < BUOC) break;
+      tuDau += BUOC;
+      if (tuDau > 100000) break;
+    }
+    return { loi: null, data: gom };
+  }
+
+  function veTabSaoLuu() {
+    than().innerHTML = `
+      <div class="qt-nhac">Toàn bộ dữ liệu của nhà trường đang nằm trên Supabase gói miễn phí.
+        Dự án bị tạm ngưng, xoá nhầm hoặc mất quyền truy cập là mất sạch. Nên sao lưu
+        <b>mỗi học kỳ một lần</b> và giữ tệp ở nơi khác.</div>
+      <div class="qt-viec">
+        <b>⚠ Tệp sao lưu chứa dữ liệu cá nhân</b>
+        <ul>
+          <li>Có họ tên, ngày sinh, kết quả học tập của học sinh và thông tin cán bộ, giáo viên.</li>
+          <li>Theo <b>Nghị định 13/2023/NĐ-CP</b>, tệp này phải được bảo quản như hồ sơ mật:
+              không gửi qua Zalo, Messenger; không lưu trên máy dùng chung.</li>
+          <li>Nên lưu vào Drive của nhà trường, đặt quyền chỉ Ban giám hiệu xem được.</li>
+        </ul>
+      </div>
+      <div class="qt-them">
+        <button id="slChay">💾 Kết xuất toàn bộ dữ liệu ra Excel</button>
+      </div>
+      <div id="slKq"></div>
+      <p class="qt-ghi">Tệp gồm ${BANG_SAO_LUU.length} trang tính, mỗi bảng dữ liệu một trang.
+        Sổ nhật ký không đưa vào vì rất dài và không phải dữ liệu nghiệp vụ; muốn lấy thì
+        dùng nút Export ở tab Nhật ký của Supabase.</p>`;
+
+    document.getElementById('slChay').addEventListener('click', async () => {
+      if (typeof XLSX === 'undefined') {
+        return baoNhanh('Chưa nạp được thư viện Excel. Kiểm tra mạng rồi tải lại trang.');
+      }
+      const nut = document.getElementById('slChay');
+      const kq = document.getElementById('slKq');
+      nut.disabled = true;
+      const wb = XLSX.utils.book_new();
+      let tongDong = 0;
+      const loi = [];
+
+      for (let i = 0; i < BANG_SAO_LUU.length; i++) {
+        const [bang, ten] = BANG_SAO_LUU[i];
+        kq.innerHTML = `<div class="qt-nhac">Đang đọc <b>${bang}</b> … (${i + 1}/${BANG_SAO_LUU.length})</div>`;
+        const r = await docHet(bang);
+        if (r.loi) { loi.push(bang + ': ' + r.loi); continue; }
+        const ws = XLSX.utils.json_to_sheet(r.data.length ? r.data : [{ '(bảng trống)': '' }]);
+        XLSX.utils.book_append_sheet(wb, ws, ten.slice(0, 31));
+        tongDong += r.data.length;
+      }
+
+      const nay = new Date();
+      const ten = 'sao-luu-hoso-so-'
+        + nay.getFullYear() + '-'
+        + String(nay.getMonth() + 1).padStart(2, '0') + '-'
+        + String(nay.getDate()).padStart(2, '0') + '.xlsx';
+      XLSX.writeFile(wb, ten);
+      nut.disabled = false;
+      kq.innerHTML = `<div class="qt-viec ok"><b>✅ Đã kết xuất ${tongDong.toLocaleString('vi-VN')} dòng
+        vào tệp ${ten}</b>${loi.length ? `<ul>${loi.map(l => `<li>Không đọc được ${l}</li>`).join('')}</ul>` : ''}</div>`;
+      baoNhanh('Đã sao lưu ' + tongDong.toLocaleString('vi-VN') + ' dòng dữ liệu.');
+    });
   }
 
   /* Dùng lại ô thông báo sẵn có của trang nếu có */

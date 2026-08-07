@@ -124,7 +124,9 @@ input,select{font-family:inherit;font-size:inherit}
 .hero h1{font-size:42px;font-weight:800;letter-spacing:.5px;line-height:1.08;margin:0 0 8px;text-transform:uppercase}
 .hero-tag{color:var(--gold-2);font-size:19px;font-weight:700;margin-bottom:20px}
 .hero-block{display:flex;gap:14px;align-items:flex-start;padding:13px 0}
-.hero-block + .hero-block{border-top:1px solid rgba(255,255,255,.18)}
+/* Bỏ đường kẻ ngang giữa Sứ mệnh và Mục tiêu — nó cắt ngang ảnh nền phía sau
+   trông rất vướng. Chỉ nới khoảng cách cho hai khối tách nhau là đủ. */
+.hero-block + .hero-block{margin-top:6px}
 .hero-block .ic{width:52px;height:52px;flex:none;border-radius:50%;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);display:grid;place-items:center;font-size:24px}
 .hero-block b{display:block;color:var(--gold-2);font-size:16px;letter-spacing:1.5px;margin-bottom:4px}
 .hero-block p{font-size:14.8px;opacity:.92;margin:0;max-width:58ch}
