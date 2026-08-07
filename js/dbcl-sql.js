@@ -84,6 +84,12 @@
   .db-nhan{font-size:11.6px;font-weight:700;padding:3px 10px;border-radius:999px}
   .db-nhan.ky{background:#e7f7ee;color:#15803d}
   .db-nhan.nhap{background:#fdf4e3;color:#96660f}
+  .db-nhanh{background:#f7f9fd;border:1px solid #e0e7f3;border-radius:11px;
+    padding:12px 14px;margin-bottom:13px}
+  .db-nhanh .hang{display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+  .db-nhanh .btn{padding:8px 13px;font-size:13.4px}
+  .db-nhanh .goi{font-size:11.8px;color:#8a94a6;margin-top:9px;line-height:1.6}
+  .db-nhanh .goi b{color:#5b6b85}
   `;
   document.head.insertAdjacentHTML('beforeend', '<style>' + css + '</style>');
 
@@ -201,6 +207,7 @@
         inp.addEventListener('blur', function () { luuO(this); });
         inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') this.blur(); });
       });
+      ganDan(hop);
     }
   }
 
@@ -260,6 +267,220 @@
     setTimeout(() => inp.classList.remove('vua-luu'), 900);
     veBoDem();
     veDoiSanh();
+  }
+
+  /* ========================================================================
+     NHẬP NHANH — ĐỠ PHẢI GÕ TAY 132 Ô
+
+     Ba cách, giải quyết đúng chỗ thầy cô kêu: "gõ tay trên web thì gõ thẳng
+     trên Word còn nhanh hơn".
+
+       1. Chép từ bảng Thực trạng sang Chuẩn đầu ra, có mức nâng.
+          Căn cứ chính hồ sơ năm 2025-2026 của trường: Phụ lục 2 gần như là
+          Phụ lục 1 nâng lên — tỉ lệ +1 điểm phần trăm (92,41 → 93,41), điểm
+          trung bình +0,1 (8,76 → 8,86). Nên mức "Nâng vừa" lấy đúng hai con
+          số đó làm mặc định.
+       2. Lấy số liệu năm học trước của cùng bảng làm nền.
+       3. Dán cả vùng ô từ Excel: bôi đen trong bảng tính, bấm vào ô đầu rồi
+          Ctrl+V, điền một lúc nhiều dòng nhiều khối.
+
+     Chép và dán đều ghi hàng loạt trong một lượt gọi máy chủ, không phải
+     từng ô một.
+     ======================================================================== */
+
+  const MUC_NANG = [
+    ['0',    'Giữ nguyên, không nâng',                     0,   0],
+    ['nhe',  'Nâng nhẹ — tỉ lệ +0,5 · điểm +0,05',       0.5, 0.05],
+    ['vua',  'Nâng vừa — tỉ lệ +1 · điểm +0,1',            1,   0.1],
+    ['manh', 'Nâng mạnh — tỉ lệ +2 · điểm +0,2',           2,   0.2]
+  ];
+  let MUC = 'vua';
+
+  function namTruoc(n) {
+    const m = String(n).match(/^(\d{4})-(\d{4})$/);
+    return m ? (parseInt(m[1], 10) - 1) + '-' + (parseInt(m[2], 10) - 1) : null;
+  }
+
+  /* Nâng con số cuối trong ô, giữ nguyên phần chữ và phần số đứng trước.
+     Ví dụ "138/90.8" nâng 1 điểm phần trăm thành "138/91.8".
+     Chỉ tiêu chiều tốt là 'down' (bỏ học, chưa đạt) thì nâng nghĩa là giảm. */
+  function nangGiaTri(ct, giaTri, buocTiLe, buocDiem) {
+    if (ct.don_vi === 'dat' || ct.don_vi === 'text') return giaTri;
+    const buoc = ct.don_vi === 'diem' ? buocDiem : buocTiLe;
+    if (!buoc) return giaTri;
+    const m = String(giaTri).replace(/,/g, '.').match(/^(.*?)([0-9]+\.?[0-9]*)([^0-9]*)$/);
+    if (!m) return giaTri;
+    let n = parseFloat(m[2]);
+    if (isNaN(n)) return giaTri;
+    n += (ct.chieu_tot === 'up' ? 1 : -1) * buoc;
+    const tran = ct.don_vi === 'diem' ? 10 : 100;
+    if (n > tran) n = tran;
+    if (n < 0) n = 0;
+    return m[1] + String(Math.round(n * 100) / 100) + m[3];
+  }
+
+  /* Ghi hàng loạt rồi nạp lại vào bộ nhớ trong trang */
+  async function ghiHangLoat(rows) {
+    if (!rows.length) return { loi: null, so: 0 };
+    const kq = await sb.from('dbcl_so_lieu')
+      .upsert(rows, { onConflict: 'nam_hoc,loai,ky,khoi,chi_tieu_ma' }).select();
+    if (kq.error) return { loi: kq.error.message, so: 0 };
+    (kq.data || []).forEach(r => {
+      SO_LIEU[r.loai + '|' + r.ky + '|' + r.khoi + '|' + r.chi_tieu_ma] = r;
+    });
+    return { loi: null, so: (kq.data || []).length };
+  }
+
+  /* Chép một bảng nguồn vào bảng đang mở */
+  async function chepTu(nguonLoai, nguonNam, nguonKy, tenNguon) {
+    const muc = MUC_NANG.find(m => m[0] === MUC) || MUC_NANG[0];
+
+    /* Nguồn cùng năm thì đã có sẵn, khác năm thì phải hỏi máy chủ */
+    let nguon = {};
+    if (nguonNam === NAM_HOC) {
+      CHI_TIEU.forEach(ct => KHOI.forEach(k => {
+        const r = SO_LIEU[nguonLoai + '|' + nguonKy + '|' + k + '|' + ct.ma];
+        if (r && r.gia_tri) nguon[k + '|' + ct.ma] = r.gia_tri;
+      }));
+    } else {
+      const kq = await sb.from('dbcl_so_lieu').select('khoi, chi_tieu_ma, gia_tri')
+        .eq('nam_hoc', nguonNam).eq('loai', nguonLoai).eq('ky', nguonKy);
+      if (kq.error) { notify('Không đọc được số liệu nguồn: ' + kq.error.message); return; }
+      (kq.data || []).forEach(r => { if (r.gia_tri) nguon[r.khoi + '|' + r.chi_tieu_ma] = r.gia_tri; });
+    }
+
+    const soNguon = Object.keys(nguon).length;
+    if (!soNguon) {
+      notify('Bảng nguồn "' + tenNguon + '" chưa có ô nào, không có gì để chép.');
+      return;
+    }
+
+    /* Đếm trước xem sẽ đè lên bao nhiêu ô đang có, rồi mới hỏi */
+    let deLen = 0;
+    Object.keys(nguon).forEach(kh => {
+      const cu = SO_LIEU[LOAI + '|' + KY + '|' + kh];
+      if (cu && cu.gia_tri && String(cu.gia_tri).trim() !== '') deLen++;
+    });
+
+    const hoi = 'Chép ' + soNguon + ' ô từ "' + tenNguon + '" sang bảng "'
+      + TEN_LOAI[LOAI] + '" của năm học ' + NAM_HOC + '.\n\n'
+      + 'Mức nâng: ' + muc[1] + '\n'
+      + (deLen ? '\n⚠ Sẽ GHI ĐÈ ' + deLen + ' ô đang có số liệu.\n' : '')
+      + '\nThầy cô đồng ý chứ?';
+    if (!window.confirm(hoi)) return;
+
+    const nguoi = window.NGUOI_DUNG ? window.NGUOI_DUNG.id : null;
+    const luc = new Date().toISOString();
+    const rows = [];
+    CHI_TIEU.forEach(ct => KHOI.forEach(k => {
+      if (ct.chi_khoi_9 && k !== 9) return;
+      const v = nguon[k + '|' + ct.ma];
+      if (v == null || String(v).trim() === '') return;
+      const cu = SO_LIEU[LOAI + '|' + KY + '|' + k + '|' + ct.ma];
+      rows.push({
+        nam_hoc: NAM_HOC, loai: LOAI, ky: KY, khoi: k, chi_tieu_ma: ct.ma,
+        gia_tri: nangGiaTri(ct, v, muc[2], muc[3]),
+        doi_sanh_tinh: cu ? cu.doi_sanh_tinh : null,
+        cap_nhat_boi: nguoi, cap_nhat_luc: luc
+      });
+    }));
+
+    const kq = await ghiHangLoat(rows);
+    if (kq.loi) { notify('Chưa chép được: ' + kq.loi); return; }
+    veBangNhap(); veDoiSanh();
+    notify('Đã chép ' + kq.so + ' ô từ "' + tenNguon + '" với mức ' + muc[1].toLowerCase()
+      + '. Thầy cô rà lại rồi chỉnh những ô cần khác đi.');
+  }
+
+  /* Dán cả vùng ô từ Excel vào bảng */
+  async function danVung(oGiaTri, viTri, txt) {
+    const bang = txt.replace(/\r/g, '').replace(/\n+$/, '').split('\n').map(d => d.split('\t'));
+    const r0 = Math.floor(viTri / KHOI.length), c0 = viTri % KHOI.length;
+    const nguoi = window.NGUOI_DUNG ? window.NGUOI_DUNG.id : null;
+    const luc = new Date().toISOString();
+    const rows = [];
+    let boQua = 0;
+
+    bang.forEach((dong, i) => dong.forEach((oVal, j) => {
+      const r = r0 + i, c = c0 + j;
+      if (r >= CHI_TIEU.length || c >= KHOI.length) { boQua++; return; }
+      const ct = CHI_TIEU[r], k = KHOI[c];
+      if (ct.chi_khoi_9 && k !== 9) { boQua++; return; }
+      const v = String(oVal).trim();
+      const cu = SO_LIEU[LOAI + '|' + KY + '|' + k + '|' + ct.ma];
+      rows.push({
+        nam_hoc: NAM_HOC, loai: LOAI, ky: KY, khoi: k, chi_tieu_ma: ct.ma,
+        gia_tri: v || null,
+        doi_sanh_tinh: cu ? cu.doi_sanh_tinh : null,
+        cap_nhat_boi: nguoi, cap_nhat_luc: luc
+      });
+    }));
+
+    if (!rows.length) { notify('Không có ô nào dán được vào vị trí này.'); return; }
+    const kq = await ghiHangLoat(rows);
+    if (kq.loi) { notify('Chưa dán được: ' + kq.loi); return; }
+    veBangNhap(); veDoiSanh();
+    notify('Đã dán ' + kq.so + ' ô'
+      + (boQua ? ', bỏ qua ' + boQua + ' ô vượt ra ngoài bảng hoặc thuộc khối bị khóa' : '') + '.');
+  }
+
+  function ganDan(hop) {
+    const oGiaTri = Array.from(hop.querySelectorAll('input[data-cot="gia_tri"]'));
+    oGiaTri.forEach((inp, idx) => {
+      inp.addEventListener('paste', function (e) {
+        const dl = e.clipboardData || window.clipboardData;
+        const txt = dl ? dl.getData('text') : '';
+        /* Dán một ô lẻ thì để trình duyệt tự làm như bình thường */
+        if (!txt || !/[\t\n]/.test(txt)) return;
+        e.preventDefault();
+        danVung(oGiaTri, idx, txt);
+      });
+    });
+  }
+
+  function veNhanh() {
+    const hop = document.getElementById('dbclNhanh');
+    if (!hop) return;
+    if (!coQuyenNhap()) { hop.innerHTML = ''; return; }
+
+    const nt = namTruoc(NAM_HOC);
+    const nut = [];
+    if (LOAI !== 'thuc_trang') {
+      nut.push('<button class="btn btn-pri" id="dbclChepTT">⧉ Chép từ bảng Thực trạng đầu năm</button>');
+    }
+    if (LOAI === 'ket_qua') {
+      nut.push('<button class="btn btn-out" id="dbclChepCDR">⧉ Chép từ Chuẩn đầu ra</button>');
+    }
+    if (nt) {
+      nut.push('<button class="btn btn-out" id="dbclChepNT">↩ Lấy bảng này của năm ' + chan(nt) + '</button>');
+    }
+
+    hop.innerHTML = '<div class="db-nhanh">'
+      + '<div class="hang">'
+      + '<label style="font-size:13.2px;font-weight:600;color:var(--muted)">Mức nâng khi chép</label>'
+      + '<select id="dbclMuc">'
+      + MUC_NANG.map(m => '<option value="' + m[0] + '"' + (m[0] === MUC ? ' selected' : '') + '>'
+          + chan(m[1]) + '</option>').join('')
+      + '</select>' + nut.join('')
+      + '</div>'
+      + '<p class="goi"><b>Dán từ Excel:</b> bôi đen vùng ô trong bảng tính, bấm vào ô đầu tiên '
+      + 'trong bảng dưới đây rồi Ctrl+V — hệ thống điền một lúc nhiều dòng, nhiều khối. '
+      + '<br><b>Mức nâng “vừa”</b> lấy đúng cách Nhà trường đã làm năm 2025-2026: tỉ lệ nâng 1 điểm '
+      + 'phần trăm, điểm trung bình nâng 0,1. Chép xong vẫn nên rà lại từng dòng.</p>'
+      + '</div>';
+
+    const sel = document.getElementById('dbclMuc');
+    if (sel) sel.addEventListener('change', function () { MUC = this.value; });
+
+    const b1 = document.getElementById('dbclChepTT');
+    if (b1) b1.addEventListener('click', () =>
+      chepTu('thuc_trang', NAM_HOC, 'ca_nam', 'Thực trạng đầu năm ' + NAM_HOC));
+    const b2 = document.getElementById('dbclChepCDR');
+    if (b2) b2.addEventListener('click', () =>
+      chepTu('chuan_dau_ra', NAM_HOC, 'ca_nam', 'Chuẩn đầu ra ' + NAM_HOC));
+    const b3 = document.getElementById('dbclChepNT');
+    if (b3) b3.addEventListener('click', () =>
+      chepTu(LOAI, nt, KY, TEN_LOAI[LOAI] + ' năm ' + nt));
   }
 
   /* ========================================================================
@@ -532,14 +753,14 @@
     document.getElementById('dbclLoai').addEventListener('change', function () {
       LOAI = this.value;
       if (LOAI !== 'ket_qua') KY = 'ca_nam';
-      veThanh(); veBangNhap(); veDoiSanh();
+      veThanh(); veNhanh(); veBangNhap(); veDoiSanh();
     });
     document.getElementById('dbclKy').addEventListener('change', function () {
-      KY = this.value; veBangNhap(); veDoiSanh();
+      KY = this.value; veNhanh(); veBangNhap(); veDoiSanh();
     });
   }
 
-  function veTatCa() { veThanh(); veBangNhap(); veDoiSanh(); veCamKet(); }
+  function veTatCa() { veThanh(); veNhanh(); veBangNhap(); veDoiSanh(); veCamKet(); }
 
   /* ========================================================================
      CỬA CHO TỆP KẾT XUẤT LẤY DỮ LIỆU
