@@ -634,6 +634,7 @@
       + '</div>' + '<div class="tt-chon">' + nutVe() + '</div>');
     if (ok && typeof window.hocSinhNoiLai === 'function') {
       window.hocSinhNoiLai().catch(e => console.error(e));
+    if (typeof window.quyMoDemLai === 'function') window.quyMoDemLai();
     }
     ganVe();
   }

@@ -44,7 +44,7 @@ const CAU_HINH = {
 
   /* Quy mô nhà trường — dùng cho phần Tổng quan của báo cáo tự đánh giá */
   SO_LOP: 16,
-  SO_HOC_SINH: 636,
+  SO_HOC_SINH: 466,
   SO_CBGV: 38
 };
 

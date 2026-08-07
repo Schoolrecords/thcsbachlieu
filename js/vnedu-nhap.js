@@ -807,6 +807,7 @@
        sang xem vẫn thấy số cũ và tưởng nạp hỏng. */
     if (ok && typeof window.hocSinhNoiLai === 'function') {
       window.hocSinhNoiLai().catch(e => console.error('[Học sinh] nối lại hỏng:', e));
+    if (typeof window.quyMoDemLai === 'function') window.quyMoDemLai();
     }
     const k = document.getElementById('vnKiemChung');
     if (k) k.addEventListener('click', () => kiemChung(namHoc));
