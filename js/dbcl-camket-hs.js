@@ -85,20 +85,43 @@
 
   /* ========================================================================
      TẢI DỮ LIỆU
+
+     Máy chủ chỉ trả tối đa 1000 dòng mỗi lần hỏi. Trường có khoảng 616 học
+     sinh × 12 môn ≈ 7.400 dòng kết quả, nên phải đọc theo trang cho tới hết.
+     Nếu không, bộ nhớ trang chỉ có 1000 dòng đầu và tưởng những em còn lại
+     CHƯA có cam kết — bấm "Đặt chuẩn đầu ra cả lớp" là ghi đè mất số thật.
      ======================================================================== */
+  async function taiHet(bang, chon, loc) {
+    const BUOC = 1000;
+    let tuDau = 0, gom = [];
+    for (;;) {
+      let q = sb.from(bang).select(chon);
+      loc.forEach(f => { q = q.eq(f[0], f[1]); });
+      const r = await q.range(tuDau, tuDau + BUOC - 1);
+      if (r.error) throw r.error;
+      const d = r.data || [];
+      gom = gom.concat(d);
+      if (d.length < BUOC) break;
+      tuDau += BUOC;
+      if (tuDau > 60000) break;         // chặn vòng lặp vô tận
+    }
+    return gom;
+  }
+
   async function tai() {
     const nt = namTruoc(NAM);
     const u = window.NGUOI_DUNG;
-    const [mh, hs, ck, kq, pc] = await Promise.all([
+    const [mh, hsD, ckD, kqD, pc] = await Promise.all([
       sb.from('mon_hoc').select('*').order('so_tt'),
-      sb.from('hoc_sinh_lop').select('*, hoc_sinh(*)').eq('nam_hoc', NAM).eq('trang_thai', 'dang_hoc'),
-      sb.from('hs_cam_ket').select('*').eq('nam_hoc', NAM),
-      nt ? sb.from('hs_ket_qua').select('hoc_sinh_ma, mon_ma, diem, muc')
-             .eq('nam_hoc', nt).eq('ky', 'ca_nam')
-         : Promise.resolve({ data: [] }),
+      taiHet('hoc_sinh_lop', '*, hoc_sinh(*)', [['nam_hoc', NAM], ['trang_thai', 'dang_hoc']]),
+      taiHet('hs_cam_ket', '*', [['nam_hoc', NAM]]),
+      nt ? taiHet('hs_ket_qua', 'hoc_sinh_ma, mon_ma, diem, muc',
+                  [['nam_hoc', nt], ['ky', 'ca_nam']])
+         : Promise.resolve([]),
       u ? sb.from('phan_cong_day').select('*').eq('nam_hoc', NAM).eq('nguoi_dung_id', u.id)
         : Promise.resolve({ data: [] })
     ]);
+    const hs = { data: hsD }, ck = { data: ckD }, kq = { data: kqD };
 
     MON = mh.data || [];
     PHAN_CONG = pc.data || [];

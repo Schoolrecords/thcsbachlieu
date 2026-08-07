@@ -360,7 +360,16 @@
   /* Nâng con số cuối trong ô, giữ nguyên phần chữ và phần số đứng trước.
      Ví dụ "138/90.8" nâng 1 điểm phần trăm thành "138/91.8".
      Chỉ tiêu chiều tốt là 'down' (bỏ học, chưa đạt) thì nâng nghĩa là giảm. */
-  function nangGiaTri(ct, giaTri, buocTiLe, buocDiem) {
+  /* Sĩ số của một khối, lấy từ ô CT01 dạng "160/4" của chính bảng đích */
+  function siSo(khoi) {
+    const r = SO_LIEU[LOAI + '|' + KY + '|' + khoi + '|CT01']
+           || SO_LIEU['thuc_trang|ca_nam|' + khoi + '|CT01'];
+    if (!r || !r.gia_tri) return null;
+    const m = String(r.gia_tri).match(/^\s*(\d+)\s*\//);
+    return m ? parseInt(m[1], 10) : null;
+  }
+
+  function nangGiaTri(ct, giaTri, buocTiLe, buocDiem, khoi) {
     if (ct.don_vi === 'dat' || ct.don_vi === 'text') return giaTri;
     const buoc = ct.don_vi === 'diem' ? buocDiem : buocTiLe;
     if (!buoc) return giaTri;
@@ -372,7 +381,19 @@
     const tran = ct.don_vi === 'diem' ? 10 : 100;
     if (n > tran) n = tran;
     if (n < 0) n = 0;
-    return m[1] + String(Math.round(n * 100) / 100) + m[3];
+    n = Math.round(n * 100) / 100;
+
+    /* Ô dạng "138/90.8" nghĩa là 138 em, đạt 90,8%. Nếu chỉ nâng tỉ lệ mà giữ
+       nguyên số em thì hai con số trong cùng một ô không còn chia ra nhau —
+       đúng loại vênh mà hệ thống này sinh ra để chặn. Nên tính lại số em
+       theo sĩ số khối. Không biết sĩ số thì trả về mình tỉ lệ, khỏi bịa. */
+    const daySo = /^\s*(\d+)\s*\/\s*$/.exec(m[1]);
+    if (ct.don_vi === 'so_ti_le' && daySo) {
+      const ss = siSo(khoi);
+      if (ss == null) return String(n) + m[3];
+      return String(Math.round(ss * n / 100)) + '/' + String(n) + m[3];
+    }
+    return m[1] + String(n) + m[3];
   }
 
   /* Ghi hàng loạt rồi nạp lại vào bộ nhớ trong trang */
@@ -389,7 +410,11 @@
 
   /* Chép một bảng nguồn vào bảng đang mở */
   async function chepTu(nguonLoai, nguonNam, nguonKy, tenNguon) {
-    const muc = MUC_NANG.find(m => m[0] === MUC) || MUC_NANG[0];
+    /* Bảng Thực trạng đầu năm phải là số THỰC TẾ. Nâng số thực trạng lên là
+       bịa số liệu gốc, và mọi đối sánh phía sau lệch theo. Nên ép giữ nguyên. */
+    const muc = (LOAI === 'thuc_trang')
+      ? MUC_NANG[0]
+      : (MUC_NANG.find(m => m[0] === MUC) || MUC_NANG[0]);
 
     /* Nguồn cùng năm thì đã có sẵn, khác năm thì phải hỏi máy chủ */
     let nguon = {};
@@ -435,7 +460,7 @@
       const cu = SO_LIEU[LOAI + '|' + KY + '|' + k + '|' + ct.ma];
       rows.push({
         nam_hoc: NAM_HOC, loai: LOAI, ky: KY, khoi: k, chi_tieu_ma: ct.ma,
-        gia_tri: nangGiaTri(ct, v, muc[2], muc[3]),
+        gia_tri: nangGiaTri(ct, v, muc[2], muc[3], k),
         doi_sanh_tinh: cu ? cu.doi_sanh_tinh : null,
         cap_nhat_boi: nguoi, cap_nhat_luc: luc
       });
@@ -501,7 +526,8 @@
 
     const nt = namTruoc(NAM_HOC);
     const nut = [];
-    if (LOAI !== 'thuc_trang') {
+    const laThucTrang = (LOAI === 'thuc_trang');
+    if (!laThucTrang) {
       nut.push('<button class="btn btn-pri" id="dbclChepTT">⧉ Chép từ bảng Thực trạng đầu năm</button>');
     }
     if (LOAI === 'ket_qua') {
@@ -513,12 +539,19 @@
 
     hop.innerHTML = '<div class="db-nhanh">'
       + '<div class="hang">'
-      + '<label style="font-size:13.2px;font-weight:600;color:var(--muted)">Mức nâng khi chép</label>'
-      + '<select id="dbclMuc">'
-      + MUC_NANG.map(m => '<option value="' + m[0] + '"' + (m[0] === MUC ? ' selected' : '') + '>'
-          + chan(m[1]) + '</option>').join('')
-      + '</select>' + nut.join('')
+      /* Bảng Thực trạng không cho chọn mức nâng — số thực tế thì không nâng */
+      + (laThucTrang ? ''
+          : '<label style="font-size:13.2px;font-weight:600;color:var(--muted)">Mức nâng khi chép</label>'
+            + '<select id="dbclMuc">'
+            + MUC_NANG.map(m => '<option value="' + m[0] + '"' + (m[0] === MUC ? ' selected' : '') + '>'
+                + chan(m[1]) + '</option>').join('')
+            + '</select>')
+      + nut.join('')
       + '</div>'
+      + (laThucTrang
+          ? '<p class="goi"><b>Bảng Thực trạng đầu năm luôn chép nguyên, không nâng</b> — '
+            + 'đây phải là số thực tế, nâng lên là bịa số liệu gốc.</p>'
+          : '')
       + '<p class="goi"><b>Dán từ Excel:</b> bôi đen vùng ô trong bảng tính, bấm vào ô đầu tiên '
       + 'trong bảng dưới đây rồi Ctrl+V — hệ thống điền một lúc nhiều dòng, nhiều khối. '
       + '<br><b>Mức nâng “vừa”</b> lấy đúng cách Nhà trường đã làm năm 2025-2026: tỉ lệ nâng 1 điểm '

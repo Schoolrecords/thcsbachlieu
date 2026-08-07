@@ -92,13 +92,33 @@
   /* ========================================================================
      TẢI DỮ LIỆU
      ======================================================================== */
+  /* Máy chủ chỉ trả tối đa 1000 dòng mỗi lần hỏi, mà trường có hơn 600 học
+     sinh nên phải đọc theo trang cho tới hết. Thiếu chỗ này thì mẫu kết quả
+     sinh ra sẽ sót học sinh mà không báo gì. */
+  async function taiHet(bang, chon, loc) {
+    const BUOC = 1000;
+    let tuDau = 0, gom = [];
+    for (;;) {
+      let q = sb.from(bang).select(chon);
+      loc.forEach(f => { q = q.eq(f[0], f[1]); });
+      const r = await q.range(tuDau, tuDau + BUOC - 1);
+      if (r.error) throw r.error;
+      const d = r.data || [];
+      gom = gom.concat(d);
+      if (d.length < BUOC) break;
+      tuDau += BUOC;
+      if (tuDau > 60000) break;
+    }
+    return gom;
+  }
+
   async function tai() {
-    const [mh, hs] = await Promise.all([
+    const [mh, hsD] = await Promise.all([
       sb.from('mon_hoc').select('*').order('so_tt'),
-      sb.from('hoc_sinh_lop').select('*, hoc_sinh(*)').eq('nam_hoc', NAM).order('lop')
+      taiHet('hoc_sinh_lop', '*, hoc_sinh(*)', [['nam_hoc', NAM]])
     ]);
     MON = mh.data || [];
-    DS = (hs.data || []).filter(r => r.hoc_sinh);
+    DS = (hsD || []).filter(r => r.hoc_sinh);
     DS.sort((a, b) => (a.lop || '').localeCompare(b.lop || '', 'vi')
       || (a.hoc_sinh.ho_ten || '').localeCompare(b.hoc_sinh.ho_ten || '', 'vi'));
   }
@@ -250,9 +270,13 @@
     const cotMon = MON.map(m => m.ten + (m.kieu === 'dat' ? ' (Đ/CĐ)' : ''));
     const hang = [
       ['MẪU NHẬP KẾT QUẢ HỌC TẬP — ' + (CAU_HINH.TEN_TRUONG || '')],
-      ['Năm học', NAM, 'Kỳ', 'ghi ca_nam hoặc hoc_ki_1 vào ô bên cạnh', ''],
+      /* Ô ngay sau chữ "Kỳ" phải chứa ĐÚNG giá trị, không được chứa câu hướng
+         dẫn — vì phần đọc tệp dò kỳ học trên chính ô này. Trước đây câu hướng
+         dẫn có sẵn chữ "hoc_ki_1" nên mọi tệp đều bị nhận nhầm là học kỳ I. */
+      ['Năm học', NAM, 'Kỳ', 'Cả năm', ''],
       [],
       ['Hướng dẫn: KHÔNG sửa cột Mã học sinh — hệ thống ghép theo cột này.'],
+      ['Ô "Kỳ" ở dòng 2: ghi "Cả năm" hoặc "Học kỳ I". Không ghi thêm chữ nào khác.'],
       ['Môn tính điểm ghi số từ 0 đến 10. Môn đánh giá Đạt ghi Đ hoặc CĐ.'],
       ['Cột Rèn luyện ghi: Tốt / Khá / Đạt / Chưa đạt.'],
       ['Cột Lên lớp chỉ điền khi nhập kết quả cả năm: ghi x nếu được lên lớp.'],
@@ -378,23 +402,34 @@
 
   /* ---------------- Nạp kết quả học tập ---------------- */
   async function napKetQua(than, cot, td, hangGoc, tenTep) {
-    /* Kỳ ghi ở dòng 2 của mẫu */
-    let ky = 'ca_nam';
+    /* Kỳ ghi ở ô ngay sau chữ "Kỳ" tại dòng 2 của mẫu.
+       So khớp CHÍNH XÁC giá trị ô, không dò chuỗi con — nếu dò chuỗi con thì
+       câu hướng dẫn nào lỡ chứa chữ "học kỳ I" cũng làm nhận nhầm. */
+    let ky = 'ca_nam', kyDoc = '';
     hangGoc.slice(0, 6).forEach(d => {
       const s = (d || []).map(x => String(x).trim());
       const i = s.indexOf('Kỳ');
-      if (i >= 0 && /hoc_ki_1|học kỳ i|hk1/i.test(s[i + 1] || '')) ky = 'hoc_ki_1';
+      if (i < 0) return;
+      const v = (s[i + 1] || '').toLowerCase();
+      kyDoc = s[i + 1] || '';
+      if (v === 'học kỳ i' || v === 'hoc_ki_1' || v === 'hk1' || v === 'học kì i') ky = 'hoc_ki_1';
+      else if (v === 'cả năm' || v === 'ca_nam' || v === 'cn') ky = 'ca_nam';
+      else if (v) kyDoc = '(không hiểu: "' + s[i + 1] + '")';
     });
 
     const coMa = {};
     DS.forEach(r => { coMa[r.hoc_sinh.ma] = r; });
 
-    /* Ánh xạ cột môn theo tên trong tiêu đề */
-    const cotMon = [];
+    /* Ánh xạ cột môn theo tên trong tiêu đề.
+       CHỈ cắt đúng hậu tố đánh dấu " (Đ/CĐ)". Trước đây cắt mọi cụm trong
+       ngoặc ở cuối, làm "Ngoại ngữ 1 (Tiếng Anh)" và "Nghệ thuật (Âm nhạc,
+       Mĩ thuật)" không khớp cột nào và bị bỏ qua lặng lẽ. */
+    const bo = t => t.replace(/\s*\(Đ\/CĐ\)\s*$/i, '').trim().toLowerCase();
+    const cotMon = [], monThieu = [];
     MON.forEach(m => {
-      const i = td.findIndex(t => t.replace(/\s*\(.*\)\s*$/, '').trim().toLowerCase()
-        === m.ten.toLowerCase());
+      const i = td.findIndex(t => bo(t) === m.ten.toLowerCase());
       if (i >= 0) cotMon.push({ mon: m, i: i });
+      else monThieu.push(m.ten);
     });
     if (!cotMon.length) {
       notify('Không nhận ra cột môn học nào trong tệp. Thầy cô dùng đúng mẫu do hệ thống tải xuống.');
@@ -440,8 +475,15 @@
 
     /* Ba con số bắt buộc hiện trước khi ghi */
     let hoi = 'Tệp "' + tenTep + '" — nạp kết quả '
-      + (ky === 'hoc_ki_1' ? 'HỌC KỲ I' : 'CẢ NĂM') + ' năm học ' + NAM + '.\n\n'
-      + '✔ Khớp mã: ' + Object.keys(daCo).length + ' học sinh, ' + kq.length + ' ô điểm\n';
+      + (ky === 'hoc_ki_1' ? 'HỌC KỲ I' : 'CẢ NĂM') + ' năm học ' + NAM + '.\n'
+      + '   (ô Kỳ trong tệp ghi: ' + (kyDoc || 'để trống, hiểu là Cả năm') + ')\n\n'
+      + '✔ Khớp mã: ' + Object.keys(daCo).length + ' học sinh, ' + kq.length + ' ô điểm\n'
+      + '   Đọc được ' + cotMon.length + '/' + MON.length + ' cột môn học\n';
+    if (monThieu.length) {
+      hoi += '⚠ KHÔNG tìm thấy cột của ' + monThieu.length + ' môn: '
+        + monThieu.slice(0, 4).join(', ') + (monThieu.length > 4 ? '…' : '') + '\n'
+        + '   → Các môn này sẽ không có điểm. Kiểm tra lại tiêu đề cột.\n';
+    }
     if (maLa.length) {
       hoi += '✖ Mã lạ (có trong tệp, KHÔNG có trong danh sách): ' + maLa.length + '\n'
         + '   ' + maLa.slice(0, 5).join(', ') + (maLa.length > 5 ? '…' : '') + '\n'
@@ -460,8 +502,15 @@
     const a = await sb.from('hs_ket_qua')
       .upsert(kq, { onConflict: 'nam_hoc,ky,hoc_sinh_ma,mon_ma' });
     if (a.error) { notify('Chưa nạp được: ' + a.error.message); return; }
+    /* Trước đây không kiểm lỗi ở đây, nên khi phần rèn luyện bị từ chối thì
+       vẫn báo "đã nạp thành công", rồi bốn chỉ tiêu CT06–CT09 im lặng để trống. */
+    let loiRL = '';
     if (rl.length) {
-      await sb.from('hs_ren_luyen').upsert(rl, { onConflict: 'nam_hoc,ky,hoc_sinh_ma' });
+      const r2 = await sb.from('hs_ren_luyen').upsert(rl, { onConflict: 'nam_hoc,ky,hoc_sinh_ma' });
+      if (r2.error) loiRL = ' ⚠ Riêng phần rèn luyện CHƯA nạp được: ' + r2.error.message;
+    } else {
+      loiRL = ' ⚠ Không có dòng rèn luyện nào hợp lệ — cột Rèn luyện phải ghi đúng '
+            + 'một trong bốn mức: Tốt, Khá, Đạt, Chưa đạt.';
     }
     for (const x of ll) {
       await sb.from('hoc_sinh_lop').update({ len_lop: x.len })
@@ -469,8 +518,8 @@
     }
 
     notify('Đã nạp ' + kq.length + ' ô điểm cho ' + Object.keys(daCo).length + ' học sinh'
-      + (maLa.length ? ', bỏ qua ' + maLa.length + ' mã lạ' : '')
-      + '. Bấm "Tính lại 33 chỉ tiêu" để cập nhật các phụ lục.');
+      + (maLa.length ? ', bỏ qua ' + maLa.length + ' mã lạ' : '') + '.' + loiRL
+      + ' Bấm "Tính lại 33 chỉ tiêu" để cập nhật các phụ lục.');
     ve(document.getElementById('dbclKhac'));
   }
 
