@@ -710,28 +710,19 @@ footer .legal{border-top:1px solid rgba(255,255,255,.15);padding-top:15px;font-s
       <div class="bars" id="chartYears"></div>
     </div>
 
-    <!-- ---- Lõi số liệu chất lượng: Phụ lục 1, 2, 5, 16 ---- -->
+    <!-- ---- Hồ sơ Đảm bảo chất lượng: Phụ lục 1, 2, 5, 15, 16 ---- -->
     <div class="sec-head" style="margin:30px 0 18px">
-      <h2 style="font-size:23px">Số liệu chất lượng theo chuẩn đầu ra</h2>
-      <p>Một bộ <b>33 chỉ tiêu dùng chung</b> cho Phụ lục 1, 2, 5, 15 và 16. Nhập một lần, các phụ lục tự sinh ra và hệ thống tự đối chiếu chuẩn đầu ra với kết quả thực hiện.</p>
+      <h2 style="font-size:23px">Hồ sơ Đảm bảo chất lượng</h2>
+      <p>Chọn phụ lục cần làm việc. Phụ lục 1, 2, 5 và 16 dùng chung <b>một bộ 33 chỉ tiêu</b> — nhập một lần, hệ thống tự đối chiếu và tự phát hiện số liệu vênh nhau giữa các phụ lục.</p>
     </div>
+    <div id="dbclTab"></div>
     <div class="db-bar" id="dbclThanh"></div>
-    <div class="toolbar">
-      <button class="btn btn-out" onclick="window.xuatPhuLuc1?xuatPhuLuc1():notify('Thầy cô đăng nhập để kết xuất.')">📄 Phụ lục 1 — Thực trạng</button>
-      <button class="btn btn-out" onclick="window.xuatPhuLuc2?xuatPhuLuc2():notify('Thầy cô đăng nhập để kết xuất.')">📄 Phụ lục 2 — Chuẩn đầu ra</button>
-      <button class="btn btn-out" onclick="window.xuatPhuLuc5?xuatPhuLuc5():notify('Thầy cô đăng nhập để kết xuất.')">📄 Phụ lục 5 — Kết quả</button>
-      <button class="btn btn-pri" onclick="window.xuatPhuLuc16?xuatPhuLuc16():notify('Thầy cô đăng nhập để kết xuất.')">📄 Phụ lục 16 — Cam kết nhà trường</button>
-    </div>
+    <div id="dbclDe"></div>
     <div id="dbclNhanh"></div>
     <div id="dbclBang"></div>
     <div id="dbclDoiSanh"></div>
-
-    <!-- ---- Cam kết của giáo viên: Phụ lục 15 ---- -->
-    <div class="sec-head" style="margin:30px 0 18px">
-      <h2 style="font-size:23px">Cam kết chất lượng của giáo viên</h2>
-      <p>Phụ lục 15. Mỗi thầy cô tự lập cam kết cho các lớp mình phụ trách; ban giám hiệu xem và kết xuất được toàn bộ.</p>
-    </div>
     <div id="dbclCamKet"></div>
+    <input type="file" id="dbclTepExcel" accept=".xlsx,.xls" style="display:none">
 
     <div class="sec-head" style="margin:30px 0 18px">
       <h2 style="font-size:23px">Kế hoạch cải tiến chất lượng 2026 – 2027</h2>
@@ -1869,7 +1860,9 @@ renderDbcl();
 <script src="js/kiemtra-drive.js"></script>
 <script src="js/xuat-bieu-mau.js"></script>
 <script src="js/xuat-bao-cao-tdg.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="js/dbcl-sql.js"></script>
 <script src="js/xuat-phu-luc-dbcl.js"></script>
+<script src="js/dbcl-excel.js"></script>
 </body>
 </html>

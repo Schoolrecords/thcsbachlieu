@@ -42,6 +42,30 @@
     ket_qua:      'Kết quả thực hiện (Phụ lục 5)'
   };
 
+  /* Mỗi phụ lục là một màn hình riêng. Phụ lục 2 và 16 cùng đọc một bảng số
+     liệu — tách hai bảng thì thầy cô sẽ nhập hai lần rồi vênh nhau, đúng lỗi
+     167/4 với 166/4 trong bộ hồ sơ giấy. Nên hai tab dùng chung dữ liệu và
+     có dòng nhắc rõ ràng. */
+  const PHU_LUC = [
+    { ma: '1',  loai: 'thuc_trang',   ten: 'Thực trạng nhà trường',
+      mo: 'Số liệu thực tế đầu năm học, làm gốc để xây dựng chuẩn đầu ra.',
+      xuat: 'xuatPhuLuc1' },
+    { ma: '2',  loai: 'chuan_dau_ra', ten: 'Chuẩn đầu ra chất lượng học tập của học sinh',
+      mo: 'Chỉ tiêu Nhà trường phấn đấu đạt được trong năm học.',
+      chung: 'Phụ lục 16', xuat: 'xuatPhuLuc2' },
+    { ma: '5',  loai: 'ket_qua',      ten: 'Kết quả học tập và rèn luyện',
+      mo: 'Số liệu thực hiện được, hệ thống tự đối chiếu với chuẩn đầu ra đã cam kết.',
+      xuat: 'xuatPhuLuc5' },
+    { ma: '15', loai: null,           ten: 'Bản cam kết của giáo viên với Hiệu trưởng',
+      mo: 'Mỗi thầy cô tự lập cam kết cho các lớp mình phụ trách; ban giám hiệu xem và kết xuất toàn bộ.' },
+    { ma: '16', loai: 'chuan_dau_ra', ten: 'Bản cam kết chất lượng giáo dục của nhà trường',
+      mo: 'Gửi UBND xã Yên Thành và Sở Giáo dục và Đào tạo Nghệ An.',
+      chung: 'Phụ lục 2', xuat: 'xuatPhuLuc16' }
+  ];
+  let PL = '2';
+
+  function plHienTai() { return PHU_LUC.find(p => p.ma === PL) || PHU_LUC[1]; }
+
   /* ========================================================================
      KIỂU DÁNG
      ======================================================================== */
@@ -90,6 +114,20 @@
   .db-nhanh .btn{padding:8px 13px;font-size:13.4px}
   .db-nhanh .goi{font-size:11.8px;color:#8a94a6;margin-top:9px;line-height:1.6}
   .db-nhanh .goi b{color:#5b6b85}
+  .db-tab{display:flex;gap:5px;flex-wrap:wrap;border-bottom:2px solid #e2e8f2;
+    margin-bottom:16px;padding-bottom:0}
+  .db-tab button{padding:11px 17px;font-size:14px;font-weight:600;color:#5b6b85;
+    border-radius:10px 10px 0 0;border-bottom:3px solid transparent;margin-bottom:-2px;
+    transition:background .15s,color .15s}
+  .db-tab button:hover{background:#f0f5fd;color:var(--navy)}
+  .db-tab button.on{background:#fff;color:var(--navy);border-bottom-color:var(--navy-2)}
+  .db-de{margin-bottom:14px}
+  .db-de h3{font-family:var(--serif);font-size:21px;color:var(--navy);margin-bottom:5px}
+  .db-de .mo{font-size:13.6px;color:var(--muted);line-height:1.6;margin-bottom:4px}
+  .db-de .chung{display:inline-block;background:#eef4ff;border:1px solid #cfe0ff;
+    color:#1d4ed8;border-radius:8px;padding:6px 11px;font-size:12.6px;margin-top:7px}
+  .db-cong{display:flex;gap:8px;flex-wrap:wrap;margin:13px 0}
+  .db-cong .btn{padding:9px 14px;font-size:13.4px}
   `;
   document.head.insertAdjacentHTML('beforeend', '<style>' + css + '</style>');
 
@@ -728,39 +766,109 @@
   /* ========================================================================
      THANH ĐIỀU KHIỂN
      ======================================================================== */
+  /* ---------------- Hàng tab: mỗi phụ lục một màn hình ---------------- */
+  function veTab() {
+    const hop = document.getElementById('dbclTab');
+    if (!hop) return;
+    hop.innerHTML = '<div class="db-tab">'
+      + PHU_LUC.map(p => '<button data-pl="' + p.ma + '"' + (p.ma === PL ? ' class="on"' : '')
+          + '>Phụ lục ' + p.ma + '</button>').join('')
+      + '</div>';
+    hop.querySelectorAll('[data-pl]').forEach(b =>
+      b.addEventListener('click', function () {
+        PL = this.dataset.pl;
+        const p = plHienTai();
+        if (p.loai) LOAI = p.loai;
+        if (LOAI !== 'ket_qua') KY = 'ca_nam';
+        veTatCa();
+        hop.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }));
+  }
+
+  /* ---------------- Tiêu đề phụ lục và thanh công cụ ---------------- */
+  function veDe() {
+    const hop = document.getElementById('dbclDe');
+    if (!hop) return;
+    const p = plHienTai();
+
+    const nut = [];
+    if (p.xuat) {
+      nut.push('<button class="btn btn-pri" id="dbclTaiWord">📄 Tải bản Word</button>');
+      nut.push('<button class="btn btn-out" id="dbclTaiMau">⬇ Tải mẫu Excel</button>');
+      nut.push('<button class="btn btn-out" id="dbclTaiLen">⬆ Tải tệp Excel lên</button>');
+    }
+
+    hop.innerHTML = '<div class="db-de">'
+      + '<h3>Phụ lục ' + chan(p.ma) + ' — ' + chan(p.ten) + '</h3>'
+      + '<p class="mo">Năm học ' + chan(NAM_HOC)
+      + (p.ma === '5' ? ' · ' + (KY === 'hoc_ki_1' ? 'Học kì I' : 'Cả năm học') : '')
+      + ' · ' + chan(p.mo) + '</p>'
+      + (p.chung
+          ? '<div class="chung">Số liệu dùng chung với <b>' + chan(p.chung)
+            + '</b> — sửa ở màn hình nào cũng như nhau, không phải nhập hai lần.</div>'
+          : '')
+      + '</div>'
+      + (nut.length ? '<div class="db-cong">' + nut.join('') + '</div>' : '');
+
+    const w = document.getElementById('dbclTaiWord');
+    if (w) w.addEventListener('click', () => {
+      if (typeof window[p.xuat] === 'function') window[p.xuat]();
+      else notify('Chưa nạp được phần kết xuất, thầy cô tải lại trang.');
+    });
+    const m = document.getElementById('dbclTaiMau');
+    if (m) m.addEventListener('click', () => {
+      if (typeof window.dbclTaiMauExcel === 'function') window.dbclTaiMauExcel();
+      else notify('Chưa nạp được phần Excel, thầy cô tải lại trang.');
+    });
+    const l = document.getElementById('dbclTaiLen');
+    if (l) l.addEventListener('click', () => {
+      if (typeof window.dbclChonTepExcel === 'function') window.dbclChonTepExcel();
+      else notify('Chưa nạp được phần Excel, thầy cô tải lại trang.');
+    });
+  }
+
   function veThanh() {
     const hop = document.getElementById('dbclThanh');
     if (!hop) return;
     const nam = [];
     for (let y = 2024; y <= 2030; y++) nam.push(y + '-' + (y + 1));
+    const laKQ = plHienTai().ma === '5';
 
     hop.innerHTML = ''
       + '<label>Năm học</label><select id="dbclNam">'
       + nam.map(n => '<option value="' + n + '"' + (n === NAM_HOC ? ' selected' : '') + '>'
         + n + '</option>').join('') + '</select>'
-      + '<label>Bảng số liệu</label><select id="dbclLoai">'
-      + Object.keys(TEN_LOAI).map(k => '<option value="' + k + '"' + (k === LOAI ? ' selected' : '')
-        + '>' + TEN_LOAI[k] + '</option>').join('') + '</select>'
-      + '<label id="dbclLbKy"' + (LOAI === 'ket_qua' ? '' : ' style="display:none"') + '>Kỳ</label>'
-      + '<select id="dbclKy"' + (LOAI === 'ket_qua' ? '' : ' style="display:none"') + '>'
-      + '<option value="ca_nam"' + (KY === 'ca_nam' ? ' selected' : '') + '>Cả năm học</option>'
-      + '<option value="hoc_ki_1"' + (KY === 'hoc_ki_1' ? ' selected' : '') + '>Học kì I</option>'
-      + '</select>';
+      + (laKQ
+          ? '<label>Kỳ</label><select id="dbclKy">'
+            + '<option value="ca_nam"' + (KY === 'ca_nam' ? ' selected' : '') + '>Cả năm học</option>'
+            + '<option value="hoc_ki_1"' + (KY === 'hoc_ki_1' ? ' selected' : '') + '>Học kì I</option>'
+            + '</select>'
+          : '');
 
     document.getElementById('dbclNam').addEventListener('change', function () {
       NAM_HOC = this.value; taiDuLieu();
     });
-    document.getElementById('dbclLoai').addEventListener('change', function () {
-      LOAI = this.value;
-      if (LOAI !== 'ket_qua') KY = 'ca_nam';
-      veThanh(); veNhanh(); veBangNhap(); veDoiSanh();
-    });
-    document.getElementById('dbclKy').addEventListener('change', function () {
-      KY = this.value; veNhanh(); veBangNhap(); veDoiSanh();
+    const ky = document.getElementById('dbclKy');
+    if (ky) ky.addEventListener('change', function () {
+      KY = this.value; veDe(); veNhanh(); veBangNhap(); veDoiSanh();
     });
   }
 
-  function veTatCa() { veThanh(); veNhanh(); veBangNhap(); veDoiSanh(); veCamKet(); }
+  /* Bật tắt từng khối theo tab đang mở */
+  function veTatCa() {
+    const laCamKet = plHienTai().ma === '15';
+    veTab(); veThanh(); veDe();
+
+    ['dbclNhanh', 'dbclBang', 'dbclDoiSanh'].forEach(id => {
+      const o1 = document.getElementById(id);
+      if (o1) o1.style.display = laCamKet ? 'none' : '';
+    });
+    const ck = document.getElementById('dbclCamKet');
+    if (ck) ck.style.display = laCamKet ? '' : 'none';
+
+    if (laCamKet) { veCamKet(); return; }
+    veNhanh(); veBangNhap(); veDoiSanh();
+  }
 
   /* ========================================================================
      CỬA CHO TỆP KẾT XUẤT LẤY DỮ LIỆU
@@ -780,6 +888,24 @@
     };
   };
   window.taiLaiDBCL = taiDuLieu;
+
+  /* Cửa cho phần tải mẫu và đọc tệp Excel */
+  window.dbclTrangThai = function () {
+    const p = plHienTai();
+    return {
+      namHoc: NAM_HOC, loai: LOAI, ky: KY,
+      maPhuLuc: p.ma, tenPhuLuc: p.ten, tenBang: TEN_LOAI[LOAI],
+      chiTieu: CHI_TIEU, khoi: KHOI,
+      coQuyen: coQuyenNhap(),
+      lay: function (khoi, ma) { return SO_LIEU[LOAI + '|' + KY + '|' + khoi + '|' + ma] || null; }
+    };
+  };
+  /* Ghi hàng loạt từ tệp Excel, dùng lại đúng đường ghi của phần nhập tay */
+  window.dbclGhiHangLoat = async function (rows) {
+    const kq = await ghiHangLoat(rows);
+    if (!kq.loi) { veBangNhap(); veDoiSanh(); }
+    return kq;
+  };
 
   /* ========================================================================
      KHỞI ĐỘNG SAU KHI ĐĂNG NHẬP XONG
