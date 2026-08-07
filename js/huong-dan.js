@@ -346,7 +346,8 @@
         'Kiểm <b>ô Năm học</b> và <b>ô Kỳ</b> ở đầu màn hình. Sai năm là nguyên nhân thường gặp nhất.',
         'Kiểm chức danh ở góc trên bên phải — có đúng vai trò cần dùng cho việc đang làm không.'
       ] },
-      { t: 'Ba việc đó không xong thì chụp <b>toàn màn hình</b> — chụp cả thanh menu và góc trên bên phải, đừng chụp mỗi ô báo lỗi — rồi gửi kèm câu: đang làm gì, bấm nút nào, mong đợi ra sao.' }
+      { t: 'Ba việc đó không xong thì chụp <b>toàn màn hình</b> — chụp cả thanh menu và góc trên bên phải, đừng chụp mỗi ô báo lỗi — rồi gửi kèm câu: đang làm gì, bấm nút nào, mong đợi ra sao.' },
+      { t: 'Gửi cho người thiết kế hệ thống: <b>thầy Chung Trần — 0913031073</b>. Số này cũng có ở cuối mỗi trang, bấm vào là gọi được ngay trên điện thoại.' }
     ] },
 
     { td: 'Những chỗ hệ thống cố ý chặn', ai: GV, tim: 'chan khong cho ghi tai sao bi tu choi', nd: [
