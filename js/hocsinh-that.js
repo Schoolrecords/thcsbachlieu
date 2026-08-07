@@ -232,6 +232,10 @@
       + (chuaRo ? ' · chưa ghi giới tính: ' + chuaRo : '')
       + ' · Năm học ' + chan(NAM) + '</div></div>'
       + '<div class="sp"></div>'
+      /* Hai lối lấy bản giấy: in thẳng, hoặc tải Word về để chèn thêm cột
+         ghi chú, đổi tiêu đề rồi mới in. Giáo viên chủ nhiệm hay cần bản
+         Word để tự thêm cột theo dõi riêng của lớp. */
+      + '<button class="btn btn-out" id="hsTaiWord">📄 Tải file Word</button>'
       + '<button class="btn btn-pri" onclick="window.print()">🖨 In danh sách</button>'
       + '</div>'
       + '<div class="tbl-wrap"><table class="data"><thead><tr>'
@@ -250,6 +254,25 @@
       + 'Thông tin cá nhân của học sinh được bảo vệ theo Nghị định 13/2023/NĐ-CP. '
       + 'Số định danh cá nhân có lưu trong hệ thống nhưng không hiển thị ở đây. '
       + 'Thầy cô chỉ xem được lớp mình phụ trách; hàng rào đặt ở máy chủ.</p>';
+
+    /* Dồn dữ liệu sẵn ở đây rồi mới đưa sang bộ xuất Word — bộ ấy không biết
+       gì về lược đồ cơ sở dữ liệu, chỉ nhận một mảng đã gọn. Đổi tên cột
+       trong bảng sau này thì sửa đúng chỗ này, không phải lần sang tệp kia. */
+    const nutW = document.getElementById('hsTaiWord');
+    if (nutW) nutW.addEventListener('click', function () {
+      if (typeof window.xuatLopWord !== 'function') {
+        if (typeof notify === 'function')
+          notify('Chưa nạp được phần xuất Word. Thầy cô tải lại trang.');
+        return;
+      }
+      window.xuatLopWord(lop, NAM, CN[String(lop).toUpperCase()] || '',
+        l.em.map(r => ({
+          ma: r.hoc_sinh.ma,
+          ten: r.hoc_sinh.ho_ten,
+          ns: ngayVN(r.hoc_sinh.ngay_sinh) || '',
+          gt: r.hoc_sinh.gioi_tinh || ''
+        })));
+    });
 
     document.getElementById('sheetOverlay').classList.add('on');
     document.body.style.overflow = 'hidden';
