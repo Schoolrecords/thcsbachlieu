@@ -281,12 +281,34 @@
   /* ==========================================================================
      THAY THẾ SAU KHI ĐĂNG NHẬP XONG
      ========================================================================== */
+  /* Đọc không ra thì NÓI THẬT, đừng để bản xem thử đứng lại.
+     Bản xem thử có 636 học sinh và tên giáo viên chủ nhiệm do trang tự bịa.
+     Người đã đăng nhập mà thấy mấy con số ấy thì rất dễ tin là số của trường
+     mình — dải cảnh báo màu vàng ở trên không cứu được, vì mắt đọc số trước
+     khi đọc chữ. Thà nói thẳng "chưa đọc được" còn hơn bày số bịa. */
+  function baoKhongDocDuoc(vi) {
+    const canh = document.querySelector('#view-hocsinh .hs-mau-canh');
+    if (canh) {
+      canh.className = 'hs-mau-canh';
+      canh.style.display = '';
+      canh.innerHTML = '<b>⚠ Chưa đọc được danh sách học sinh của nhà trường.</b> '
+        + chan(vi) + '<br>Những con số bên dưới là <b>số minh hoạ do trang tự sinh</b>, '
+        + 'không phải số thật — đừng dùng để làm báo cáo.';
+    }
+  }
+
   async function noi() {
     try {
-      if (!await tai()) return;   // chưa có dữ liệu thì để nguyên bản xem thử
+      if (!await tai()) {
+        baoKhongDocDuoc('Năm học hiện hành chưa có danh sách nào được nhập, '
+          + 'hoặc tài khoản của thầy cô chưa được mở quyền xem.');
+        return;
+      }
     } catch (e) {
       console.error('[Quản lý học sinh] Không đọc được danh sách thật:', e);
-      return;                    // giữ nguyên bản xem thử kèm cảnh báo, không hiện bảng rỗng
+      baoKhongDocDuoc('Máy chủ không trả lời. Thầy cô kiểm tra kết nối mạng '
+        + 'rồi tải lại trang.');
+      return;
     }
     DA_NOI = true;
     window.renderKhoi = veKhoi;
