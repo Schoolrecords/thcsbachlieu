@@ -572,7 +572,10 @@
         + 'Ngh\u0129a l\u00e0 <b>b\u1ea3ng h\u1ecdc k\u1ef3 II KH\u00d4NG ph\u1ea3i k\u1ebft qu\u1ea3 c\u1ea3 n\u0103m</b> \u2014 thi\u1ebfu h\u1ecdc k\u1ef3 I th\u00ec '
         + 'kh\u00f4ng c\u00f3 c\u00e1ch n\u00e0o t\u00ednh ra con s\u1ed1 \u0111\u00fang.<br><br>'
         + '<b>Th\u1ea7y c\u00f4 ch\u1ecdn th\u00eam t\u1ec7p s\u1ed5 \u0111i\u1ec3m H\u1eccC K\u1ef2 I c\u1ee7a c\u00f9ng n\u0103m h\u1ecdc r\u1ed3i n\u1ea1p m\u1ed9t l\u01b0\u1ee3t</b> \u2014 '
-        + 'h\u1ec7 th\u1ed1ng t\u1ef1 t\u00ednh v\u00e0 ghi lu\u00f4n k\u1ebft qu\u1ea3 c\u1ea3 n\u0103m.</div>';
+        + 'h\u1ec7 th\u1ed1ng t\u1ef1 t\u00ednh v\u00e0 ghi lu\u00f4n k\u1ebft qu\u1ea3 c\u1ea3 n\u0103m.<br><br>'
+        + '<button class="btn btn-pri" id="vnThem1">\ud83d\udcc2 Ch\u1ecdn th\u00eam t\u1ec7p h\u1ecdc k\u1ef3 I ngay</button>'
+        + '<span class="vn-nho" style="margin-left:10px">'
+        + (DS_TEP.length + ' t\u1ec7p \u0111\u00e3 ch\u1ecdn v\u1eabn \u0111\u01b0\u1ee3c gi\u1eef nguy\u00ean') + '</span></div>';
     } else {
       h += '<div class="vn-canh vn-tin"><b>Ch\u1ec9 c\u00f3 h\u1ecdc k\u1ef3 I.</b> S\u1ebd ghi v\u00e0o \u00f4 '
         + '<b>H\u1ecdc k\u00ec I</b>. Khi n\u00e0o c\u00f3 s\u1ed5 h\u1ecdc k\u1ef3 II, n\u1ea1p c\u1ea3 hai m\u1ed9t l\u01b0\u1ee3t l\u00e0 h\u1ec7 th\u1ed1ng '
@@ -605,15 +608,35 @@
 
     const chanGhi = KQ.maTrung.length || KQ.namTep.length > 1 || (KQ.coHk2 && !KQ.coHk1);
     KQ.gop = gop;
-    h += '<div class="vn-chon">'
-      + (chanGhi ? '' : '<button class="btn btn-pri" id="vnGhi">\u2705 Ghi v\u00e0o c\u01a1 s\u1edf d\u1eef li\u1ec7u</button>')
-      + '<button class="btn btn-out" id="vnHuy">Hu\u1ef7</button></div>';
+
+    /* H\u00e0ng n\u00fat \u0111\u1eb7t \u1ede C\u1ea2 HAI \u0110\u1ea6U m\u00e0n h\u00ecnh. B\u1ea3ng 16 l\u1edbp d\u00e0i qu\u00e1 m\u1ed9t m\u00e0n, th\u1ea7y c\u00f4
+       cu\u1ed9n xu\u1ed1ng cu\u1ed1i kh\u00f4ng th\u1ea5y n\u00fat th\u00ec t\u01b0\u1edfng h\u1ec7 th\u1ed1ng h\u1ecfng; m\u00e0 cu\u1ed9n l\u00ean \u0111\u1ea7u
+       c\u0169ng kh\u00f4ng th\u1ea5y v\u00ec tr\u01b0\u1edbc \u0111\u00e2y n\u00fat ch\u1ec9 n\u1eb1m \u1edf cu\u1ed1i. */
+    const hangNut = (chanGhi
+        ? '<div class="vn-canh vn-do" style="margin:0;flex:1;min-width:260px">'
+          + '<b>Ch\u01b0a c\u00f3 n\u00fat Ghi</b> \u2014 v\u00ec l\u00fd do \u0111\u1ecf \u1edf tr\u00ean. S\u1eeda xong l\u00e0 n\u00fat hi\u1ec7n ra.</div>'
+          + '<button class="btn btn-pri" id="vnThemNua">\ud83d\udcc2 Ch\u1ecdn th\u00eam t\u1ec7p</button>'
+        : '<button class="btn btn-pri" id="vnGhi">\u2705 Ghi v\u00e0o c\u01a1 s\u1edf d\u1eef li\u1ec7u</button>'
+          + '<button class="btn btn-out" id="vnThemNua">\ud83d\udcc2 Ch\u1ecdn th\u00eam t\u1ec7p</button>')
+      + '<button class="btn btn-out" id="vnHuy">Hu\u1ef7</button>';
+
+    h = '<div class="vn-chon" style="margin-top:0">' + hangNut + '</div>'
+      + h
+      + '<div class="vn-chon">' + hangNut.replace(/id="vn/g, 'id="vnD') + '</div>';
 
     veKq(h);
-    const g = document.getElementById('vnGhi');
-    if (g) g.addEventListener('click', ghi);
-    const hy = document.getElementById('vnHuy');
-    if (hy) hy.addEventListener('click', () => { KQ = null; if (window.hsVeLai) window.hsVeLai(HOP); });
+    /* Hai b\u1ea3n n\u00fat n\u00ean ph\u1ea3i g\u1eafn s\u1ef1 ki\u1ec7n cho c\u1ea3 hai, id b\u1ea3n d\u01b0\u1edbi th\u00eam ch\u1eef D */
+    const gan = (id, fn) => {
+      [id, id.replace('vn', 'vnD')].forEach(x => {
+        const o = document.getElementById(x);
+        if (o) o.addEventListener('click', fn);
+      });
+    };
+    gan('vnGhi', ghi);
+    gan('vnThemNua', () => veChonTep());
+    gan('vnHuy', () => { DS_TEP = []; KQ = null; if (window.hsVeLai) window.hsVeLai(HOP); });
+    const t1 = document.getElementById('vnThem1');
+    if (t1) t1.addEventListener('click', () => veChonTep());
   }
 
   function nam() {
@@ -697,14 +720,14 @@
     const dsHs = Object.keys(hs).map(k => hs[k]);
     const dsHl = Object.keys(hl).map(k => hl[k]);
 
-    if (!await meGhi('hoc_sinh', dsHs, 'ma', 'Danh sách học sinh', 200)) return xong(y);
+    if (!await meGhi('hoc_sinh', dsHs, 'ma', 'Danh sách học sinh', 200)) return xong(y, false, namHoc);
     y.push('Đã ghi ' + dsHs.length + ' học sinh.');
 
-    if (!await meGhi('hoc_sinh_lop', dsHl, 'hoc_sinh_ma,nam_hoc', 'Xếp lớp')) return xong(y);
+    if (!await meGhi('hoc_sinh_lop', dsHl, 'hoc_sinh_ma,nam_hoc', 'Xếp lớp')) return xong(y, false, namHoc);
     y.push('Đã xếp lớp cho ' + dsHl.length + ' em, năm học ' + namHoc + '.');
 
     if (kq.length) {
-      if (!await meGhi('hs_ket_qua', kq, 'nam_hoc,ky,hoc_sinh_ma,mon_ma', 'Điểm từng môn')) return xong(y);
+      if (!await meGhi('hs_ket_qua', kq, 'nam_hoc,ky,hoc_sinh_ma,mon_ma', 'Điểm từng môn')) return xong(y, false, namHoc);
       const soHk1 = kq.filter(x => x.ky === 'hoc_ki_1').length;
       const soCn = kq.length - soHk1;
       y.push('Đã ghi ' + kq.length + ' ô điểm'
@@ -713,24 +736,69 @@
     }
 
     if (rl.length) {
-      if (!await meGhi('hs_ren_luyen', rl, 'nam_hoc,ky,hoc_sinh_ma', 'Mức rèn luyện')) return xong(y);
+      if (!await meGhi('hs_ren_luyen', rl, 'nam_hoc,ky,hoc_sinh_ma', 'Mức rèn luyện')) return xong(y, false, namHoc);
       y.push('Đã ghi ' + rl.length + ' mức rèn luyện.');
     }
-    xong(y, true);
+    xong(y, true, namHoc);
   }
 
-  function xong(y, ok) {
+  function xong(y, ok, namHoc) {
     veKq('<div class="vn-canh ' + (ok ? 'vn-ok' : 'vn-do') + '"><b>'
-      + (ok ? 'Xong.' : 'Dừng giữa chừng — đọc kỹ dòng báo lỗi bên dưới.') + '</b><br>'
+      + (ok ? '✅ ĐÃ LƯU VÀO CƠ SỞ DỮ LIỆU — không cần bấm lưu gì thêm.'
+            : 'Dừng giữa chừng — đọc kỹ dòng báo lỗi bên dưới.') + '</b><br>'
       + y.map(chan).join('<br>')
-      + (ok ? '<br><br>Bước tiếp: bấm <b>"Tính lại 33 chỉ tiêu"</b> để hệ thống xếp loại '
+      + (ok ? '<br><br>Mỗi dòng trên là một việc đã ghi xong xuống máy chủ. '
+            + 'Muốn tự kiểm chứng thì bấm nút bên dưới — hệ thống <b>đọc ngược từ máy '
+            + 'chủ</b> ra đếm lại, chứ không lấy số máy này tự nhớ.<br>'
+            + 'Bước tiếp: bấm <b>"Tính lại 33 chỉ tiêu"</b> để hệ thống xếp loại '
             + 'theo Thông tư 22 và đổ số vào Phụ lục 5.'
             : '<br><br>Sửa xong nguyên nhân rồi <b>nạp lại chính những tệp này</b> — '
             + 'mọi bước đều ghi theo khoá duy nhất nên dữ liệu không bị nhân đôi, '
             + 'phần đã ghi được sẽ được cập nhật lại chứ không thêm mới.')
-      + '</div><div class="vn-chon"><button class="btn btn-pri" id="vnVe">← Về màn hình học sinh</button></div>');
+      + '</div><div id="vnKiem"></div><div class="vn-chon">'
+      + (ok ? '<button class="btn btn-pri" id="vnKiemChung">🔍 Đọc ngược từ máy chủ để kiểm chứng</button>' : '')
+      + '<button class="btn btn-out" id="vnVe">← Về màn hình học sinh</button></div>');
+    const k = document.getElementById('vnKiemChung');
+    if (k) k.addEventListener('click', () => kiemChung(namHoc));
     const v = document.getElementById('vnVe');
-    if (v) v.addEventListener('click', () => { KQ = null; if (window.hsVeLai) window.hsVeLai(); });
+    if (v) v.addEventListener('click', () => {
+      DS_TEP = []; KQ = null; if (window.hsVeLai) window.hsVeLai(HOP);
+    });
+  }
+
+  /* ĐỌC NGƯỢC TỪ MÁY CHỦ để tự kiểm chứng.
+     Câu "đã ghi xong" do chính máy khách in ra — thầy cô không có cách nào
+     biết máy chủ có nhận thật hay không. Nút này hỏi thẳng cơ sở dữ liệu và
+     đếm lại, đó mới là bằng chứng. */
+  async function kiemChung(namHoc) {
+    const o = document.getElementById('vnKiem');
+    if (o) o.innerHTML = '<div class="vn-canh">Đang đọc lại từ máy chủ…</div>';
+    const s = sb();
+    const dem = async (bang, loc) => {
+      let q = s.from(bang).select('*', { count: 'exact', head: true });
+      (loc || []).forEach(f => { q = q.eq(f[0], f[1]); });
+      const r = await q;
+      return r.error ? ('lỗi: ' + r.error.message) : r.count;
+    };
+    const [hsl, kq1, kqCn, rl1, rlCn] = await Promise.all([
+      dem('hoc_sinh_lop', [['nam_hoc', namHoc]]),
+      dem('hs_ket_qua', [['nam_hoc', namHoc], ['ky', 'hoc_ki_1']]),
+      dem('hs_ket_qua', [['nam_hoc', namHoc], ['ky', 'ca_nam']]),
+      dem('hs_ren_luyen', [['nam_hoc', namHoc], ['ky', 'hoc_ki_1']]),
+      dem('hs_ren_luyen', [['nam_hoc', namHoc], ['ky', 'ca_nam']])
+    ]);
+    if (!o) return;
+    o.innerHTML = '<div class="vn-canh vn-ok"><b>Máy chủ đang có, năm học '
+      + chan(namHoc) + ':</b>'
+      + '<table class="vn-bang"><tbody>'
+      + '<tr><td>Học sinh đã xếp lớp</td><td><b>' + hsl + '</b></td></tr>'
+      + '<tr><td>Ô điểm học kỳ I</td><td><b>' + kq1 + '</b></td></tr>'
+      + '<tr><td>Ô điểm cả năm</td><td><b>' + kqCn + '</b></td></tr>'
+      + '<tr><td>Mức rèn luyện học kỳ I</td><td><b>' + rl1 + '</b></td></tr>'
+      + '<tr><td>Mức rèn luyện cả năm</td><td><b>' + rlCn + '</b></td></tr>'
+      + '</tbody></table>'
+      + '<span class="vn-nho">Đây là số đếm được từ chính cơ sở dữ liệu, '
+      + 'không phải số máy này tự nhớ. Khớp với bảng trên là chắc chắn đã lưu.</span></div>';
   }
 
   window.vneduChonTep = chonTep;
