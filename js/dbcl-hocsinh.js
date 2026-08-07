@@ -145,6 +145,45 @@
     return { ok: false, gt: null };
   }
 
+  /* Đổi ngược yyyy-mm-dd của cơ sở dữ liệu về ngày/tháng/năm cho thầy cô đọc.
+     Hàm này CÓ ở vài tệp khác nhưng nằm trong IIFE riêng, không dùng chung
+     được — thiếu bản ở đây thì nút "Tải mẫu danh sách" ném ReferenceError
+     ngay khi trường ĐÃ CÓ học sinh: không tải gì, không báo gì, chỉ có một
+     dòng đỏ trong console. Máy trắng thì chạy, ra trường thì im lặng hỏng. */
+  function ngayVN(s) {
+    const m = String(s || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
+    return m ? m[3] + '/' + m[2] + '/' + m[1] : '';
+  }
+
+  /* Đổi mấy câu lỗi hay gặp của máy chủ sang tiếng Việt kèm CÁCH CHỮA.
+     Câu gốc là tiếng Anh và nói theo lối kỹ thuật — thầy cô đọc "Could not
+     find the 'so_dinh_danh' column in the schema cache" thì không thể suy ra
+     là quản trị còn thiếu một bước chạy tệp SQL. */
+  function loiTiengViet(e, viec) {
+    const s = String(e && e.message || e || '');
+    if (/so_dinh_danh/.test(s) && /schema cache|column/i.test(s)) {
+      return 'Cơ sở dữ liệu chưa có cột "Số định danh cá nhân". '
+        + 'Quản trị chạy tệp sql/25 rồi thầy cô thử lại — cột này mới thêm.';
+    }
+    if (/hoc_sinh_dinh_danh_hop_le/.test(s)) {
+      return 'Có ô Số định danh không đúng 12 chữ số nên máy chủ từ chối cả mẻ. '
+        + 'Thường do Excel nuốt mất số 0 đứng đầu — chọn cột đó, đặt định dạng '
+        + 'ô thành Văn bản rồi gõ lại.';
+    }
+    if (/row-level security|permission denied/i.test(s)) {
+      return 'Tài khoản của thầy cô chưa đủ quyền ghi ' + viec + '. Báo quản trị giúp em.';
+    }
+    if (/JWT|token|expired/i.test(s)) {
+      return 'Phiên đăng nhập đã hết hạn. Thầy cô đăng nhập lại rồi làm lại.';
+    }
+    return 'Chưa nạp được ' + viec + ': ' + s;
+  }
+  window.hsLoiTiengViet = loiTiengViet;
+
+  /* Mở ra ngoài để phần nạp thẳng tệp VnEdu dùng lại đúng bộ quy tắc này,
+     khỏi viết hai bản rồi lệch nhau. */
+  window.hsChuanNgay = chuanNgay;
+
   function dungNgay(nam, thang, ngay) {
     if (!(nam >= 1900 && nam <= 2100) || !(thang >= 1 && thang <= 12)
         || !(ngay >= 1 && ngay <= 31)) return { ok: false, gt: null };
@@ -267,6 +306,12 @@
       + 'không ghép theo họ tên. Tệp kết quả không tạo được học sinh mới.</p>'
       + (qt ? '<button class="btn btn-out" id="hsMauKQ">⬇ Tải mẫu kết quả</button>'
             + '<button class="btn btn-pri" id="hsLenKQ">⬆ Tải kết quả lên</button>' : '')
+      + '</div>'
+      + '<div class="hs-o dam"><h4>⚡ Cách nhanh nhất — nạp thẳng sổ điểm VnEdu</h4>'
+      + '<p>Thả nguyên các tệp <b>so_diem_tong_ket_khoi_*.xls</b> tải từ VnEdu về. '
+      + 'Một lần vào cả <b>danh sách học sinh</b> lẫn <b>điểm 12 môn</b> — '
+      + 'không phải chép sang mẫu, không có chỗ cho lỗi chép nhầm.</p>'
+      + (qt ? '<button class="btn btn-pri" id="hsVnEdu">📥 Nạp tệp VnEdu</button>' : '')
       + '</div></div>';
 
     if (!DS.length) {
@@ -346,83 +391,155 @@
     g('hsLenDS', () => chonTep('ds'));
     g('hsLenKQ', () => chonTep('kq'));
     g('hsTinh', tinhChiTieu);
+    g('hsVnEdu', () => {
+      if (typeof window.vneduChonTep === 'function') window.vneduChonTep(hop);
+      else notify('Chưa nạp được phần đọc tệp VnEdu, thầy cô tải lại trang.');
+    });
   }
 
+  /* Cho phần nạp VnEdu vẽ lại màn hình sau khi ghi xong */
+  window.hsVeLai = function () { ve(); };
+
   /* ========================================================================
-     MẪU EXCEL
+     MẪU EXCEL — theo ĐÚNG thứ tự cột sổ điểm VnEdu của nhà trường
+
+     Trường đang dùng tệp "so_diem_tong_ket_khoi_*.xls" xuất từ VnEdu, cột xếp
+     theo thứ tự:  STT · Mã học sinh · Số định danh cá nhân · Họ và tên ·
+     Ngày sinh · rồi tới các môn. Mẫu của hệ thống bám đúng thứ tự đó để thầy
+     cô chép cả cột sang là xong, không phải sắp lại từng cột.
+
+     Phần TẠO mẫu đi qua mau-excel.js (ExcelJS) để có khổ A4 ngang, khung viền
+     và màu nền — thư viện xlsx bản miễn phí không viết được những thứ đó.
+     Phần ĐỌC tệp tải lên vẫn dùng xlsx như cũ.
      ======================================================================== */
   function mauDanhSach() {
-    if (!coThuVien()) return;
-    const hang = [
-      ['MẪU KHAI BÁO DANH SÁCH HỌC SINH — ' + (CAU_HINH.TEN_TRUONG || '')],
-      ['Năm học', NAM],
-      [],
-      ['Hướng dẫn: Mã học sinh lấy ĐÚNG mã đang dùng trên VnEdu, giữ nguyên suốt cấp học.'],
-      ['Ngày sinh và Ngày vào học ghi dạng ngày/tháng/năm, ví dụ 20/05/2014.'],
-      ['Hai dòng có mã VIDU-01 và VIDU-02 chỉ là ví dụ — xoá đi, hệ thống cũng tự bỏ qua.'],
-      ['Cột Hoà nhập ghi x nếu em học hoà nhập — Thông tư 22 đánh giá theo quy định riêng.'],
-      ['Cột Miễn/giảm môn ghi tên môn được miễn, ví dụ: Giáo dục thể chất.'],
-      ['Trạng thái: Đang học / Chuyển đi / Bảo lưu / Thôi học. Để trống nghĩa là Đang học.'],
-      [],
-      ['Mã học sinh', 'Họ và tên', 'Ngày sinh', 'Giới tính', 'Lớp',
-       'Hoà nhập', 'Miễn/giảm môn', 'Ngày vào học', 'Trạng thái']
-    ];
-    if (DS.length) {
-      DS.forEach(r => {
-        const h = r.hoc_sinh;
-        hang.push([h.ma, h.ho_ten, h.ngay_sinh || '', h.gioi_tinh || '', r.lop,
-          h.hoa_nhap ? 'x' : '', h.mien_giam_mon || '', r.ngay_vao || '', TEN_TT[r.trang_thai] || '']);
-      });
-    } else {
-      /* Hai dòng ví dụ có chữ "(ví dụ — xoá dòng này)" ngay trong mã, và phần
-         đọc tệp bỏ qua mọi mã bắt đầu bằng VIDU. Trước đây ví dụ ghi mã thật
-         HS0001, HS0002 nên thầy cô điền tiếp bên dưới rồi nạp lên là hai em
-         không có thật vào thẳng cơ sở dữ liệu, không một lời cảnh báo. */
-      hang.push(['VIDU-01', 'Nguyễn Văn A (ví dụ — xoá dòng này)', '20/05/2014', 'Nam', '6A', '', '', '', '']);
-      hang.push(['VIDU-02', 'Trần Thị B (ví dụ — xoá dòng này)', '03/11/2014', 'Nữ', '6A', 'x', 'Giáo dục thể chất', '', '']);
-    }
-    xuat(hang, [{ wch: 14 }, { wch: 26 }, { wch: 12 }, { wch: 9 }, { wch: 8 },
-                { wch: 10 }, { wch: 22 }, { wch: 13 }, { wch: 13 }],
-         'Danh sach HS', 'mau-danh-sach-hoc-sinh-' + NAM + '.xlsx');
-    notify('Đã tải mẫu danh sách học sinh. Điền xong bấm "Tải danh sách lên".');
+    const dong = DS.length
+      ? DS.map((r, i) => {
+          const h = r.hoc_sinh;
+          return [i + 1, h.ma, h.so_dinh_danh || '', h.ho_ten, ngayVN(h.ngay_sinh),
+                  h.gioi_tinh || '', r.lop, h.hoa_nhap ? 'x' : '',
+                  h.mien_giam_mon || '', ngayVN(r.ngay_vao), TEN_TT[r.trang_thai] || ''];
+        })
+      : [
+          [1, 'VIDU-01', '', 'Nguyễn Văn A (ví dụ — xoá dòng này)', '20/05/2014', 'Nam', '6A', '', '', '', ''],
+          [2, 'VIDU-02', '', 'Trần Thị B (ví dụ — xoá dòng này)', '03/11/2014', 'Nữ', '6A', 'x', 'Giáo dục thể chất', '', '']
+        ];
+
+    window.taoMauExcel({
+      ten: 'Danh sach hoc sinh',
+      ngang: true,
+      tieuDe: [
+        (CAU_HINH.TEN_TRUONG || '').toUpperCase(),
+        'DANH SÁCH HỌC SINH',
+        'Năm học ' + NAM
+      ],
+      cot: [
+        { ten: 'STT',                  rong: 5,  giua: true },
+        { ten: 'Mã học sinh',          rong: 14, giua: true },
+        { ten: 'Số định danh cá nhân', rong: 19, giua: true, chu: true },
+        /* chu: true → ô định dạng Văn bản, giữ được số 0 đứng đầu (040…) */
+        { ten: 'Họ và tên',            rong: 26 },
+        { ten: 'Ngày sinh',            rong: 12, giua: true },
+        { ten: 'Giới tính',            rong: 10, giua: true, chon: ['Nam', 'Nữ'] },
+        { ten: 'Lớp',                  rong: 8,  giua: true },
+        { ten: 'Hoà nhập',             rong: 10, giua: true, chon: ['x'] },
+        { ten: 'Miễn/giảm môn',        rong: 22 },
+        { ten: 'Ngày vào học',         rong: 13, giua: true },
+        { ten: 'Trạng thái',           rong: 14, giua: true,
+          chon: ['Đang học', 'Chuyển đi', 'Bảo lưu', 'Thôi học'] }
+      ],
+      dong: dong,
+      soDongTrong: DS.length ? 10 : 40,
+      huongDan: [
+        'Thứ tự cột giống hệt sổ điểm tổng kết xuất từ VnEdu, nên chép cả cột sang là xong.',
+        '',
+        '· Mã học sinh lấy ĐÚNG mã đang dùng trên VnEdu, giữ nguyên suốt cấp học. Đây là khoá ghép — tệp kết quả về sau ghép theo cột này, không ghép theo họ tên.',
+        '· Số định danh cá nhân có thì điền, không có cũng được. Hệ thống không bắt buộc và không đưa số này ra màn hình công khai.',
+        '· Ngày sinh và Ngày vào học ghi ngày/tháng/năm, ví dụ 20/05/2014. Để Excel tự định dạng ngày cũng đọc được.',
+        '· Giới tính, Hoà nhập, Trạng thái đều có danh sách xổ xuống — bấm vào ô rồi chọn, khỏi gõ sai.',
+        '· Cột Hoà nhập ghi x nếu em học hoà nhập. Thông tư 22 đánh giá diện này theo quy định riêng, và các em không tính vào mẫu số của tỉ lệ.',
+        '· Cột Miễn/giảm môn ghi tên môn được miễn, ví dụ: Giáo dục thể chất.',
+        '· Trạng thái để trống nghĩa là Đang học.',
+        '',
+        'HAI DÒNG VÍ DỤ',
+        'Hai dòng mã VIDU-01 và VIDU-02 chỉ để xem mẫu. Xoá đi cũng được, để nguyên cũng được — hệ thống tự bỏ qua mọi dòng có mã bắt đầu bằng VIDU.',
+        '',
+        'CỘT NÀO TỆP KHÔNG CÓ THÌ HỆ THỐNG GIỮ NGUYÊN GIÁ TRỊ CŨ',
+        'Ô để trống cũng vậy. Nạp lại một danh sách rút gọn không làm mất diện hoà nhập hay trạng thái của em nào.'
+      ],
+      tenTep: 'mau-danh-sach-hoc-sinh-' + NAM + '.xlsx'
+    });
+  }
+
+  /* Tên môn viết tắt theo đúng sổ điểm VnEdu, và thứ tự cột cũng theo VnEdu —
+     để mẫu kết quả trông y như tệp thầy cô đang có, chép sang không phải đổi
+     tiêu đề cột hay sắp lại. */
+  const TEN_VNEDU = {
+    TOAN: 'Toán', LSDL: 'LS&ĐL', KHTN: 'KHTN', TIN: 'Tin', NV: 'Văn',
+    NN1: 'Ng.ngữ', GDCD: 'GDCD', CN: 'C.nghệ', GDTC: 'GDTC', NT: 'Nghệ thuật',
+    GDDP: 'NDGDCĐP', TNHN: 'HĐTN&HN'
+  };
+  const TT_VNEDU = ['TOAN', 'LSDL', 'KHTN', 'TIN', 'NV', 'NN1', 'GDCD', 'CN',
+                    'GDTC', 'NT', 'GDDP', 'TNHN'];
+
+  function monTheoVnEdu() {
+    const co = {};
+    MON.forEach(m => { co[m.ma] = m; });
+    const ra = [];
+    TT_VNEDU.forEach(ma => { if (co[ma]) { ra.push(co[ma]); delete co[ma]; } });
+    /* Môn nào danh mục có mà VnEdu không liệt kê thì xếp cuối, không bỏ sót */
+    MON.forEach(m => { if (co[m.ma]) ra.push(m); });
+    return ra;
   }
 
   function mauKetQua() {
-    if (!coThuVien()) return;
     if (!DS.length) { notify('Chưa có danh sách học sinh, chưa tạo được mẫu kết quả.'); return; }
-    const cotMon = MON.map(m => m.ten + (m.kieu === 'dat' ? ' (Đ/CĐ)' : ''));
-    const hang = [
-      ['MẪU NHẬP KẾT QUẢ HỌC TẬP — ' + (CAU_HINH.TEN_TRUONG || '')],
-      /* Ô ngay sau chữ "Kỳ" phải chứa ĐÚNG giá trị, không được chứa câu hướng
-         dẫn — vì phần đọc tệp dò kỳ học trên chính ô này. Trước đây câu hướng
-         dẫn có sẵn chữ "hoc_ki_1" nên mọi tệp đều bị nhận nhầm là học kỳ I. */
-      ['Năm học', NAM, 'Kỳ', 'Cả năm', ''],
-      [],
-      ['Hướng dẫn: KHÔNG sửa cột Mã học sinh — hệ thống ghép theo cột này.'],
-      ['Ô "Kỳ" ở dòng 2: ghi "Cả năm" hoặc "Học kỳ I". Không ghi thêm chữ nào khác.'],
-      ['Môn tính điểm ghi số từ 0 đến 10. Môn đánh giá Đạt ghi Đ hoặc CĐ.'],
-      ['Cột Rèn luyện ghi: Tốt / Khá / Đạt / Chưa đạt.'],
-      ['Cột Lên lớp chỉ điền khi nhập kết quả cả năm, và điền cho MỌI em:'],
-      ['   ghi x nếu được lên lớp, ghi 0 nếu ở lại lớp. Để trống cả cột thì hệ thống bỏ qua.'],
-      [],
-      ['Mã học sinh', 'Họ và tên', 'Lớp'].concat(cotMon).concat(['Rèn luyện', 'Lên lớp'])
-    ];
-    DS.filter(r => r.trang_thai === 'dang_hoc').forEach(r => {
-      hang.push([r.hoc_sinh.ma, r.hoc_sinh.ho_ten, r.lop].concat(MON.map(() => '')).concat(['', '']));
-    });
-    const cols = [{ wch: 14 }, { wch: 26 }, { wch: 8 }]
-      .concat(MON.map(() => ({ wch: 13 }))).concat([{ wch: 12 }, { wch: 9 }]);
-    xuat(hang, cols, 'Ket qua', 'mau-ket-qua-hoc-tap-' + NAM + '.xlsx');
-    notify('Đã tải mẫu kết quả với ' + DS.filter(r => r.trang_thai === 'dang_hoc').length
-      + ' học sinh đang học. Nhớ ghi rõ kỳ ở dòng 2.');
-  }
+    const mons = monTheoVnEdu();
+    const dangHoc = DS.filter(r => r.trang_thai === 'dang_hoc');
 
-  function xuat(hang, cols, ten, tep) {
-    const ws = XLSX.utils.aoa_to_sheet(hang);
-    ws['!cols'] = cols;
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, ten);
-    XLSX.writeFile(wb, tep);
+    window.taoMauExcel({
+      ten: 'Ket qua hoc tap',
+      ngang: true,
+      tieuDe: [
+        (CAU_HINH.TEN_TRUONG || '').toUpperCase(),
+        'BẢNG TỔNG HỢP KẾT QUẢ HỌC TẬP VÀ RÈN LUYỆN'
+      ],
+      /* Ô "Kỳ" phải đứng RIÊNG một ô để phần đọc tệp dò được giá trị ngay bên
+         phải nó. Gộp vào dòng tiêu đề là không dò được nữa. */
+      thongSo: ['Năm học', NAM, 'Kỳ', 'Cả năm'],
+      cot: [
+        { ten: 'STT',         rong: 5,  giua: true },
+        { ten: 'Mã học sinh', rong: 14, giua: true },
+        { ten: 'Họ và tên',   rong: 24 },
+        { ten: 'Lớp',         rong: 7,  giua: true }
+      ].concat(mons.map(m => ({
+        ten: (TEN_VNEDU[m.ma] || m.ten) + (m.kieu === 'dat' ? ' (Đ/CĐ)' : ''),
+        rong: 11, giua: true
+      }))).concat([
+        { ten: 'Rèn luyện', rong: 12, giua: true, chon: ['Tốt', 'Khá', 'Đạt', 'Chưa đạt'] },
+        { ten: 'Lên lớp',   rong: 9,  giua: true, chon: ['x', '0'] }
+      ]),
+      dong: dangHoc.map((r, i) =>
+        [i + 1, r.hoc_sinh.ma, r.hoc_sinh.ho_ten, r.lop]
+          .concat(mons.map(() => '')).concat(['', ''])),
+      soDongTrong: 0,
+      huongDan: [
+        'Thứ tự cột môn giống hệt sổ điểm tổng kết xuất từ VnEdu, nên chép cả vùng điểm sang là xong.',
+        '',
+        '· KHÔNG sửa cột Mã học sinh — hệ thống ghép theo cột này, không ghép theo họ tên.',
+        '· Ô "Kỳ" ở đầu trang: ghi "Cả năm" hoặc "Học kì I". Không ghi thêm chữ nào khác. Ghi sai hoặc để trống thì hệ thống dừng lại và báo, chứ không đoán.',
+        '· Môn tính điểm ghi số từ 0 đến 10. Môn có chữ (Đ/CĐ) ghi Đ hoặc CĐ.',
+        '· Cột Rèn luyện chọn một trong bốn mức: Tốt / Khá / Đạt / Chưa đạt.',
+        '',
+        'CỘT LÊN LỚP — đọc kỹ chỗ này',
+        'Chỉ điền khi nhập kết quả CẢ NĂM, và điền cho MỌI em: ghi x nếu được lên lớp, ghi 0 nếu ở lại lớp.',
+        'Để trống CẢ CỘT thì hệ thống bỏ qua, coi như trường chưa xét lên lớp. Nhưng điền dở dang thì những em còn trống sẽ bị ghi là Ở LẠI LỚP — hệ thống có hỏi lại riêng một câu trước khi ghi.',
+        'Con số này đi thẳng vào chỉ tiêu CT10 và CT11 của Phụ lục 5 gửi Sở.',
+        '',
+        'Ô nào máy không đọc được thì được kể ra trước khi ghi, không bỏ lặng lẽ. Tệp kết quả KHÔNG BAO GIỜ tạo được học sinh mới — mã lạ sẽ bị bỏ qua và báo lại.'
+      ],
+      tenTep: 'mau-ket-qua-hoc-tap-' + NAM + '.xlsx'
+    });
   }
 
   /* ========================================================================
@@ -464,6 +581,18 @@
     } catch (e) { notify('Không đọc được tệp: ' + e.message); return; }
     const ws = wb.Sheets[wb.SheetNames[0]];
     if (!ws) { notify('Tệp không có trang tính nào.'); return; }
+    /* Màn hình này CHỈ đọc trang tính đầu. Mẫu của hệ thống có trang thứ hai
+       tên "Huong dan" nên không sao. Nhưng sổ điểm VnEdu có MỖI LỚP MỘT TRANG
+       (6a, 6b, 6c, 6d) — đọc trang đầu là mất ba lớp, không một lời cảnh báo.
+       Chặn lại và chỉ sang đúng nút dành cho việc đó. */
+    const phu = wb.SheetNames.slice(1).filter(t => !/^h(uo|ướ)ng\s*d(an|ẫn)$/i.test(String(t).trim()));
+    if (phu.length) {
+      notify('Tệp có ' + wb.SheetNames.length + ' trang tính (' + wb.SheetNames.join(', ')
+        + '). Màn hình này chỉ đọc trang đầu nên sẽ mất ' + phu.length
+        + ' trang còn lại. Nếu đây là sổ điểm VnEdu thì thầy cô dùng nút '
+        + '"📥 Nạp tệp VnEdu" — nút đó đọc hết mọi lớp.');
+      return;
+    }
     const hang = XLSX.utils.sheet_to_json(ws, { header: 1, raw: false, defval: '' });
 
     const iTd = timDongTieuDe(hang, 'mã học sinh', 'họ và tên');
@@ -506,6 +635,7 @@
        gan() lo việc gắn sự kiện chọn tệp, trùng tên là bẫy cho lần sửa sau. */
     const datNeuCo = (b, khoa, coCotKhong, giaTri) => { if (coCotKhong) b[khoa] = giaTri; };
 
+    const coDinhDanh  = coCot('số định danh cá nhân', 'số định danh');
     const coNgaySinh  = coCot('ngày sinh');
     const coGioiTinh  = coCot('giới tính');
     const coHoaNhap   = coCot('hoà nhập', 'hòa nhập');
@@ -552,6 +682,16 @@
         loi.push('Dòng ' + dong + ': ngày vào học "' + c(d, 'ngày vào học')
           + '" không đọc được — ghi dạng 05/09/2026'); return;
       }
+      /* Số định danh phải đúng 12 chữ số — máy chủ có ràng buộc, gửi sai là
+         từ chối CẢ MẺ. Bắt ở đây để kể tên đúng dòng, thay vì để thầy cô
+         nhận một câu tiếng Anh về "check constraint". */
+      const dd = coDinhDanh ? (c(d, 'số định danh cá nhân') || c(d, 'số định danh')) : '';
+      if (dd && !/^[0-9]{12}$/.test(dd)) {
+        loi.push('Dòng ' + dong + ': số định danh "' + dd + '" phải đúng 12 chữ số. '
+          + (dd.length === 11 ? 'Có vẻ Excel đã nuốt mất số 0 đứng đầu — '
+             : '') + 'chọn cột đó, đặt định dạng ô thành Văn bản rồi gõ lại.');
+        return;
+      }
       daGap[ma] = true;
 
       /* Ô TRỐNG cũng không được ghi đè. Nguyên tắc "tệp không có thì không
@@ -563,6 +703,10 @@
          sạch. Nên ô trống thì điền lại chính giá trị đang có của em đó. */
       const cu = coMaCu[ma] || {};
       const bHs = { ma: ma, ho_ten: ten };
+      /* Số định danh cá nhân là dữ liệu nhạy cảm theo Nghị định 13/2023 —
+         chỉ lưu, không bao giờ đưa ra màn hình công khai. Giữ dạng chuỗi để
+         không mất số 0 đứng đầu. */
+      datNeuCo(bHs, 'so_dinh_danh', coDinhDanh, dd || cu.so_dinh_danh || null);
       datNeuCo(bHs, 'ngay_sinh', coNgaySinh,
                ns.gt !== null ? ns.gt : (cu.ngay_sinh || null));
       datNeuCo(bHs, 'gioi_tinh', coGioiTinh,
@@ -629,7 +773,7 @@
           : ''))) return;
 
     const a = await sb.from('hoc_sinh').upsert(hs, { onConflict: 'ma' });
-    if (a.error) { notify('Chưa nạp được danh sách: ' + a.error.message); return; }
+    if (a.error) { notify(loiTiengViet(a.error, 'danh sách')); return; }
     const b = await sb.from('hoc_sinh_lop').upsert(hl, { onConflict: 'hoc_sinh_ma,nam_hoc' });
     if (b.error) { notify('Nạp được học sinh nhưng chưa gán lớp: ' + b.error.message); return; }
 
@@ -678,10 +822,23 @@
        CHỈ cắt đúng hậu tố đánh dấu " (Đ/CĐ)". Trước đây cắt mọi cụm trong
        ngoặc ở cuối, làm "Ngoại ngữ 1 (Tiếng Anh)" và "Nghệ thuật (Âm nhạc,
        Mĩ thuật)" không khớp cột nào và bị bỏ qua lặng lẽ. */
-    const bo = t => t.replace(/\s*\(Đ\/CĐ\)\s*$/i, '').trim().toLowerCase();
+    const bo = t => t.replace(/\s*\(Đ\/CĐ\)\s*$/i, '')
+                     .replace(/\s*\(HS\s*\d\)\s*$/i, '')     // sổ VnEdu có "(HS 1)"
+                     .replace(/\s*\(N\.xét\)\s*$/i, '')
+                     .trim().toLowerCase();
+    /* Nhận CẢ tên đầy đủ trong danh mục LẪN tên viết tắt của sổ điểm VnEdu.
+       Sổ của trường ghi "LS&ĐL", "Ng.ngữ", "C.nghệ", "NDGDCĐP", "HĐTN&HN" —
+       không chữ nào khớp tên đầy đủ ("Lịch sử và Địa lí", "Ngoại ngữ 1
+       (Tiếng Anh)"…). Thiếu bảng này thì chép thẳng tệp VnEdu sang là mất
+       gần hết cột điểm, mà chỉ báo chung chung "không tìm thấy cột của N môn". */
     const cotMon = [], monThieu = [];
     MON.forEach(m => {
-      const i = td.findIndex(t => bo(t) === m.ten.toLowerCase());
+      const tenDay = m.ten.toLowerCase();
+      const tenTat = (TEN_VNEDU[m.ma] || '').toLowerCase();
+      const i = td.findIndex(t => {
+        const x = bo(t);
+        return x === tenDay || (tenTat && x === tenTat) || x === m.ma.toLowerCase();
+      });
       if (i >= 0) cotMon.push({ mon: m, i: i });
       else monThieu.push(m.ten);
     });

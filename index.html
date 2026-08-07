@@ -2141,11 +2141,16 @@ renderDbcl();
      không viết được màu nền, khung viền hay khổ giấy A4 ngang. Phần ĐỌC tệp
      tải lên vẫn dùng xlsx như cũ, không đụng gì tới các màn hình đang chạy. -->
 <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+<!-- Bộ tạo mẫu dùng chung: mọi mẫu Excel của hệ thống đi qua đây nên trông
+     giống nhau và in ra dùng được ngay. Phải nạp TRƯỚC các màn hình gọi nó. -->
+<script src="js/mau-excel.js"></script>
 <script src="js/dbcl-sql.js"></script>
 <script src="js/xuat-phu-luc-dbcl.js"></script>
 <script src="js/dbcl-excel.js"></script>
 <script src="js/dbcl-vanhanh.js"></script>
 <script src="js/dbcl-hocsinh.js"></script>
+<!-- Nạp SAU dbcl-hocsinh.js: dùng lại window.hsChuanNgay và window.hsVeLai -->
+<script src="js/vnedu-nhap.js"></script>
 <script src="js/dbcl-phancong.js"></script>
 <script src="js/dbcl-camket-hs.js"></script>
 <!-- Các tab thêm vào bảng Quản trị hệ thống. Phải nạp SAU dbcl-hocsinh.js vì

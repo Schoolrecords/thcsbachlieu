@@ -355,57 +355,9 @@
   function sanh(s) { return String(s || '').trim().toLowerCase(); }
 
   /* ==========================================================================
-     TẢI MẪU — khổ A4 NGANG, có trang trí, dùng ExcelJS
-     Thư viện xlsx bản miễn phí không viết được màu nền, khung viền hay khổ
-     giấy; ExcelJS làm được cả ba nên mẫu in ra dùng được ngay.
+     TẢI MẪU — đi qua bộ tạo mẫu dùng chung ở mau-excel.js
      ========================================================================== */
   async function taiMau() {
-    if (typeof ExcelJS === 'undefined') {
-      bao('Chưa nạp được thư viện tạo mẫu. Thầy cô kiểm tra mạng rồi tải lại trang.');
-      return;
-    }
-    const wb = new ExcelJS.Workbook();
-    const ws = wb.addWorksheet('Danh sach CBGVNV', {
-      pageSetup: {
-        paperSize: 9,              // A4
-        orientation: 'landscape',  // NGANG
-        fitToPage: true, fitToWidth: 1, fitToHeight: 0,
-        margins: { left: 0.4, right: 0.4, top: 0.5, bottom: 0.5, header: 0.2, footer: 0.2 }
-      },
-      views: [{ state: 'frozen', ySplit: 5 }]   // khoá dòng tiêu đề khi cuộn
-    });
-
-    ws.columns = [
-      { width: 5 }, { width: 26 }, { width: 12 }, { width: 24 },
-      { width: 16 }, { width: 40 }, { width: 30 }, { width: 22 }
-    ];
-
-    const V = 'Times New Roman';
-    function gopGiua(dong, chu, co, dam) {
-      ws.mergeCells(dong, 1, dong, COT.length);
-      const o = ws.getCell(dong, 1);
-      o.value = chu;
-      o.font = { name: V, size: co, bold: !!dam };
-      o.alignment = { horizontal: 'center', vertical: 'middle' };
-    }
-    gopGiua(1, (CAU_HINH.TEN_TRUONG || 'Trường THCS Bạch Liêu').toUpperCase(), 13, true);
-    gopGiua(2, 'DANH SÁCH CÁN BỘ, GIÁO VIÊN, NHÂN VIÊN', 15, true);
-    gopGiua(3, 'Năm học ' + (CAU_HINH.NAM_HOC || ''), 12, false);
-    ws.getCell(3, 1).font = { name: V, size: 12, italic: true };
-
-    /* Dòng 4 để trống, dòng 5 là tiêu đề bảng */
-    const hd = ws.getRow(5);
-    COT.forEach((t, i) => {
-      const o = hd.getCell(i + 1);
-      o.value = t;
-      o.font = { name: V, size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
-      o.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF14306B' } };
-      o.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
-      o.border = vien();
-    });
-    hd.height = 30;
-
-    /* Đổ dữ liệu đang có, để thầy cô sửa tại chỗ chứ không gõ lại từ đầu */
     const sap = DS.slice().sort((a, b) => {
       const sa = (HS_NS[a.email] || {}).so_tt, sbb = (HS_NS[b.email] || {}).so_tt;
       if (sa != null && sbb != null) return sa - sbb;
@@ -414,72 +366,50 @@
       return String(a.ho_ten || '').localeCompare(String(b.ho_ten || ''), 'vi');
     });
 
-    const soDong = Math.max(sap.length + 10, 45);   // chừa dòng trống để thêm người
-    for (let i = 0; i < soDong; i++) {
-      const d = sap[i];
-      const r = d ? (HS_NS[d.email] || {}) : {};
-      const row = ws.getRow(6 + i);
-      row.getCell(1).value = i + 1;
-      row.getCell(2).value = d ? (d.ho_ten || '') : '';
-      row.getCell(3).value = d ? ngayVN(r.ngay_sinh) : '';
-      row.getCell(4).value = d ? (r.trinh_do || '') : '';
-      row.getCell(5).value = d ? (d.chuc_vu || '') : '';
-      row.getCell(6).value = d ? (r.nhiem_vu || '') : '';
-      row.getCell(7).value = d ? d.email : '';
-      row.getCell(8).value = d ? (d.ghi_chu || '') : '';
-      for (let c = 1; c <= COT.length; c++) {
-        const o = row.getCell(c);
-        o.font = { name: V, size: 11 };
-        o.border = vien();
-        o.alignment = (c === 1 || c === 3)
-          ? { horizontal: 'center', vertical: 'middle' }
-          : { horizontal: 'left', vertical: 'middle', wrapText: c === 6 };
-      }
-      row.height = 20;
-
-      /* Ô Chức vụ có danh sách xổ xuống — khỏi gõ sai chính tả rồi máy không hiểu */
-      row.getCell(5).dataValidation = {
-        type: 'list', allowBlank: true,
-        formulae: ['"' + CHUC_VU.map(x => x.ten).join(',') + '"'],
-        showErrorMessage: true,
-        errorTitle: 'Chức vụ không hợp lệ',
-        error: 'Chọn một trong: ' + CHUC_VU.map(x => x.ten).join(', ')
-      };
-    }
-
-    /* Hướng dẫn đặt DƯỚI bảng, không chen vào giữa làm lệch dòng tiêu đề */
-    const d0 = 6 + soDong + 1;
-    [
-      'HƯỚNG DẪN ĐIỀN',
-      '· Cột Gmail là khoá ghép — mỗi người một địa chỉ, không được để trống, không sửa của người đang có.',
-      '· Ngày sinh ghi ngày/tháng/năm, ví dụ 20/05/1980.',
-      '· Chức vụ chọn trong danh sách xổ xuống: ' + CHUC_VU.map(x => x.ten).join(' · '),
-      '· Nhiệm vụ phân công viết như trong quyết định, ngăn nhau bằng dấu chấm phẩy:',
-      '     Dạy Toán lớp 9A, 9B, 9C; Chủ nhiệm 9A',
-      '· Xoá một người khỏi danh sách: xoá cả dòng đó, hệ thống sẽ hỏi lại trước khi xoá.',
-      '· Người đã đăng nhập rồi mà đổi chức vụ thì nhớ bấm "Đồng bộ vai trò" sau khi nạp.'
-    ].forEach((t, i) => {
-      ws.mergeCells(d0 + i, 1, d0 + i, COT.length);
-      const o = ws.getCell(d0 + i, 1);
-      o.value = t;
-      o.font = { name: V, size: 10.5, bold: i === 0, italic: i > 0, color: { argb: 'FF555555' } };
-      o.alignment = { horizontal: 'left', vertical: 'middle' };
+    const dong = sap.map((d, i) => {
+      const r = HS_NS[d.email] || {};
+      return [i + 1, d.ho_ten || '', ngayVN(r.ngay_sinh), r.trinh_do || '',
+              d.chuc_vu || '', r.nhiem_vu || '', d.email, d.ghi_chu || ''];
     });
 
-    const buf = await wb.xlsx.writeBuffer();
-    const blob = new Blob([buf], {
-      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    await window.taoMauExcel({
+      ten: 'Danh sach CBGVNV',
+      ngang: true,
+      tieuDe: [
+        (CAU_HINH.TEN_TRUONG || 'Trường THCS Bạch Liêu').toUpperCase(),
+        'DANH SÁCH CÁN BỘ, GIÁO VIÊN, NHÂN VIÊN',
+        'Năm học ' + (CAU_HINH.NAM_HOC || '')
+      ],
+      cot: [
+        { ten: 'TT',                  rong: 5,  giua: true },
+        { ten: 'Họ và tên',           rong: 26 },
+        { ten: 'Ngày sinh',           rong: 12, giua: true },
+        { ten: 'Trình độ chuyên môn', rong: 24 },
+        { ten: 'Chức vụ',             rong: 17, chon: CHUC_VU.map(x => x.ten) },
+        { ten: 'Nhiệm vụ phân công',  rong: 40, xuongDong: true },
+        { ten: 'Địa chỉ Gmail',       rong: 30 },
+        { ten: 'Ghi chú',             rong: 24, xuongDong: true }
+      ],
+      dong: dong,
+      soDongTrong: 8,
+      huongDan: [
+        '· Cột Gmail là khoá ghép — mỗi người một địa chỉ, không được để trống, không sửa của người đang có.',
+        '· Ngày sinh ghi ngày/tháng/năm, ví dụ 20/05/1980.',
+        '· Chức vụ chọn trong danh sách xổ xuống: ' + CHUC_VU.map(x => x.ten).join(' · '),
+        '· Để trống ô Chức vụ, hoặc ghi y hệt chức vụ đang có, thì hệ thống GIỮ NGUYÊN quyền cũ. Chỉ đổi quyền khi chức vụ thật sự đổi.',
+        '',
+        'NHIỆM VỤ PHÂN CÔNG — viết như trong quyết định, ngăn nhau bằng dấu chấm phẩy hoặc dấu chấm:',
+        '     Dạy Toán lớp 9A, 9B, 9C; Chủ nhiệm 9A',
+        'Máy đọc được cả "Kiêm chủ nhiệm", "GVCN", "Giảng dạy". Tên môn viết theo lối quen dùng cũng được:',
+        '     Tiếng Anh · Địa lí · Lịch sử · Âm nhạc · Mĩ thuật · Thể dục — máy tự quy về đúng môn trong danh mục.',
+        'Nạp xong hệ thống hiện BẢNG XEM TRƯỚC để duyệt; câu nào không đọc được thì kể ra, không bỏ lặng lẽ.',
+        '',
+        'HAI VIỆC LÀM SAU KHI NẠP',
+        '· Bấm "Đồng bộ vai trò" nếu có người đổi chức vụ — sửa danh sách thôi thì người ĐÃ đăng nhập vẫn giữ quyền cũ.',
+        '· Xoá một người khỏi danh sách: xoá riêng ở tab "Danh sách mời". Thiếu một dòng trong Excel KHÔNG làm mất người.'
+      ],
+      tenTep: 'danh-sach-cbgv-nv-' + (CAU_HINH.NAM_HOC || '') + '.xlsx'
     });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'danh-sach-cbgv-nv-' + (CAU_HINH.NAM_HOC || '') + '.xlsx';
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
-  }
-
-  function vien() {
-    const m = { style: 'thin', color: { argb: 'FF9AA8C0' } };
-    return { top: m, left: m, bottom: m, right: m };
   }
 
   /* ==========================================================================
