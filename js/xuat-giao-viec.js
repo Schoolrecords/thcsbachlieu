@@ -117,17 +117,35 @@
       + '</style></head><body>' + than + '</body></html>';
   }
 
-  /* Quốc hiệu · tiêu ngữ · tên cơ quan — thể thức Nghị định 30/2020 */
+  /* Quốc hiệu · tiêu ngữ · tên cơ quan — thể thức Nghị định 30/2020
+
+     BỀ RỘNG 38 / 62, KHÔNG PHẢI 45 / 55
+     Dòng "CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM" dài 34 ký tự chữ hoa in đậm.
+     Ô 55% trên khổ A4 dọc (vùng in 16,5cm sau khi trừ lề 3cm và 1,5cm) không
+     đủ chỗ, Word đẩy chữ "NAM" xuống dòng riêng — nhìn rất kỳ vì Quốc hiệu
+     phải nằm trọn một dòng. Nới ô phải lên 62% và khoá không cho ngắt dòng.
+
+     Bảng thể thức bỏ padding: quy tắc chung ở khungWord đặt 4pt 6pt cho mọi
+     ô để bảng dữ liệu dễ đọc, nhưng ở đây nó ăn mất gần nửa centimet mỗi bên,
+     đúng chỗ đang thiếu.
+
+     CƠ QUAN CHỦ QUẢN in hoa, KHÔNG đậm; cơ quan ban hành (tên trường) in hoa
+     VÀ đậm — đúng Nghị định 30, hai cấp phân biệt bằng nét chữ. */
   function theThuc() {
-    return '<table style="border:none;width:100%"><tr>'
-      + '<td style="border:none;width:45%;text-align:center;font-size:12pt">'
-      + 'UBND ' + chan(cauHinh('DIA_CHI_TRUONG', '').split(',')[0] || 'XÃ') + '<br>'
+    const chuQuan = 'UBND ' + (cauHinh('DIA_CHI_TRUONG', '').split(',')[0] || 'Xã').trim();
+    return '<table style="border:none;width:100%;border-collapse:collapse"><tr>'
+      + '<td style="border:none;padding:0;width:38%;text-align:center;font-size:12pt">'
+      + chan(chuQuan.toUpperCase()) + '<br>'
       + '<b>' + chan(cauHinh('TEN_TRUONG', '').toUpperCase()) + '</b>'
-      + '<div style="border-bottom:1px solid #000;width:60%;margin:3pt auto 0"></div></td>'
-      + '<td style="border:none;width:55%;text-align:center;font-size:12pt">'
-      + '<b>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</b><br>'
+      + '<div style="border-bottom:1px solid #000;width:62%;margin:3pt auto 0"></div></td>'
+      + '<td style="border:none;padding:0;width:62%;text-align:center;font-size:12pt">'
+      /* Hai lớp chống ngắt dòng: white-space:nowrap cho trình duyệt, và dấu
+         cách không ngắt (&nbsp;) giữa các từ cho Word — không phải bản Word
+         nào cũng đọc nowrap, nhưng &nbsp; thì bản nào cũng tôn trọng. */
+      + '<b style="white-space:nowrap">CỘNG&nbsp;HÒA&nbsp;XÃ&nbsp;HỘI&nbsp;'
+      + 'CHỦ&nbsp;NGHĨA&nbsp;VIỆT&nbsp;NAM</b><br>'
       + '<b>Độc lập - Tự do - Hạnh phúc</b>'
-      + '<div style="border-bottom:1px solid #000;width:55%;margin:3pt auto 0"></div></td>'
+      + '<div style="border-bottom:1px solid #000;width:48%;margin:3pt auto 0"></div></td>'
       + '</tr></table>'
       + '<p class="phai nghieng" style="margin:10pt 0 14pt;font-size:12pt">'
       + chan(diaDanh()) + ', ' + ngayVN() + '</p>';
