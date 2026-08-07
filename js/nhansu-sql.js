@@ -78,9 +78,7 @@
     /* Cập nhật con số CBGVNV trên trang chủ */
     var oCbgv = document.getElementById('hsCbgvTop');
     if (oCbgv) oCbgv.textContent = ds.length;
-    if (typeof notify === 'function') {
-      notify('Đã tải danh sách ' + ds.length + ' cán bộ, giáo viên, nhân viên của trường.');
-    }
+    /* Không báo khi tải xong — chạy ngay lúc đăng nhập, thầy cô còn ở trang chủ. */
   }
 
   /* Nhóm đang mở trong phần danh sách (trang mở sẵn Ban giám hiệu) */

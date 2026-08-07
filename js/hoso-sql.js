@@ -84,13 +84,20 @@
      Quan trọng: phải dọn sạch danh mục mẫu trên trang, nếu không thầy cô sẽ
      thấy nguyên danh mục giả của toàn trường và tưởng đó là dữ liệu thật. */
   function veTrangKhongCoHoSo() {
-    if (Array.isArray(window.CATS)) window.CATS.length = 0;
+    /* CATS khai báo const ở phạm vi script của trang nên KHÔNG nằm trên
+       window — bản vá trước dùng window.CATS nên không dọn được gì, thầy cô
+       gõ tìm kiếm là đổ ra nguyên danh mục mẫu của cả trường. */
+    if (typeof CATS !== 'undefined' && Array.isArray(CATS)) CATS.length = 0;
+
+    /* KHÔNG đụng vào thanh chỉ số đầu trang. Đó là số của cả trường, đặt về 0
+       chỉ vì người này chưa được giao hồ sơ là sai và gây hiểu nhầm. */
     const oCats = document.getElementById('hsCats');
     const oStats = document.getElementById('hsStats');
-    const oTong = document.getElementById('hsTotalTop');
-    if (oTong) oTong.textContent = '0';
+    const oTim = document.getElementById('hsSearchResult');
     if (oStats) oStats.innerHTML = '';
+    if (oTim) oTim.innerHTML = '';
     if (oCats) {
+      oCats.style.display = '';
       oCats.innerHTML =
         '<div style="background:#eef4ff;border:1px solid #cfe0ff;color:#1d4ed8;'
         + 'border-radius:12px;padding:20px 22px;font-size:14px;line-height:1.7">'
@@ -100,9 +107,9 @@
         + 'Ban giám hiệu gán người phụ trách trong danh mục hồ sơ.'
         + '</div>';
     }
-    if (typeof notify === 'function') {
-      notify('Thầy cô chưa được giao hồ sơ nào. Đây không phải lỗi hệ thống.');
-    }
+    /* KHÔNG bật thông báo nổi. Việc tải dữ liệu chạy ngay lúc đăng nhập, khi
+       thầy cô còn đang ở trang chủ — bật thông báo lúc đó là làm phiền vô cớ.
+       Lời nhắc đã nằm sẵn trong mục Hồ sơ số, ai vào mới thấy. */
   }
 
   /* ========================================================================
@@ -165,9 +172,9 @@
       catsMoi.forEach(c => CATS.push(c));
 
       renderCats();
-      if (typeof notify === 'function') {
-        notify('Đã tải ' + hoSo.data.length + ' hồ sơ từ cơ sở dữ liệu.');
-      }
+      /* Không báo gì khi tải xong. Việc tải chạy ngay lúc đăng nhập, khi thầy
+         cô còn ở trang chủ — bật thông báo lúc đó là làm phiền vô cớ. Dữ liệu
+         hiện ra trên màn hình đã là bằng chứng tải xong rồi. */
     } catch (e) {
       console.error('[Hồ sơ số] Không tải được dữ liệu:', e);
       if (typeof notify === 'function') {
