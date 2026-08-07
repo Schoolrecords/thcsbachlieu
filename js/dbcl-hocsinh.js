@@ -37,6 +37,9 @@
   let MON = [];
   let DS = [];          // danh sách học sinh của năm học đang chọn
   let CHE_DO = 'ds';    // 'ds' = danh sách · 'kq' = kết quả
+  /* Dải cảnh báo còn lại sau lần nạp tệp gần nhất — hiện một lần rồi xoá.
+     Dùng thay cho thông báo nổi khi nội dung dài hoặc quan trọng. */
+  let CANH_SAU_NAP = '';
 
   const TEN_TT = {
     dang_hoc: 'Đang học', chuyen_di: 'Chuyển đi',
@@ -89,19 +92,65 @@
     return m ? parseInt(m[1], 10) : null;
   }
 
+  /* ĐƯA MỌI KIỂU GHI NGÀY VỀ DẠNG yyyy-mm-dd.
+
+     Cột ngay_sinh trong cơ sở dữ liệu là kiểu date. Thầy cô gõ 20/05/2014,
+     Excel tự biến ô thành ngày, thư viện đọc ra "20/5/14" — máy chủ từ chối
+     CẢ MẺ với câu tiếng Anh "invalid input syntax for type date", mất trắng
+     toàn bộ danh sách vì đúng một ô. Nhận cả bốn lối ghi thường gặp:
+       20/05/2014 · 20-5-2014 · 2014-05-20 · số sê-ri của Excel (41779)
+     Không hiểu thì trả null để bên gọi kể vào danh sách lỗi, đừng gửi đi. */
+  function chuanNgay(v) {
+    const s = String(v == null ? '' : v).trim();
+    if (!s) return { ok: true, gt: null };
+
+    let m = s.match(/^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})$/);
+    if (m) return dungNgay(+m[1], +m[2], +m[3]);
+
+    m = s.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})$/);
+    if (m) {
+      let nam = +m[3];
+      /* Hai chữ số thì Excel hiểu 00-29 là 2000-2029, còn lại là 19xx */
+      if (nam < 100) nam += (nam <= 29 ? 2000 : 1900);
+      return dungNgay(nam, +m[2], +m[1]);
+    }
+
+    /* Số sê-ri Excel: đếm ngày từ 30/12/1899 */
+    if (/^\d+(\.\d+)?$/.test(s)) {
+      const n = parseFloat(s);
+      if (n > 0 && n < 80000) {
+        const d = new Date(Date.UTC(1899, 11, 30) + Math.round(n) * 86400000);
+        return dungNgay(d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate());
+      }
+    }
+    return { ok: false, gt: null };
+  }
+  function dungNgay(nam, thang, ngay) {
+    if (!(nam >= 1900 && nam <= 2100) || !(thang >= 1 && thang <= 12)
+        || !(ngay >= 1 && ngay <= 31)) return { ok: false, gt: null };
+    const hai = n => (n < 10 ? '0' : '') + n;
+    return { ok: true, gt: nam + '-' + hai(thang) + '-' + hai(ngay) };
+  }
+
   /* ========================================================================
      TẢI DỮ LIỆU
      ======================================================================== */
   /* Máy chủ chỉ trả tối đa 1000 dòng mỗi lần hỏi, mà trường có hơn 600 học
      sinh nên phải đọc theo trang cho tới hết. Thiếu chỗ này thì mẫu kết quả
-     sinh ra sẽ sót học sinh mà không báo gì. */
+     sinh ra sẽ sót học sinh mà không báo gì.
+
+     BẮT BUỘC PHẢI CÓ .order('id') — đây là lỗi đã có thật:
+     PostgreSQL không hứa hẹn thứ tự dòng khi câu hỏi không ghi rõ sắp xếp.
+     Hỏi trang 1 rồi hỏi trang 2, máy chủ có quyền trả về hai thứ tự khác
+     nhau, thế là có em bị đọc hai lần còn em khác không bao giờ được đọc.
+     Sắp theo khoá chính id là cách rẻ nhất để thứ tự luôn cố định. */
   async function taiHet(bang, chon, loc) {
     const BUOC = 1000;
     let tuDau = 0, gom = [];
     for (;;) {
       let q = sb.from(bang).select(chon);
       loc.forEach(f => { q = q.eq(f[0], f[1]); });
-      const r = await q.range(tuDau, tuDau + BUOC - 1);
+      const r = await q.order('id', { ascending: true }).range(tuDau, tuDau + BUOC - 1);
       if (r.error) throw r.error;
       const d = r.data || [];
       gom = gom.concat(d);
@@ -117,6 +166,10 @@
       sb.from('mon_hoc').select('*').order('so_tt'),
       taiHet('hoc_sinh_lop', '*, hoc_sinh(*)', [['nam_hoc', NAM]])
     ]);
+    /* Thư viện Supabase KHÔNG ném lỗi — nó trả về { data: null, error }. Viết
+       `mh.data || []` là nuốt trọn lỗi: danh mục môn hiện ra rỗng, màn hình
+       báo "chưa chạy sql/17" trong khi thật ra chỉ là hết phiên đăng nhập. */
+    if (mh.error) throw mh.error;
     MON = mh.data || [];
     DS = (hsD || []).filter(r => r.hoc_sinh);
     DS.sort((a, b) => (a.lop || '').localeCompare(b.lop || '', 'vi')
@@ -131,12 +184,29 @@
     if (!sb) sb = window.sbClient;
     if (!sb) { hop.innerHTML = '<div class="hs-canh">Thầy cô đăng nhập để xem phần này.</div>'; return; }
 
-    hop.innerHTML = '<p style="color:#8a94a6;font-size:13.4px">Đang tải dữ liệu học sinh…</p>';
+    /* Lấy dải cảnh báo RA NGAY, trước mọi đường thoát sớm. Nếu để tới cuối
+       hàm mới đọc thì lần vẽ nào hỏng giữa chừng là dải cảnh báo của tệp vừa
+       nạp nằm chờ, rồi bật ra ở lần mở màn hình sau — lúc đó thầy cô không
+       còn biết nó nói về tệp nào. */
+    const canh = CANH_SAU_NAP;
+    CANH_SAU_NAP = '';
+
+    hop.innerHTML = canh
+      + '<p style="color:#8a94a6;font-size:13.4px">Đang tải dữ liệu học sinh…</p>';
+    /* Câu lỗi tiếng Anh của máy chủ làm thầy cô tưởng hệ thống hỏng. Nói bằng
+       tiếng Việt, chi tiết kỹ thuật đẩy vào console cho quản trị xem. */
     try { await tai(); }
-    catch (e) { hop.innerHTML = '<div class="hs-canh">Không tải được: ' + chan(e.message) + '</div>'; return; }
+    catch (e) {
+      console.error('[Học sinh] Không tải được:', e);
+      hop.innerHTML = canh + '<div class="hs-canh"><b>Chưa đọc được dữ liệu học sinh.</b><br>'
+        + 'Thầy cô thử đăng nhập lại. Nếu vẫn vậy thì tài khoản chưa được phân quyền '
+        + 'xem phần này — báo quản trị giúp em.<br>'
+        + '<span style="font-size:12.4px;color:#a0564a">Chi tiết: ' + chan(e.message) + '</span></div>';
+      return;
+    }
 
     if (!MON.length) {
-      hop.innerHTML = '<div class="hs-canh">Cơ sở dữ liệu chưa có danh mục môn học. '
+      hop.innerHTML = canh + '<div class="hs-canh">Cơ sở dữ liệu chưa có danh mục môn học. '
         + 'Kiểm tra đã chạy tệp <code>sql/17</code> chưa.</div>';
       return;
     }
@@ -145,8 +215,10 @@
     const loc = LOP ? DS.filter(r => r.lop === LOP) : DS;
     const qt = laQuanTri();
 
+    let html = canh;
+
     /* ---- Hai khối việc ---- */
-    let html = '<div class="hs-buoc">'
+    html += '<div class="hs-buoc">'
       + '<div class="hs-o dam"><h4>1. Danh sách học sinh — làm trước</h4>'
       + '<p>Khai báo một lần đầu năm. Có <b>mã học sinh</b> làm khoá ghép. '
       + 'Chưa có danh sách thì không nhận được tệp kết quả nào.</p>'
@@ -179,7 +251,12 @@
       + '<span><b>' + hoaNhap + '</b> diện hoà nhập</span>'
       + '</div>';
 
-    if (qt) {
+    /* Nút tính lại chỉ tiêu mở cho cả TỔ TRƯỞNG — đúng bằng hàm
+       dbcl_tinh_tu_hoc_sinh trên máy chủ, vốn nhận admin, ban giám hiệu và
+       tổ trưởng. Bản cũ chỉ cho quản trị, hẹp hơn máy chủ, nên tổ trưởng
+       nhập xong dữ liệu lại phải đi nhờ người khác bấm hộ. */
+    const tinhDuoc = qt || (window.NGUOI_DUNG && window.NGUOI_DUNG.vai_tro === 'to_truong');
+    if (tinhDuoc) {
       html += '<div class="db-cong">'
         + '<button class="btn btn-pri" id="hsTinh">🔄 Tính lại 33 chỉ tiêu từ dữ liệu học sinh</button>'
         + '<select id="hsTinhKy" style="padding:8px 11px;border:1.5px solid #d7dde8;border-radius:9px">'
@@ -241,6 +318,8 @@
       ['Năm học', NAM],
       [],
       ['Hướng dẫn: Mã học sinh lấy ĐÚNG mã đang dùng trên VnEdu, giữ nguyên suốt cấp học.'],
+      ['Ngày sinh và Ngày vào học ghi dạng ngày/tháng/năm, ví dụ 20/05/2014.'],
+      ['Hai dòng có mã VIDU-01 và VIDU-02 chỉ là ví dụ — xoá đi, hệ thống cũng tự bỏ qua.'],
       ['Cột Hoà nhập ghi x nếu em học hoà nhập — Thông tư 22 đánh giá theo quy định riêng.'],
       ['Cột Miễn/giảm môn ghi tên môn được miễn, ví dụ: Giáo dục thể chất.'],
       ['Trạng thái: Đang học / Chuyển đi / Bảo lưu / Thôi học. Để trống nghĩa là Đang học.'],
@@ -255,8 +334,12 @@
           h.hoa_nhap ? 'x' : '', h.mien_giam_mon || '', r.ngay_vao || '', TEN_TT[r.trang_thai] || '']);
       });
     } else {
-      hang.push(['HS0001', 'Nguyễn Văn A', '2014-05-20', 'Nam', '6A', '', '', '', '']);
-      hang.push(['HS0002', 'Trần Thị B', '2014-11-03', 'Nữ', '6A', 'x', 'Giáo dục thể chất', '', '']);
+      /* Hai dòng ví dụ có chữ "(ví dụ — xoá dòng này)" ngay trong mã, và phần
+         đọc tệp bỏ qua mọi mã bắt đầu bằng VIDU. Trước đây ví dụ ghi mã thật
+         HS0001, HS0002 nên thầy cô điền tiếp bên dưới rồi nạp lên là hai em
+         không có thật vào thẳng cơ sở dữ liệu, không một lời cảnh báo. */
+      hang.push(['VIDU-01', 'Nguyễn Văn A (ví dụ — xoá dòng này)', '20/05/2014', 'Nam', '6A', '', '', '', '']);
+      hang.push(['VIDU-02', 'Trần Thị B (ví dụ — xoá dòng này)', '03/11/2014', 'Nữ', '6A', 'x', 'Giáo dục thể chất', '', '']);
     }
     xuat(hang, [{ wch: 14 }, { wch: 26 }, { wch: 12 }, { wch: 9 }, { wch: 8 },
                 { wch: 10 }, { wch: 22 }, { wch: 13 }, { wch: 13 }],
@@ -279,7 +362,8 @@
       ['Ô "Kỳ" ở dòng 2: ghi "Cả năm" hoặc "Học kỳ I". Không ghi thêm chữ nào khác.'],
       ['Môn tính điểm ghi số từ 0 đến 10. Môn đánh giá Đạt ghi Đ hoặc CĐ.'],
       ['Cột Rèn luyện ghi: Tốt / Khá / Đạt / Chưa đạt.'],
-      ['Cột Lên lớp chỉ điền khi nhập kết quả cả năm: ghi x nếu được lên lớp.'],
+      ['Cột Lên lớp chỉ điền khi nhập kết quả cả năm, và điền cho MỌI em:'],
+      ['   ghi x nếu được lên lớp, ghi 0 nếu ở lại lớp. Để trống cả cột thì hệ thống bỏ qua.'],
       [],
       ['Mã học sinh', 'Họ và tên', 'Lớp'].concat(cotMon).concat(['Rèn luyện', 'Lên lớp'])
     ];
@@ -314,10 +398,21 @@
     inp.click();
   }
 
-  function timDongTieuDe(hang, khoa) {
+  /* TÌM DÒNG TIÊU ĐỀ BẰNG SO KHỚP CHÍNH XÁC TỪNG Ô — không dò chuỗi con.
+
+     Đây là lỗi đã chặn cả module suốt từ đầu: bản cũ hỏi "ô nào CHỨA chữ
+     'mã học sinh'", mà dòng thứ 4 của chính mẫu hệ thống tải xuống là câu
+     "Hướng dẫn: Mã học sinh lấy ĐÚNG mã đang dùng trên VnEdu…" — câu ấy chứa
+     chữ đó nên bị nhận nhầm là dòng tiêu đề. Từ đó cot['mã học sinh'] không
+     có, mọi dòng bị lọc sạch, và hệ thống báo "Tệp không có dòng dữ liệu nào"
+     ngay cả với đúng tệp nó vừa tải xuống.
+
+     Nay đòi ô phải BẰNG ĐÚNG tên cột, và phải có thêm một cột thứ hai nữa
+     mới nhận — câu hướng dẫn chỉ có một ô nên không thể lọt. */
+  function timDongTieuDe(hang, khoa, khoaPhu) {
     for (let i = 0; i < Math.min(hang.length, 20); i++) {
       const d = (hang[i] || []).map(x => String(x).trim().toLowerCase());
-      if (d.some(x => x.indexOf(khoa) >= 0)) return i;
+      if (d.indexOf(khoa) >= 0 && (!khoaPhu || d.indexOf(khoaPhu) >= 0)) return i;
     }
     return -1;
   }
@@ -331,9 +426,11 @@
     if (!ws) { notify('Tệp không có trang tính nào.'); return; }
     const hang = XLSX.utils.sheet_to_json(ws, { header: 1, raw: false, defval: '' });
 
-    const iTd = timDongTieuDe(hang, 'mã học sinh');
+    const iTd = timDongTieuDe(hang, 'mã học sinh', 'họ và tên');
     if (iTd < 0) {
-      notify('Không tìm thấy dòng tiêu đề có cột "Mã học sinh". Thầy cô dùng đúng mẫu do hệ thống tải xuống.');
+      notify('Không tìm thấy dòng tiêu đề. Tệp phải có một dòng mà ô ghi đúng '
+        + '"Mã học sinh" và một ô ghi đúng "Họ và tên". '
+        + 'Thầy cô dùng đúng mẫu do hệ thống tải xuống, đừng sửa dòng tiêu đề.');
       return;
     }
     const td = hang[iTd].map(x => String(x).trim());
@@ -346,17 +443,45 @@
     return napKetQua(than, cot, td, hang, tep.name);
   }
 
-  /* ---------------- Nạp danh sách học sinh ---------------- */
+  /* ---------------- Nạp danh sách học sinh ----------------
+
+     CHỈ GHI ĐÈ NHỮNG CỘT CÓ THẬT TRONG TỆP. Đây là lỗi đã có thật và mất dữ
+     liệu không lấy lại được: trước đây tệp nào thiếu cột "Hoà nhập" thì
+     `cot['hoà nhập']` là undefined, đọc ra chuỗi rỗng, và upsert ghi
+     hoa_nhap = false đè lên. Bốn em khuyết tật học hoà nhập biến mất khỏi
+     diện hoà nhập, kéo theo mẫu số của toàn bộ tỉ lệ tính sai theo Thông tư
+     22. Cột "Miễn/giảm môn", "Ngày sinh", "Giới tính", "Ngày vào học" cũng
+     bị xoá y như vậy. Nay cột nào tệp không có thì KHÔNG đụng tới. */
   async function napDanhSach(than, cot, tenTep) {
     const c = (d, ten) => String(d[cot[ten]] == null ? '' : d[cot[ten]]).trim();
+    /* Có cột đó trong dòng tiêu đề hay không — nhận cả hai lối viết "hoà/hòa" */
+    const coCot = (...tens) => tens.some(t => cot[t] !== undefined);
+    /* Gán vào bản ghi nếu tệp có cột; không có thì bỏ qua để giữ giá trị cũ.
+       Tên là datNeuCo chứ không phải gan — trong tệp này đã có sẵn một hàm
+       gan() lo việc gắn sự kiện chọn tệp, trùng tên là bẫy cho lần sửa sau. */
+    const datNeuCo = (b, khoa, coCotKhong, giaTri) => { if (coCotKhong) b[khoa] = giaTri; };
+
+    const coNgaySinh  = coCot('ngày sinh');
+    const coGioiTinh  = coCot('giới tính');
+    const coHoaNhap   = coCot('hoà nhập', 'hòa nhập');
+    const coMienGiam  = coCot('miễn/giảm môn');
+    const coNgayVao   = coCot('ngày vào học');
+    const coTrangThai = coCot('trạng thái');
+
     const hs = [], hl = [], loi = [];
     const daGap = {};
+    let boViDu = 0;
 
     than.forEach((d, i) => {
       const ma = c(d, 'mã học sinh');
       const ten = c(d, 'họ và tên');
-      const lop = c(d, 'lớp');
+      /* Chữ hoa cho khớp với bảng phân công — quyền xem học sinh và quyền ghi
+         cam kết đều ghép hai bảng bằng tên lớp, "6a" khác "6A" là mất quyền. */
+      const lop = c(d, 'lớp').toUpperCase();
       const dong = i + 1;
+      /* Bỏ hai dòng ví dụ của mẫu. Thầy cô điền tiếp bên dưới rồi nạp lên là
+         hai em không có thật vào thẳng cơ sở dữ liệu — nay chặn ở đây. */
+      if (/^VIDU/i.test(ma)) { boViDu++; return; }
       if (daGap[ma]) { loi.push('Dòng ' + dong + ': mã ' + ma + ' bị lặp'); return; }
       if (!ten) { loi.push('Dòng ' + dong + ': thiếu họ tên'); return; }
       if (!lop) { loi.push('Dòng ' + dong + ': thiếu lớp'); return; }
@@ -364,32 +489,83 @@
       if (!khoi || khoi < 6 || khoi > 9) {
         loi.push('Dòng ' + dong + ': lớp "' + lop + '" không suy ra được khối 6 đến 9'); return;
       }
+      /* Ngày sai định dạng phải KỂ RA ở đây. Gửi thẳng xuống máy chủ thì nó
+         từ chối cả mẻ vì đúng một ô, kèm câu tiếng Anh không ai hiểu. */
+      const ns = chuanNgay(coNgaySinh ? c(d, 'ngày sinh') : '');
+      if (!ns.ok) {
+        loi.push('Dòng ' + dong + ': ngày sinh "' + c(d, 'ngày sinh')
+          + '" không đọc được — ghi dạng 20/05/2014'); return;
+      }
+      const nv = chuanNgay(coNgayVao ? c(d, 'ngày vào học') : '');
+      if (!nv.ok) {
+        loi.push('Dòng ' + dong + ': ngày vào học "' + c(d, 'ngày vào học')
+          + '" không đọc được — ghi dạng 05/09/2026'); return;
+      }
       daGap[ma] = true;
-      const tt = c(d, 'trạng thái').toLowerCase();
-      hs.push({
-        ma: ma, ho_ten: ten,
-        ngay_sinh: c(d, 'ngày sinh') || null,
-        gioi_tinh: ['Nam', 'Nữ'].indexOf(c(d, 'giới tính')) >= 0 ? c(d, 'giới tính') : null,
-        hoa_nhap: /^(x|có|1|true)$/i.test(c(d, 'hoà nhập') || c(d, 'hòa nhập')),
-        mien_giam_mon: c(d, 'miễn/giảm môn') || null
-      });
-      hl.push({
-        hoc_sinh_ma: ma, nam_hoc: NAM, lop: lop, khoi: khoi,
-        ngay_vao: c(d, 'ngày vào học') || null,
-        trang_thai: tt.indexOf('chuyển') >= 0 ? 'chuyen_di'
-                  : tt.indexOf('bảo lưu') >= 0 ? 'bao_luu'
-                  : tt.indexOf('thôi') >= 0 ? 'thoi_hoc' : 'dang_hoc'
-      });
+
+      const bHs = { ma: ma, ho_ten: ten };
+      datNeuCo(bHs, 'ngay_sinh', coNgaySinh, ns.gt);
+      datNeuCo(bHs, 'gioi_tinh', coGioiTinh,
+          ['Nam', 'Nữ'].indexOf(c(d, 'giới tính')) >= 0 ? c(d, 'giới tính') : null);
+      datNeuCo(bHs, 'hoa_nhap', coHoaNhap,
+          /^(x|có|1|true)$/i.test(c(d, 'hoà nhập') || c(d, 'hòa nhập')));
+      datNeuCo(bHs, 'mien_giam_mon', coMienGiam, c(d, 'miễn/giảm môn') || null);
+      hs.push(bHs);
+
+      const bHl = { hoc_sinh_ma: ma, nam_hoc: NAM, lop: lop, khoi: khoi };
+      datNeuCo(bHl, 'ngay_vao', coNgayVao, nv.gt);
+      /* Trạng thái thì luôn ghi: tệp không có cột này nghĩa là danh sách đầu
+         năm, mọi em đều đang học — đó cũng chính là giá trị mặc định. */
+      /* Trạng thái cũng theo đúng quy tắc "tệp không có cột thì không đụng".
+         Nạp giữa năm một tệp danh sách rút gọn không có cột này mà vẫn ghi đè
+         thì mọi em chuyển đi, thôi học, bảo lưu bị kéo hết về "đang học" —
+         mẫu số của CT02 đến CT11 phồng lên, tỉ lệ gửi Sở sai mà không báo gì.
+         Dòng mới thì cơ sở dữ liệu tự đặt mặc định 'dang_hoc'. */
+      if (coTrangThai) {
+        const tt = c(d, 'trạng thái').toLowerCase();
+        bHl.trang_thai = tt.indexOf('chuyển') >= 0 ? 'chuyen_di'
+                       : tt.indexOf('bảo lưu') >= 0 ? 'bao_luu'
+                       : tt.indexOf('thôi') >= 0 ? 'thoi_hoc' : 'dang_hoc';
+      }
+      hl.push(bHl);
     });
 
     if (loi.length) {
-      notify(loi.length + ' dòng có lỗi, chưa nạp gì cả. Lỗi đầu tiên: ' + loi[0]);
+      /* Kể ra nhiều lỗi một lúc. Chỉ báo lỗi đầu tiên thì tệp có 40 dòng sai
+         là thầy cô phải sửa rồi tải lên 40 lượt. */
+      CANH_SAU_NAP = '<div class="hs-canh"><b>' + loi.length
+        + ' dòng có lỗi — chưa nạp gì cả, danh sách đang có vẫn nguyên.</b><br>'
+        + loi.slice(0, 8).map(chan).join('<br>')
+        + (loi.length > 8 ? '<br>… và ' + (loi.length - 8) + ' dòng nữa.' : '')
+        + '</div>';
+      ve(document.getElementById('dbclKhac'));
+      notify(loi.length + ' dòng có lỗi, chưa nạp gì cả — đọc chi tiết trên trang.');
       return;
     }
+    /* Nói rõ cột nào tệp không có để thầy cô biết trước, khỏi tưởng mất dữ liệu */
+    const thieuCot = [];
+    if (!coNgaySinh) thieuCot.push('Ngày sinh');
+    if (!coGioiTinh) thieuCot.push('Giới tính');
+    if (!coHoaNhap)  thieuCot.push('Hoà nhập');
+    if (!coMienGiam) thieuCot.push('Miễn/giảm môn');
+    if (!coNgayVao)  thieuCot.push('Ngày vào học');
+    if (!coTrangThai) thieuCot.push('Trạng thái');
+
+    if (!hs.length) {
+      notify('Tệp không có dòng học sinh nào ngoài hai dòng ví dụ. '
+        + 'Thầy cô điền danh sách vào bên dưới dòng tiêu đề rồi tải lại.');
+      return;
+    }
+
     if (!window.confirm('Nạp ' + hs.length + ' học sinh vào năm học ' + NAM
       + ' từ tệp "' + tenTep + '"?\n\n'
       + 'Em nào đã có thì cập nhật lại thông tin và lớp.\n'
-      + 'Kết quả học tập đã nhập trước đó không bị đụng tới.')) return;
+      + 'Kết quả học tập đã nhập trước đó không bị đụng tới.'
+      + (boViDu ? '\n\nĐã bỏ ' + boViDu + ' dòng ví dụ của mẫu.' : '')
+      + (thieuCot.length
+          ? '\n\nTệp không có ' + thieuCot.length + ' cột: ' + thieuCot.join(', ') + '.\n'
+            + '→ Những cột này GIỮ NGUYÊN giá trị đang có, hệ thống không xoá.'
+          : ''))) return;
 
     const a = await sb.from('hoc_sinh').upsert(hs, { onConflict: 'ma' });
     if (a.error) { notify('Chưa nạp được danh sách: ' + a.error.message); return; }
@@ -405,17 +581,35 @@
     /* Kỳ ghi ở ô ngay sau chữ "Kỳ" tại dòng 2 của mẫu.
        So khớp CHÍNH XÁC giá trị ô, không dò chuỗi con — nếu dò chuỗi con thì
        câu hướng dẫn nào lỡ chứa chữ "học kỳ I" cũng làm nhận nhầm. */
-    let ky = 'ca_nam', kyDoc = '';
+    let ky = 'ca_nam', kyDoc = '', kyLa = '', daThayKy = false;
+    const KY_HK1 = ['học kỳ i', 'học kì i', 'học kỳ 1', 'học kì 1',
+                    'hoc_ki_1', 'hk1', 'hk i', 'hk 1'];
+    const KY_CN  = ['cả năm', 'ca_nam', 'cn', 'cả năm học'];
     hangGoc.slice(0, 6).forEach(d => {
       const s = (d || []).map(x => String(x).trim());
       const i = s.indexOf('Kỳ');
       if (i < 0) return;
+      /* Đặt lại kyLa mỗi lần gặp ô Kỳ. Không đặt lại thì một ô sai ở dòng
+         trước làm chặn cả tệp dù ô sau ghi đúng. */
+      daThayKy = true;
       const v = (s[i + 1] || '').toLowerCase();
       kyDoc = s[i + 1] || '';
-      if (v === 'học kỳ i' || v === 'hoc_ki_1' || v === 'hk1' || v === 'học kì i') ky = 'hoc_ki_1';
-      else if (v === 'cả năm' || v === 'ca_nam' || v === 'cn') ky = 'ca_nam';
-      else if (v) kyDoc = '(không hiểu: "' + s[i + 1] + '")';
+      kyLa = '';
+      if (KY_HK1.indexOf(v) >= 0) ky = 'hoc_ki_1';
+      else if (KY_CN.indexOf(v) >= 0) ky = 'ca_nam';
+      else kyLa = s[i + 1] || '(để trống)';
     });
+    /* Không hiểu ô Kỳ thì DỪNG HẲN, không lẳng lặng hiểu là Cả năm.
+       Kể cả khi ô ĐỂ TRỐNG: thầy cô xoá ô định điền sau rồi quên là tệp học
+       kì I nạp ĐÈ lên ô kết quả cả năm — hỏng số gửi Sở, không dấu hiệu nào. */
+    if (!daThayKy || kyLa) {
+      notify(!daThayKy
+        ? 'Tệp không có ô "Kỳ" ở đầu trang nên chưa nạp gì cả. Thầy cô dùng đúng '
+          + 'mẫu do hệ thống tải xuống, giữ nguyên ba dòng đầu.'
+        : 'Ô "Kỳ" ở dòng 2 của tệp ghi "' + kyLa + '" — hệ thống không hiểu, nên chưa '
+          + 'nạp gì cả. Thầy cô sửa ô đó thành đúng "Cả năm" hoặc "Học kì I" rồi tải lại.');
+      return;
+    }
 
     const coMa = {};
     DS.forEach(r => { coMa[r.hoc_sinh.ma] = r; });
@@ -442,20 +636,36 @@
 
     const kq = [], rl = [], ll = [];
     const maLa = [], daCo = {};
+    /* Ô có chữ nhưng máy không hiểu thì PHẢI KỂ RA, đừng bỏ lặng lẽ. Trước
+       đây gõ nhầm "8,5đ" hay "Đạt " thừa dấu cách là ô đó rơi mất mà màn hình
+       vẫn báo nạp thành công — điểm của em ấy trống, không ai biết vì sao. */
+    const oLoi = [], rlLoi = [], maLap = [];
+    let coOLenLop = false;
     than.forEach(d => {
       const ma = String(d[iMa] == null ? '' : d[iMa]).trim();
       if (!coMa[ma]) { maLa.push(ma); return; }
+      /* Mã lặp phải bỏ qua, không chỉ đếm. Hai dòng cùng một em cùng một môn
+         là hai bản ghi trùng khoá trong CÙNG một mẻ ghi, Postgres từ chối cả
+         mẻ với câu "ON CONFLICT DO UPDATE command cannot affect row a second
+         time" — mất trắng kết quả cả trường vì một dòng thừa trong tệp. */
+      if (daCo[ma]) { maLap.push(ma); return; }
       daCo[ma] = true;
       cotMon.forEach(x => {
         const v = String(d[x.i] == null ? '' : d[x.i]).trim();
         if (!v) return;
         if (x.mon.kieu === 'diem') {
           const n = parseFloat(v.replace(',', '.'));
-          if (isNaN(n) || n < 0 || n > 10) return;
+          if (isNaN(n) || n < 0 || n > 10) {
+            oLoi.push(ma + ' · ' + x.mon.ten + ': "' + v + '"');
+            return;
+          }
           kq.push({ nam_hoc: NAM, ky: ky, hoc_sinh_ma: ma, mon_ma: x.mon.ma, diem: n, muc: null });
         } else {
           const m = /^(đ|d|đạt|dat)$/i.test(v) ? 'D' : /^(cđ|cd|chưa đạt)$/i.test(v) ? 'CD' : null;
-          if (!m) return;
+          if (!m) {
+            oLoi.push(ma + ' · ' + x.mon.ten + ': "' + v + '"');
+            return;
+          }
           kq.push({ nam_hoc: NAM, ky: ky, hoc_sinh_ma: ma, mon_ma: x.mon.ma, diem: null, muc: m });
         }
       });
@@ -463,26 +673,65 @@
         const v = String(d[iRL] == null ? '' : d[iRL]).trim();
         if (['Tốt', 'Khá', 'Đạt', 'Chưa đạt'].indexOf(v) >= 0) {
           rl.push({ nam_hoc: NAM, ky: ky, hoc_sinh_ma: ma, muc: v });
+        } else if (v) {
+          rlLoi.push(ma + ': "' + v + '"');
         }
       }
+      /* Cột "Lên lớp": ô trống nghĩa là Ở LẠI LỚP, vì hướng dẫn trong mẫu ghi
+         "ghi x nếu được lên lớp". Bản cũ bỏ qua ô rỗng nên len_lop nằm im ở
+         NULL, mà CT10 đếm len_lop = true còn CT11 đếm len_lop = false — em
+         lưu ban không vào cả hai, tỉ lệ gửi Sở thấp hơn thực tế.
+
+         NHƯNG chỉ ghi khi CẢ CỘT có ít nhất một ô được điền. Thầy cô nạp
+         điểm cả năm TRƯỚC cuộc họp xét lên lớp thì cột này còn trống hết —
+         ghi bừa là cả trường thành lưu ban, CT10 = 0%, CT11 = 100%. */
       if (iLL >= 0 && ky === 'ca_nam') {
         const v = String(d[iLL] == null ? '' : d[iLL]).trim();
-        if (v) ll.push({ ma: ma, len: /^(x|có|1|true)$/i.test(v) });
+        if (v) coOLenLop = true;
+        ll.push({ ma: ma, len: /^(x|có|1|true)$/i.test(v) });
       }
     });
 
+    /* Cả cột để trống thì coi như trường chưa xét lên lớp — bỏ qua, đừng ghi */
+    if (!coOLenLop) ll.length = 0;
+
     const thieu = DS.filter(r => r.trang_thai === 'dang_hoc' && !daCo[r.hoc_sinh.ma]);
 
-    /* Ba con số bắt buộc hiện trước khi ghi */
-    let hoi = 'Tệp "' + tenTep + '" — nạp kết quả '
-      + (ky === 'hoc_ki_1' ? 'HỌC KỲ I' : 'CẢ NĂM') + ' năm học ' + NAM + '.\n'
-      + '   (ô Kỳ trong tệp ghi: ' + (kyDoc || 'để trống, hiểu là Cả năm') + ')\n\n'
+    /* CÂU HỎI ĐẶT LÊN ĐẦU. Hộp confirm của hệ điều hành cắt bớt nội dung dài
+       trên điện thoại, mà phần chi tiết dưới đây có lúc lên hơn 20 dòng — để
+       câu hỏi ở cuối là thầy cô bấm Đồng ý mà chưa từng nhìn thấy nó. */
+    let hoi = 'Nạp kết quả ' + (ky === 'hoc_ki_1' ? 'Học kì I' : 'Cả năm')
+      + ' năm học ' + NAM + ' từ tệp "' + tenTep + '" chứ?\n'
+      + '(ô Kỳ trong tệp ghi: ' + (kyDoc || 'để trống, hiểu là Cả năm') + ')\n\n'
       + '✔ Khớp mã: ' + Object.keys(daCo).length + ' học sinh, ' + kq.length + ' ô điểm\n'
       + '   Đọc được ' + cotMon.length + '/' + MON.length + ' cột môn học\n';
     if (monThieu.length) {
       hoi += '⚠ KHÔNG tìm thấy cột của ' + monThieu.length + ' môn: '
         + monThieu.slice(0, 4).join(', ') + (monThieu.length > 4 ? '…' : '') + '\n'
         + '   → Các môn này sẽ không có điểm. Kiểm tra lại tiêu đề cột.\n';
+    }
+    if (ll.length) {
+      const soLen = ll.filter(x => x.len).length;
+      hoi += '↑ Lên lớp: ' + soLen + ' em lên lớp, ' + (ll.length - soLen) + ' em Ở LẠI LỚP.\n'
+        + '   → Con số này vào thẳng chỉ tiêu CT10 và CT11 gửi Sở. Rà kỹ trước khi đồng ý.\n';
+    } else if (iLL >= 0 && ky === 'ca_nam') {
+      hoi += 'ℹ Cột Lên lớp để trống hoàn toàn → chưa ghi kết luận lên lớp cho em nào.\n'
+        + '   → Xét lên lớp xong thì điền cột đó rồi tải lên lần nữa.\n';
+    }
+    if (maLap.length) {
+      hoi += '⚠ Mã bị lặp trong tệp: ' + maLap.length + ' dòng ('
+        + maLap.slice(0, 5).join(', ') + (maLap.length > 5 ? '…' : '') + ')\n'
+        + '   → Chỉ lấy dòng ĐẦU TIÊN của mỗi mã. Kiểm lại xem có bị dán trùng không.\n';
+    }
+    if (oLoi.length) {
+      hoi += '✖ ' + oLoi.length + ' ô có chữ nhưng không đọc được, sẽ để trống:\n'
+        + '   ' + oLoi.slice(0, 3).join('\n   ') + (oLoi.length > 3 ? '\n   …' : '') + '\n'
+        + '   → Môn tính điểm chỉ nhận số 0 đến 10. Môn đánh giá Đạt chỉ nhận Đ hoặc CĐ.\n';
+    }
+    if (rlLoi.length) {
+      hoi += '✖ ' + rlLoi.length + ' ô Rèn luyện không đọc được: '
+        + rlLoi.slice(0, 4).join(' · ') + (rlLoi.length > 4 ? '…' : '') + '\n'
+        + '   → Chỉ nhận đúng bốn mức: Tốt, Khá, Đạt, Chưa đạt.\n';
     }
     if (maLa.length) {
       hoi += '✖ Mã lạ (có trong tệp, KHÔNG có trong danh sách): ' + maLa.length + '\n'
@@ -507,19 +756,58 @@
     let loiRL = '';
     if (rl.length) {
       const r2 = await sb.from('hs_ren_luyen').upsert(rl, { onConflict: 'nam_hoc,ky,hoc_sinh_ma' });
-      if (r2.error) loiRL = ' ⚠ Riêng phần rèn luyện CHƯA nạp được: ' + r2.error.message;
-    } else {
-      loiRL = ' ⚠ Không có dòng rèn luyện nào hợp lệ — cột Rèn luyện phải ghi đúng '
+      if (r2.error) loiRL = 'Riêng phần rèn luyện CHƯA nạp được: ' + r2.error.message;
+    } else if (iRL >= 0 && rlLoi.length) {
+      /* CHỈ mắng khi tệp CÓ cột Rèn luyện và trong đó CÓ ô ghi sai.
+         Bản cũ mắng cả khi cột để trống — mà mẫu hệ thống sinh ra luôn có cột
+         này bỏ trống, nên mọi lần nạp điểm giữa kỳ bình thường đều bị báo là
+         ghi sai bốn mức. Thầy cô đi sửa cái không hỏng. */
+      loiRL = 'Không đọc được ô Rèn luyện nào — cột Rèn luyện chỉ nhận đúng '
             + 'một trong bốn mức: Tốt, Khá, Đạt, Chưa đạt.';
     }
-    for (const x of ll) {
-      await sb.from('hoc_sinh_lop').update({ len_lop: x.len })
-        .eq('hoc_sinh_ma', x.ma).eq('nam_hoc', NAM);
+    /* Cột "Lên lớp" cũng phải soi lỗi. Trước đây chạy vòng lặp rồi bỏ mặc kết
+       quả, nên khi máy chủ từ chối thì im lặng — mà lên lớp hay ở lại là kết
+       luận cả năm học của một đứa trẻ, sai chỗ này không được. */
+    /* Gộp thành HAI lệnh thay vì một lệnh mỗi em: hơn 600 lượt gọi tuần tự
+       mất vài phút và chỉ cần rớt mạng giữa chừng là ghi được nửa chừng. */
+    /* Chia mẻ 100 mã một lệnh. Thư viện đưa danh sách in.(…) vào ĐƯỜNG DẪN
+       chứ không vào thân yêu cầu, nên 636 mã một lệnh cho ra đường dẫn hơn
+       8 KB — vượt ngưỡng máy chủ, trả về lỗi 414. Lỗi này chỉ lộ ở quy mô
+       thật của trường, thử 5 em thì không thấy gì. */
+    let loiLL = '';
+    if (ll.length) {
+      const nhom = [[true, ll.filter(x => x.len).map(x => x.ma)],
+                    [false, ll.filter(x => !x.len).map(x => x.ma)]];
+      for (const [len, mas] of nhom) {
+        for (let i = 0; i < mas.length && !loiLL; i += 100) {
+          const u = await sb.from('hoc_sinh_lop').update({ len_lop: len })
+            .eq('nam_hoc', NAM).in('hoc_sinh_ma', mas.slice(i, i + 100));
+          if (u.error) loiLL = 'Cột Lên lớp CHƯA ghi được: ' + u.error.message;
+        }
+        if (loiLL) break;
+      }
     }
 
-    notify('Đã nạp ' + kq.length + ' ô điểm cho ' + Object.keys(daCo).length + ' học sinh'
-      + (maLa.length ? ', bỏ qua ' + maLa.length + ' mã lạ' : '') + '.' + loiRL
-      + ' Bấm "Tính lại 33 chỉ tiêu" để cập nhật các phụ lục.');
+    /* Điều cần nhớ thì ĐỂ LẠI TRÊN TRANG, đừng nhét vào thông báo nổi.
+       Thông báo nổi tự tắt sau 3,6 giây và không cuộn được, mà nội dung ở đây
+       có khi là "phần rèn luyện chưa nạp được" hoặc "cột Lên lớp chưa ghi
+       được" — lên lớp hay ở lại là kết luận cả năm học của một đứa trẻ. */
+    const y = [];
+    if (loiRL) y.push(loiRL);
+    if (loiLL) y.push(loiLL);
+    if (maLa.length) y.push(maLa.length + ' mã lạ đã bị bỏ qua: '
+      + maLa.slice(0, 8).join(', ') + (maLa.length > 8 ? '…' : ''));
+    if (oLoi.length) y.push(oLoi.length + ' ô không đọc được nên để trống: '
+      + oLoi.slice(0, 8).join(' · ') + (oLoi.length > 8 ? '…' : ''));
+
+    CANH_SAU_NAP = '<div class="hs-canh ' + (y.length ? '' : 'hs-ok') + '">'
+      + '<b>Đã nạp ' + kq.length + ' ô điểm cho ' + Object.keys(daCo).length + ' học sinh.</b>'
+      + (y.length ? '<br>⚠ ' + y.map(chan).join('<br>⚠ ') : '')
+      + '<br>Bấm <b>"Tính lại 33 chỉ tiêu"</b> để cập nhật các phụ lục.</div>';
+
+    notify(y.length
+      ? 'Đã nạp xong nhưng có ' + y.length + ' điểm cần xem — đọc dải cảnh báo trên trang.'
+      : 'Đã nạp ' + kq.length + ' ô điểm.');
     ve(document.getElementById('dbclKhac'));
   }
 

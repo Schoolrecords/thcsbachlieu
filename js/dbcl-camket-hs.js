@@ -76,10 +76,17 @@
     const m = String(n).match(/^(\d{4})-(\d{4})$/);
     return m ? (parseInt(m[1], 10) - 1) + '-' + (parseInt(m[2], 10) - 1) : null;
   }
-  /* Đúng bằng chính sách hsck_sua đặt ở máy chủ */
+  /* Đúng bằng chính sách hsck_sua đặt ở máy chủ.
+     So tên lớp phải CHUẨN HOÁ hoa thường và khoảng trắng, y như máy chủ làm
+     (upper(btrim(...)) từ tệp sql/23). Bản cũ so === thô, nên tệp phân công
+     ghi "6a" còn danh sách ghi "6A" là ô nhập bị khoá kèm câu "không được
+     phân công dạy môn này" — thầy cô đi tìm một lỗi phân công không có thật,
+     mà máy chủ thì đã cho ghi rồi. */
+  function chuanLop(s) { return String(s || '').trim().toUpperCase(); }
   function suaDuoc(lop, monMa) {
     if (laQuanTri()) return true;
-    return PHAN_CONG.some(p => p.lop === lop && (p.mon_ma === monMa || p.la_chu_nhiem));
+    return PHAN_CONG.some(p => chuanLop(p.lop) === chuanLop(lop)
+      && (p.mon_ma === monMa || p.la_chu_nhiem));
   }
   function monHienTai() { return MON.find(m => m.ma === MONMA) || MON[0]; }
 
@@ -90,6 +97,10 @@
      sinh × 12 môn ≈ 7.400 dòng kết quả, nên phải đọc theo trang cho tới hết.
      Nếu không, bộ nhớ trang chỉ có 1000 dòng đầu và tưởng những em còn lại
      CHƯA có cam kết — bấm "Đặt chuẩn đầu ra cả lớp" là ghi đè mất số thật.
+
+     BẮT BUỘC PHẢI CÓ .order('id'): không ghi rõ sắp xếp thì máy chủ được
+     quyền trả hai trang theo hai thứ tự khác nhau, dòng bị đọc trùng hoặc
+     rơi mất mà không báo gì. Sắp theo khoá chính id cho thứ tự cố định.
      ======================================================================== */
   async function taiHet(bang, chon, loc) {
     const BUOC = 1000;
@@ -97,7 +108,7 @@
     for (;;) {
       let q = sb.from(bang).select(chon);
       loc.forEach(f => { q = q.eq(f[0], f[1]); });
-      const r = await q.range(tuDau, tuDau + BUOC - 1);
+      const r = await q.order('id', { ascending: true }).range(tuDau, tuDau + BUOC - 1);
       if (r.error) throw r.error;
       const d = r.data || [];
       gom = gom.concat(d);
@@ -121,6 +132,11 @@
       u ? sb.from('phan_cong_day').select('*').eq('nam_hoc', NAM).eq('nguoi_dung_id', u.id)
         : Promise.resolve({ data: [] })
     ]);
+    /* Thư viện Supabase KHÔNG ném lỗi — nó trả { data: null, error }. Không
+       soi .error thì màn hình hiện ra "chưa có em nào cam kết", rồi nút "Đặt
+       chuẩn đầu ra cả lớp" ghi đè lên số thật đang có dưới cơ sở dữ liệu. */
+    if (mh.error) throw mh.error;
+    if (pc.error) throw pc.error;
     const hs = { data: hsD }, ck = { data: ckD }, kq = { data: kqD };
 
     MON = mh.data || [];
@@ -130,8 +146,13 @@
       || (a.hoc_sinh.ho_ten || '').localeCompare(b.hoc_sinh.ho_ten || '', 'vi'));
 
     CK = {}; (ck.data || []).forEach(r => { CK[r.hoc_sinh_ma + '|' + r.mon_ma] = r; });
+    /* Đổi mã cơ sở dữ liệu sang ký hiệu Thông tư 22 ngay lúc nạp. Trước đây
+       giữ nguyên 'D'/'CD', nên phiếu cam kết đưa học sinh và cha mẹ học sinh
+       ký ghi thực trạng môn Giáo dục thể chất là "CD" — phụ huynh không hiểu,
+       mà cũng sai ký hiệu quy định. */
     TT = {}; (kq.data || []).forEach(r => {
-      TT[r.hoc_sinh_ma + '|' + r.mon_ma] = (r.diem != null ? r.diem : r.muc);
+      TT[r.hoc_sinh_ma + '|' + r.mon_ma] = r.diem != null ? r.diem
+        : (r.muc === 'D' ? 'Đ' : r.muc === 'CD' ? 'CĐ' : null);
     });
     if (!MONMA && MON.length) MONMA = MON[0].ma;
   }
@@ -146,12 +167,30 @@
 
     hop.innerHTML = '<p style="color:#8a94a6;font-size:13.4px">Đang tải…</p>';
     try { await tai(); }
-    catch (e) { hop.innerHTML = '<div class="ck-canh">Không tải được: ' + chan(e.message) + '</div>'; return; }
+    catch (e) {
+      console.error('[Cam kết HS] Không tải được:', e);
+      hop.innerHTML = '<div class="ck-canh"><b>Chưa đọc được dữ liệu cam kết.</b><br>'
+        + 'Thầy cô thử đăng nhập lại. Nếu vẫn vậy thì tài khoản chưa được phân công '
+        + 'lớp nào trong năm học này — báo quản trị giúp em.<br>'
+        + '<span style="font-size:12.4px;color:#a0564a">Chi tiết: ' + chan(e.message) + '</span></div>';
+      return;
+    }
 
     if (!DS.length) {
       hop.innerHTML = '<div class="ck-canh ck-tin"><b>Năm học ' + chan(NAM)
         + ' chưa có học sinh nào đang học.</b><br>'
         + 'Sang tab <b>Học sinh</b> khai báo danh sách trước đã — cam kết phải gắn với từng em cụ thể.</div>';
+      return;
+    }
+
+    /* Chốt danh mục môn trước khi dùng. Thiếu chốt này thì monHienTai() trả
+       undefined, dòng suaDuoc(LOP, mon.ma) ném TypeError NGOÀI try/catch, mà
+       veTatCa gọi hàm này không await nên lỗi rơi vào hư không — màn hình
+       đứng nguyên chữ "Đang tải…" cho tới khi tải lại trang. Hai màn hình anh
+       em đã có chốt này, riêng đây bị sót. */
+    if (!MON.length) {
+      hop.innerHTML = '<div class="ck-canh">Chưa có danh mục môn học. '
+        + 'Kiểm tra đã chạy tệp <code>sql/17</code> chưa.</div>';
       return;
     }
 
@@ -328,8 +367,9 @@
       return c && c.diem_cam_ket != null;
     }).length;
 
-    if (!window.confirm('Đặt chuẩn đầu ra môn ' + mon.ten + ' cho lớp ' + LOP + '.\n\n'
-      + 'Lấy kết quả cả năm ' + namTruoc(NAM) + ' cộng thêm ' + buoc + ' điểm.\n'
+    const nt = namTruoc(NAM);
+    if (!window.confirm('Đặt chuẩn đầu ra môn ' + mon.ten + ' cho cả lớp ' + LOP + ' chứ?\n\n'
+      + 'Lấy kết quả cả năm ' + (nt || '(năm trước)') + ' cộng thêm ' + buoc + ' điểm.\n'
       + co.length + ' em có thực trạng sẽ được đặt.\n'
       + (loc.length - co.length ? (loc.length - co.length) + ' em chưa có thực trạng sẽ bỏ qua.\n' : '')
       + (de ? '\n⚠ Sẽ GHI ĐÈ ' + de + ' em đã có chuẩn đầu ra.\n' : '')
@@ -361,12 +401,14 @@
 
   function ngayThang() {
     const d = new Date();
-    return 'Yên Thành, ngày ' + d.getDate() + ' tháng ' + (d.getMonth() + 1) + ' năm ' + d.getFullYear();
+    return (CAU_HINH.DIA_DANH || 'Yên Thành') + ', ngày ' + d.getDate()
+      + ' tháng ' + (d.getMonth() + 1) + ' năm ' + d.getFullYear();
   }
   function dauTrang(phu) {
     return '<table style="width:100%;border-collapse:collapse"><tr>'
       + '<td style="' + TR + 'width:45%;text-align:center;font-size:12pt;vertical-align:top">'
-      + 'UBND XÃ YÊN THÀNH<br><b>' + chan(CAU_HINH.TEN_TRUONG || '').toUpperCase() + '</b></td>'
+      + chan(CAU_HINH.DON_VI_CHU_QUAN || 'UBND XÃ YÊN THÀNH')
+      + '<br><b>' + chan(CAU_HINH.TEN_TRUONG || '').toUpperCase() + '</b></td>'
       + '<td style="' + TR + 'text-align:center;font-size:12pt;vertical-align:top">'
       + '<b>CỘNG HOÀ XÃ HỘI CHỦ NGHĨA VIỆT NAM</b><br><b>Độc lập - Tự do - Hạnh phúc</b>'
       + '<p style="' + TR + 'font-style:italic;margin:8pt 0 0">' + ngayThang() + '</p></td></tr></table>'

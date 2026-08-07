@@ -38,7 +38,8 @@
 
   function ngayThang() {
     var d = new Date();
-    return 'Yên Thành, ngày ' + d.getDate() + ' tháng ' + (d.getMonth() + 1) + ' năm ' + d.getFullYear();
+    var diaDanh = (typeof CAU_HINH !== 'undefined' && CAU_HINH.DIA_DANH) || 'Yên Thành';
+    return diaDanh + ', ngày ' + d.getDate() + ' tháng ' + (d.getMonth() + 1) + ' năm ' + d.getFullYear();
   }
 
   /* CATS khai báo bằng const trong index.html nên không nằm trên window —

@@ -45,7 +45,8 @@
   }
   function ngayThang() {
     const d = new Date();
-    return 'Yên Thành, ngày ' + d.getDate() + ' tháng ' + (d.getMonth() + 1) + ' năm ' + d.getFullYear();
+    return (CAU_HINH.DIA_DANH || 'Yên Thành') + ', ngày ' + d.getDate()
+      + ' tháng ' + (d.getMonth() + 1) + ' năm ' + d.getFullYear();
   }
 
   function layDuLieu() {
@@ -62,11 +63,19 @@
       + '<p style="' + TR + 'text-align:center;font-size:13pt;font-weight:bold;margin:16pt 0 8pt">Phần I. TỔNG QUAN</p>'
       + '<p style="' + TR + 'font-size:12pt;font-weight:bold;margin:8pt 0 4pt">1. Thông tin chung</p>'
       + '<p style="' + TR + 'font-size:12pt;margin:0 0 3pt">a) Tên cơ sở giáo dục: ' + chan(tenTruong()) + '</p>'
-      + '<p style="' + TR + 'font-size:12pt;margin:0 0 3pt">b) Địa chỉ: Xã Yên Thành, tỉnh Nghệ An</p>'
-      + '<p style="' + TR + 'font-size:12pt;margin:0 0 3pt">c) Cơ quan quản lý trực tiếp: Sở Giáo dục và Đào tạo Nghệ An</p>'
+      + '<p style="' + TR + 'font-size:12pt;margin:0 0 3pt">b) Địa chỉ: '
+      + chan(CAU_HINH.DIA_CHI_TRUONG || 'Xã Yên Thành, tỉnh Nghệ An') + '</p>'
+      + '<p style="' + TR + 'font-size:12pt;margin:0 0 3pt">c) Cơ quan quản lý trực tiếp: '
+      + chan(CAU_HINH.CO_QUAN_QUAN_LY || 'Sở Giáo dục và Đào tạo Nghệ An') + '</p>'
       + '<p style="' + TR + 'font-size:12pt;margin:0 0 3pt">d) Loại hình và cấp học: Công lập — Trung học cơ sở</p>'
       + '<p style="' + TR + 'font-size:12pt;margin:0 0 3pt">đ) Năm thành lập: …</p>'
-      + '<p style="' + TR + 'font-size:12pt;margin:0 0 3pt">e) Quy mô: 16 lớp, 616 học sinh, 38 cán bộ quản lý, giáo viên và nhân viên</p>'
+      /* Quy mô lấy từ cauhinh.js. Trước đây gõ cứng "616 học sinh" trong khi
+         quy mô thật là 636 — bản Word gửi Sở lệch 20 em so với mọi màn hình
+         khác của chính hệ thống này. */
+      + '<p style="' + TR + 'font-size:12pt;margin:0 0 3pt">e) Quy mô: '
+      + chan(CAU_HINH.SO_LOP || '…') + ' lớp, '
+      + chan(CAU_HINH.SO_HOC_SINH || '…') + ' học sinh, '
+      + chan(CAU_HINH.SO_CBGV || '…') + ' cán bộ quản lý, giáo viên và nhân viên</p>'
       + '<p style="' + TR + 'font-size:12pt;font-weight:bold;margin:8pt 0 4pt">2. Bối cảnh và đặc điểm</p>'
       + '<p style="' + TR + 'font-size:12pt;margin:0 0 3pt">a) Điều kiện kinh tế - xã hội địa phương: …</p>'
       + '<p style="' + TR + 'font-size:12pt;margin:0 0 3pt">b) Thuận lợi: …</p>'
@@ -241,7 +250,8 @@
       + '<p style="' + TR + 'font-size:11.5pt;font-style:italic;margin:0 0 5pt;text-align:justify">Căn cứ khoản 3 Điều 5 Thông tư số 57/2026/TT-BGDĐT: đạt Mức 1 khi tất cả tiêu chí bắt buộc đạt Mức 1 và có ít nhất 05 trong 07 tiêu chí còn lại đạt Mức 1 trở lên; đạt Mức 2 khi tất cả tiêu chí bắt buộc đạt Mức 2 và có ít nhất 05 trong 07 tiêu chí còn lại đạt Mức 2, các tiêu chí còn lại đạt tối thiểu Mức 1.</p>'
       + '<p style="' + TR + 'font-size:12pt;font-weight:bold;margin:8pt 0 3pt">4. Đề xuất, kiến nghị</p>'
       + '<p style="' + TR + 'font-size:12pt;margin:0 0 3pt">a) Với Sở Giáo dục và Đào tạo Nghệ An: …</p>'
-      + '<p style="' + TR + 'font-size:12pt;margin:0 0 3pt">b) Với Ủy ban nhân dân xã Yên Thành: …</p>'
+      + '<p style="' + TR + 'font-size:12pt;margin:0 0 3pt">b) Với Uỷ ban nhân dân xã '
+      + chan(CAU_HINH.DIA_DANH || 'Yên Thành') + ': …</p>'
       + '<p style="' + TR + 'font-size:12pt;margin:0 0 5pt">c) Với tổ chức, cá nhân liên quan: …</p>'
       + '<p style="' + TR + 'font-size:12pt;margin:8pt 0 0;text-align:justify">Hiệu trưởng chịu trách nhiệm về tính trung thực, chính xác của thông tin, số liệu và minh chứng trong báo cáo tự đánh giá./.</p>';
   }
@@ -286,7 +296,8 @@
     }
 
     const bia = ''
-      + '<p style="' + TR + 'text-align:center;font-size:13pt;margin:0">UBND XÃ YÊN THÀNH</p>'
+      + '<p style="' + TR + 'text-align:center;font-size:13pt;margin:0">'
+      + chan(CAU_HINH.DON_VI_CHU_QUAN || 'UBND XÃ YÊN THÀNH') + '</p>'
       + '<p style="' + TR + 'text-align:center;font-size:13pt;font-weight:bold;margin:0 0 30pt">'
       + chan(tenTruong()).toUpperCase() + '</p>'
       + '<p style="' + TR + 'text-align:center;font-size:17pt;font-weight:bold;margin:40pt 0 6pt">BÁO CÁO TỰ ĐÁNH GIÁ</p>'

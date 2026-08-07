@@ -358,6 +358,24 @@ td.tdst{white-space:nowrap;text-align:right}
 .stu-hero h2{font-family:var(--serif);font-size:29px;margin-bottom:9px}
 .stu-hero p{font-size:14.4px;opacity:.88;max-width:56ch;margin:0 auto 16px}
 .stu-pill{display:inline-block;border:1.5px solid rgba(229,177,58,.6);color:var(--gold-2);border-radius:999px;padding:9px 22px;font-size:14.4px;font-weight:700}
+/* Dải cảnh báo "đây là dữ liệu mẫu" ở màn hình Quản lý học sinh */
+.hs-mau-canh{background:#fff8e8;border:1.5px solid #f0d089;border-left:5px solid #e0a72e;
+  color:#7a5410;border-radius:12px;padding:15px 18px;margin:0 0 20px;
+  font-size:16px;line-height:1.7}
+.hs-mau-canh b{color:#6b4409}
+@media(min-width:900px){.hs-mau-canh{font-size:17px}}
+/* Bản in: đóng dấu chìm lên danh sách mẫu để tờ giấy in ra không bị nhầm là
+   hồ sơ thật. Bám vào class .la-mau chứ KHÔNG bám vào #shBody — lớp phủ đó
+   dùng chung cho ba màn hình (danh sách HS mẫu, danh mục minh chứng, nội dung
+   tiêu chí TT57), đóng dấu vào #shBody là in danh mục minh chứng thật cũng
+   dính chữ "KHÔNG DÙNG LÀM HỒ SƠ". */
+@media print{
+  #shBody.la-mau{position:relative}
+  #shBody.la-mau::after{content:'DỮ LIỆU MẪU — KHÔNG DÙNG LÀM HỒ SƠ';
+    position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font-size:34px;font-weight:800;color:rgba(200,60,40,.16);
+    transform:rotate(-24deg);pointer-events:none;letter-spacing:2px;text-align:center}
+}
 .khoi-grid{display:grid;gap:13px;grid-template-columns:repeat(2,1fr)}
 .khoi{background:#fff;border:1px solid var(--line);border-radius:15px;border-left:5px solid var(--navy);padding:18px 16px;text-align:center;box-shadow:var(--shadow);transition:transform .16s,box-shadow .16s}
 .khoi:hover{transform:translateY(-4px);box-shadow:var(--shadow-lg)}
@@ -600,7 +618,7 @@ footer .legal{border-top:1px solid rgba(255,255,255,.15);padding-top:15px;font-s
         <div class="mod-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 10 12 5 2 10l10 5 10-5Z"/><path d="M6 12.5V17c3.5 3 8.5 3 12 0v-4.5"/><path d="M22 10v6"/></svg></div>
         <h3>Quản lý học sinh</h3>
         <div class="chips"><span class="chip">4 khối</span><span class="chip">16 lớp</span></div>
-        <p>Danh sách học sinh theo khối và lớp, đồng bộ trực tiếp từ bảng dữ liệu của nhà trường, tra cứu nhanh trên điện thoại.</p>
+        <p>Bản xem thử bố cục danh sách học sinh theo khối và lớp. Tên và sĩ số trong đây là <b>số liệu giả</b> để minh hoạ giao diện — dữ liệu thật nằm ở mục Đảm bảo chất lượng.</p>
         <span class="mod-go">Xem các khối</span>
               <span class="mod-hinh" aria-hidden="true"><svg viewBox="0 0 64 64"><path d="M8 26l22-11 22 11-22 11z"/><path d="M17 31v11c7 6 19 6 26 0V31"/><path d="M52 26v14"/><circle cx="52" cy="44" r="3"/></svg></span>
       </button>
@@ -716,10 +734,22 @@ footer .legal{border-top:1px solid rgba(255,255,255,.15);padding-top:15px;font-s
 <!-- ============ QUẢN LÝ HỌC SINH ============ -->
 <section class="view" id="view-hocsinh">
   <div class="wrap">
+    <!-- Cảnh báo đặt TRƯỚC phần tiêu đề và con số. Để sau thì thầy cô đọc
+         "636 học sinh" trong khung sang trọng, tin là thật, rồi mới tới lời
+         cảnh báo — mà trên điện thoại nó còn bị đẩy khỏi màn hình đầu tiên.
+         Trước đây trang còn ghi "đồng bộ trực tiếp từ bảng dữ liệu của nhà
+         trường", trong khi tên học sinh ở đây do trang tự sinh ngẫu nhiên. -->
+    <div class="hs-mau-canh">
+      <b>⚠ Đây là bản xem thử, chưa phải dữ liệu thật.</b>
+      Toàn bộ họ tên, ngày sinh, sĩ số và giáo viên chủ nhiệm trong màn hình này do trang
+      tự sinh ra để minh hoạ bố cục. Danh sách học sinh thật của nhà trường nằm ở
+      <b>Đảm bảo chất lượng → Học sinh</b>, và chỉ hiện với tài khoản đã được phân quyền.
+      Không dùng số ở đây để làm báo cáo, không in ra kẹp vào hồ sơ.
+    </div>
     <div class="stu-hero">
       <h2>Quản lý Học sinh</h2>
-      <p>Chọn từng khối để xem các lớp và danh sách học sinh. Dữ liệu đồng bộ trực tiếp từ bảng dữ liệu của nhà trường.</p>
-      <span class="stu-pill" id="stuPill">Toàn trường · 16 lớp · 636 học sinh</span>
+      <p>Chọn từng khối để xem các lớp và danh sách học sinh.</p>
+      <span class="stu-pill" id="stuPill">Số minh hoạ</span>
     </div>
     <div class="khoi-grid" id="khoiGrid"></div>
     <div id="lopArea" style="margin-top:26px"></div>
@@ -795,6 +825,8 @@ footer .legal{border-top:1px solid rgba(255,255,255,.15);padding-top:15px;font-s
     </div>
     <div id="dbclTab"></div>
     <div class="db-bar" id="dbclThanh"></div>
+    <!-- Ô báo lỗi tải dữ liệu — LUÔN hiện, không bị veTatCa ẩn đi như dbclBang -->
+    <div id="dbclLoi"></div>
     <div id="dbclDe"></div>
     <div id="dbclKhac"></div>
     <div id="dbclNhanh"></div>
@@ -1481,6 +1513,7 @@ function openCat(id){
   shIc.className = 'ic num';
   document.getElementById('shTitle').textContent = c.name;
   document.getElementById('shSub').textContent = c.desc;
+  document.getElementById('shBody').classList.remove('la-mau');
   document.getElementById('shBody').innerHTML = `
     <div class="sheet-sum">
       <div>
@@ -1599,6 +1632,7 @@ function showCrit(code){
   document.getElementById('shIc').textContent='✅';
   document.getElementById('shTitle').textContent='Tiêu chí '+c.code;
   document.getElementById('shSub').textContent=c.name;
+  document.getElementById('shBody').classList.remove('la-mau');
   document.getElementById('shBody').innerHTML = `
     <div class="lv"><span class="lv-tag">MỨC 1</span><p>${c.m1}</p></div>
     <div class="lv"><span class="lv-tag m2">MỨC 2</span><p>${c.m2}</p></div>
@@ -1699,7 +1733,11 @@ function closePerson(){
 function renderKhoi(){
   const tongLop = KHOI.reduce((s,k)=>s+k.lops.length,0);
   const tongHS = KHOI.reduce((s,k)=>s+k.si.reduce((a,b)=>a+b,0),0);
-  document.getElementById('stuPill').textContent = `Toàn trường · ${tongLop} lớp · ${tongHS} học sinh`;
+  /* Ghi rõ "số minh hoạ" ngay trên con số. Bản cũ chỉ ghi "Toàn trường · 16
+     lớp · 636 học sinh" — mà 636 lại trùng khít sĩ số thật, nên thầy cô kiểm
+     tổng thấy khớp là kết luận màn hình này là thật, cảnh báo mất hiệu lực. */
+  document.getElementById('stuPill').textContent =
+    `Số minh hoạ · ${tongLop} lớp · ${tongHS} học sinh`;
   document.getElementById('khoiGrid').innerHTML = KHOI.map(k=>`
     <button class="khoi" onclick="showLop(${k.k})">
       <div class="em">${k.k}</div>
@@ -1738,26 +1776,27 @@ function showDsHs(lop, si, gvIdx){
   document.getElementById('shIc').textContent='🎒';
   document.getElementById('shTitle').textContent='Lớp '+lop;
   document.getElementById('shSub').textContent='Giáo viên chủ nhiệm: '+GVCN[gvIdx%GVCN.length];
+  /* Chi rieng man hinh nay la du lieu mau -> bat co de ban in co dau chim */
+  document.getElementById('shBody').classList.add('la-mau');
   document.getElementById('shBody').innerHTML = `
+    <div class="hs-mau-canh" style="margin-bottom:14px"><b>⚠ Danh sách minh hoạ.</b>
+      Những họ tên dưới đây do trang tự sinh ra để xem thử bố cục — không phải học sinh có thật
+      của nhà trường. Danh sách thật nằm ở <b>Đảm bảo chất lượng → Học sinh</b>.</div>
     <div class="sheet-sum">
-      <div><div class="big">${si} học sinh</div><div class="sub">Nam: ${nam} · Nữ: ${si-nam} · Năm học 2026-2027</div></div>
-      <div class="sp"></div>
-      <button class="btn btn-out" onclick="notify('Đang kết xuất danh sách lớp ${lop} ra tệp Excel…')">📊 Xuất Excel</button>
-      <button class="btn btn-pri" onclick="window.print()">🖨 In danh sách</button>
+      <div><div class="big">${si} học sinh</div><div class="sub">Nam: ${nam} · Nữ: ${si-nam} · số minh hoạ</div></div>
     </div>
     <div class="tbl-wrap">
       <table class="data">
-        <thead><tr><th style="width:60px">STT</th><th>Họ và tên</th><th style="width:120px">Ngày sinh</th><th style="width:90px">Giới tính</th><th style="width:120px">Hồ sơ</th></tr></thead>
+        <thead><tr><th style="width:60px">STT</th><th>Họ và tên</th><th style="width:120px">Ngày sinh</th><th style="width:90px">Giới tính</th></tr></thead>
         <tbody>${ds.map(h=>`<tr>
           <td class="num">${h.stt}</td>
           <td>${h.ten}</td>
           <td class="num">${h.ns}</td>
           <td class="num">${h.gt}</td>
-          <td class="num"><button class="drive" onclick="openDrive('Hồ sơ học sinh ${h.ten}')">📂</button></td>
         </tr>`).join('')}</tbody>
       </table>
     </div>
-    <p style="font-size:12.4px;color:var(--muted);margin-top:12px;line-height:1.6">Thông tin cá nhân của học sinh được bảo vệ theo Nghị định 13/2023/NĐ-CP. Số điện thoại phụ huynh và địa chỉ cư trú chỉ hiển thị với giáo viên chủ nhiệm và ban giám hiệu.</p>`;
+    <p style="font-size:12.4px;color:var(--muted);margin-top:12px;line-height:1.6">Khi mục này được nối với cơ sở dữ liệu, thông tin cá nhân của học sinh sẽ được bảo vệ theo Nghị định 13/2023/NĐ-CP: số điện thoại phụ huynh và địa chỉ cư trú chỉ hiển thị với giáo viên chủ nhiệm và ban giám hiệu.</p>`;
   document.getElementById('sheetOverlay').classList.add('on');
   document.body.style.overflow='hidden';
 }

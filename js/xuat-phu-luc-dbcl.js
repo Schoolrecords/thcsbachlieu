@@ -30,8 +30,9 @@
   const TR = "font-family:'Times New Roman',serif;";
   const O  = TR + 'border:1px solid #000;padding:4pt 6pt;font-size:11.5pt;vertical-align:middle;';
   const OC = O + 'text-align:center;';
-  const XA = 'UBND XÃ YÊN THÀNH';
-  const DIA_DANH = 'Yên Thành';
+  /* Lấy từ cauhinh.js — một nguồn duy nhất, khỏi mỗi tệp một giá trị */
+  const XA = CAU_HINH.DON_VI_CHU_QUAN || 'UBND XÃ YÊN THÀNH';
+  const DIA_DANH = CAU_HINH.DIA_DANH || 'Yên Thành';
 
   function chan(s) {
     return String(s == null ? '' : s)
@@ -84,8 +85,9 @@
   function ghiChuSua() {
     return '<p style="' + TR + 'font-size:10.5pt;font-style:italic;color:#444;margin:12pt 0 0;'
       + 'text-align:justify">Ghi chú về thể thức: biểu mẫu đã cập nhật theo mô hình chính quyền '
-      + 'địa phương hai cấp — cơ quan chủ quản ghi là Uỷ ban nhân dân xã Yên Thành và Sở Giáo dục '
-      + 'và Đào tạo Nghệ An. Dòng "học sinh giỏi cấp huyện" của biểu mẫu cũ được thay bằng '
+      + 'địa phương hai cấp — cơ quan chủ quản ghi là Uỷ ban nhân dân xã ' + chan(DIA_DANH)
+      + ' và ' + chan(CAU_HINH.CO_QUAN_QUAN_LY || 'Sở Giáo dục và Đào tạo Nghệ An')
+      + '. Dòng "học sinh giỏi cấp huyện" của biểu mẫu cũ được thay bằng '
       + '"cấp trường"; các cột đối sánh cấp huyện gộp thành một cột đối sánh toàn tỉnh. '
       + 'Danh mục môn học ghi theo Chương trình giáo dục phổ thông 2018; mức xếp loại ghi theo '
       + 'Thông tư số 22/2021/TT-BGDĐT.</p>';
@@ -186,7 +188,9 @@
     if (demODaNhap(d, loai, ky) > 0) return false;
     if (typeof notify === 'function') {
       notify('Bảng "' + tenBang + '" của năm học ' + d.namHoc + ' chưa có ô nào được nhập, '
-        + 'nên chưa xuất được. Thầy cô chọn đúng bảng ở ô "Bảng số liệu", nhập số rồi xuất lại.');
+        /* Giao diện không có ô nào tên "Bảng số liệu" — việc chọn bảng nằm ở
+           hàng thẻ Phụ lục. Chỉ sai chỗ là thầy cô đi tìm cái không có. */
+        + 'nên chưa xuất được. Thầy cô chọn đúng thẻ Phụ lục ở hàng trên, nhập số rồi xuất lại.');
     }
     return true;
   }
@@ -240,24 +244,42 @@
     if (bangTrong(d, 'ket_qua', d.ky, 'Kết quả thực hiện — ' + tenKy)) return;
 
     /* Bảng đối chiếu với chuẩn đã cam kết — thứ bản giấy không có */
+    /* Lấy chuẩn CÙNG KỲ với kết quả, y như màn hình đối sánh. Bản cũ luôn lấy
+       chuẩn cả năm, nên tệp Word Phụ lục 5 của học kì I liệt kê hàng loạt chỉ
+       tiêu "chưa đạt cam kết" giả — mà đây là tệp gửi Sở, lại không có dòng
+       "đây mới là mốc giữa đường" như trên màn hình. */
     let doiChieu = '';
     const hut = [];
+    let muonCaNam = false;
     d.chiTieu.forEach(ct => {
       if (ct.don_vi === 'text') return;
       d.khoi.forEach(k => {
         if (ct.chi_khoi_9 && k !== 9) return;
-        const c = d.lay('chuan_dau_ra', 'ca_nam', k, ct.ma);
+        let c = d.lay('chuan_dau_ra', d.ky, k, ct.ma);
+        let muonO = false;
+        if ((!c || !c.gia_tri) && d.ky !== 'ca_nam') {
+          c = d.lay('chuan_dau_ra', 'ca_nam', k, ct.ma);
+          muonO = !!(c && c.gia_tri);
+        }
         const r = d.lay('ket_qua', d.ky, k, ct.ma);
         if (!c || !r || !c.gia_tri || !r.gia_tri) return;
         const nc = so(c.gia_tri), nr = so(r.gia_tri);
         if (nc == null || nr == null) return;
         const dat = ct.chieu_tot === 'up' ? nr >= nc : nr <= nc;
-        if (!dat) hut.push({ ct: ct, k: k, c: c.gia_tri, r: r.gia_tri });
+        if (!dat) { hut.push({ ct: ct, k: k, c: c.gia_tri, r: r.gia_tri }); if (muonO) muonCaNam = true; }
       });
     });
     if (hut.length) {
       doiChieu = '<p style="' + TR + 'font-size:12pt;font-weight:bold;margin:14pt 0 5pt">'
-        + 'Các chỉ tiêu chưa đạt chuẩn đầu ra đã cam kết</p>'
+        + (muonCaNam
+            ? 'Các chỉ tiêu còn hụt so với đích cả năm (mốc giữa học kì I)'
+            : 'Các chỉ tiêu chưa đạt chuẩn đầu ra đã cam kết') + '</p>'
+        + (muonCaNam
+            ? '<p style="' + TR + 'font-size:11.5pt;font-style:italic;margin:0 0 5pt;text-align:justify">'
+              + 'Chuẩn đầu ra tại Phụ lục 2 và 16 là đích của cả năm học, còn kết quả trong bảng này '
+              + 'mới hết học kì I. Bảng dưới đây dùng để xác định chỗ cần tập trung trong học kì II, '
+              + 'không phải kết luận nhà trường chưa đạt cam kết.</p>'
+            : '')
         + '<table style="width:100%;border-collapse:collapse"><tr>'
         + '<td style="' + OC + 'font-weight:bold;width:8%">Khối</td>'
         + '<td style="' + OC + 'font-weight:bold">Chỉ tiêu</td>'
@@ -281,9 +303,14 @@
       + kyTen('HIỆU TRƯỞNG');
     taiVe('Phụ lục 5 — Kết quả ' + tenKy + ' ' + d.namHoc, than,
       'phu-luc-5-ket-qua-' + (d.ky === 'hoc_ki_1' ? 'hk1-' : 'ca-nam-') + d.namHoc + '.doc');
+    /* Câu này phải khớp với tiêu đề bảng vừa in ra. Trước đây luôn nói "chưa
+       đạt cam kết" trong khi tệp Word đã ghi rõ đây mới là mốc giữa học kì I. */
     if (typeof notify === 'function')
       notify('Đã tải Phụ lục 5' + (hut.length
-        ? ' — có ' + hut.length + ' chỉ tiêu chưa đạt cam kết, đã liệt kê ở cuối tệp.' : '.'));
+        ? ' — có ' + hut.length + ' chỉ tiêu '
+          + (muonCaNam ? 'còn cách đích cả năm' : 'chưa đạt cam kết')
+          + ', đã liệt kê ở cuối tệp.'
+        : '.'));
   }
 
   function so(t) {
@@ -364,14 +391,16 @@
   function xuat16() {
     const d = duLieu(); if (!d) return thieuDuLieu();
     if (bangTrong(d, 'chuan_dau_ra', 'ca_nam', 'Chuẩn đầu ra phấn đấu')) return;
-    const ht = 'Nguyễn Phúc Lộc';
+    const ht = CAU_HINH.HIEU_TRUONG || '……………………';
 
     const than = tieuDe()
       + tenPhuLuc('16', 'BẢN CAM KẾT CHẤT LƯỢNG GIÁO DỤC NHÀ TRƯỜNG',
           'Năm học ' + d.namHoc)
       + '<p style="' + TR + 'font-size:12pt;margin:8pt 0 4pt"><b>Kính gửi:</b></p>'
-      + '<p style="' + TR + 'font-size:12pt;margin:0 0 2pt">- Uỷ ban nhân dân xã Yên Thành;</p>'
-      + '<p style="' + TR + 'font-size:12pt;margin:0 0 8pt">- Sở Giáo dục và Đào tạo Nghệ An.</p>'
+      + '<p style="' + TR + 'font-size:12pt;margin:0 0 2pt">- Uỷ ban nhân dân xã '
+      + chan(DIA_DANH) + ';</p>'
+      + '<p style="' + TR + 'font-size:12pt;margin:0 0 8pt">- '
+      + chan(CAU_HINH.CO_QUAN_QUAN_LY || 'Sở Giáo dục và Đào tạo Nghệ An') + '.</p>'
       + '<p style="' + TR + 'font-size:12pt;margin:0 0 3pt">Tôi tên là: <b>' + chan(ht) + '</b></p>'
       + '<p style="' + TR + 'font-size:12pt;margin:0 0 8pt">Chức vụ: Hiệu trưởng</p>'
       + '<p style="' + TR + 'font-size:12pt;margin:0 0 8pt;text-align:justify">Tôi xin cam kết '
@@ -389,7 +418,8 @@
       + ghiChuSua()
       + '<p style="' + TR + 'font-size:10.5pt;font-style:italic;color:#444;margin:6pt 0 0;'
       + 'text-align:justify">Ghi chú về nơi nhận: theo mô hình chính quyền địa phương hai cấp, '
-      + 'bản cam kết này gửi Uỷ ban nhân dân xã Yên Thành và Sở Giáo dục và Đào tạo Nghệ An. '
+      + 'bản cam kết này gửi Uỷ ban nhân dân xã ' + chan(DIA_DANH) + ' và '
+      + chan(CAU_HINH.CO_QUAN_QUAN_LY || 'Sở Giáo dục và Đào tạo Nghệ An') + '. '
       + 'Phụ lục 17 của bộ biểu mẫu cũ (Trưởng phòng Giáo dục và Đào tạo ký cam kết với Giám đốc Sở) '
       + 'không còn đối tượng thực hiện.</p>'
       + '<table style="width:100%;border-collapse:collapse;margin-top:18pt"><tr>'

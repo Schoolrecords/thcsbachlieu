@@ -74,18 +74,43 @@
   /* ========================================================================
      TẢI DỮ LIỆU
      ======================================================================== */
+  /* Danh sách lớp lấy từ bảng học sinh: hơn 600 dòng mỗi năm, mà máy chủ chỉ
+     trả 1000 dòng một lần. Đọc theo trang cho chắc, và sắp theo khoá chính để
+     thứ tự giữa các trang không đổi (không sắp thì dòng bị trùng hoặc rơi). */
+  async function taiLopHoc() {
+    const BUOC = 1000;
+    let tuDau = 0, gom = [];
+    for (;;) {
+      const r = await sb.from('hoc_sinh_lop').select('id, lop').eq('nam_hoc', NAM)
+        .order('id', { ascending: true }).range(tuDau, tuDau + BUOC - 1);
+      if (r.error) throw r.error;
+      const d = r.data || [];
+      gom = gom.concat(d);
+      if (d.length < BUOC) break;
+      tuDau += BUOC;
+      if (tuDau > 60000) break;
+    }
+    return gom;
+  }
+
   async function tai() {
     const [mh, nd, pc, hl] = await Promise.all([
       sb.from('mon_hoc').select('*').order('so_tt'),
       sb.from('nguoi_dung').select('id, email, ho_ten, chuc_vu, to_chuyen_mon, trang_thai')
         .eq('trang_thai', 'hoat_dong').order('ho_ten'),
       sb.from('phan_cong_day').select('*').eq('nam_hoc', NAM),
-      sb.from('hoc_sinh_lop').select('lop').eq('nam_hoc', NAM)
+      taiLopHoc()
     ]);
+    /* Soi lỗi cả ba câu hỏi. Bỏ qua chỗ này thì khi máy chủ từ chối, màn hình
+       hiện ra "chưa có giáo viên nào" y như thật, và phân công cũ biến mất. */
+    if (mh.error) throw mh.error;
+    if (nd.error) throw nd.error;
+    if (pc.error) throw pc.error;
+
     MON = mh.data || [];
     GV = nd.data || [];
     PC = pc.data || [];
-    LOPS = Array.from(new Set((hl.data || []).map(r => r.lop)))
+    LOPS = Array.from(new Set((hl || []).map(r => r.lop)))
       .concat(Array.from(new Set(PC.map(p => p.lop))));
     LOPS = Array.from(new Set(LOPS)).filter(Boolean).sort((a, b) => a.localeCompare(b, 'vi'));
   }
@@ -100,7 +125,13 @@
 
     hop.innerHTML = '<p style="color:#8a94a6;font-size:13.4px">Đang tải…</p>';
     try { await tai(); }
-    catch (e) { hop.innerHTML = '<div class="pc-canh">Không tải được: ' + chan(e.message) + '</div>'; return; }
+    catch (e) {
+      console.error('[Phân công] Không tải được:', e);
+      hop.innerHTML = '<div class="pc-canh"><b>Chưa đọc được bảng phân công giảng dạy.</b><br>'
+        + 'Thầy cô thử đăng nhập lại. Nếu vẫn vậy thì báo quản trị giúp em.<br>'
+        + '<span style="font-size:12.4px;color:#a0564a">Chi tiết: ' + chan(e.message) + '</span></div>';
+      return;
+    }
 
     if (!MON.length) {
       hop.innerHTML = '<div class="pc-canh">Chưa có danh mục môn học. Kiểm tra đã chạy <code>sql/17</code> chưa.</div>';
@@ -308,6 +339,12 @@
 
   function chonTep() {
     if (!coThuVien()) return;
+    /* Chốt quyền ngay ở giao diện cho khớp chính sách pcd_sua trên máy chủ —
+       để thầy cô không mất công điền cả tệp rồi mới bị từ chối. */
+    if (!laQuanTri()) {
+      notify('Chỉ quản trị và ban giám hiệu mới nhập được phân công giảng dạy.');
+      return;
+    }
     const inp = document.getElementById('pcTepExcel');
     if (!inp) return;
     inp.value = '';
@@ -322,12 +359,27 @@
     if (!ws) { notify('Tệp không có trang tính nào.'); return; }
     const hang = XLSX.utils.sheet_to_json(ws, { header: 1, raw: false, defval: '' });
 
-    /* Tìm dòng tiêu đề */
+    /* Tìm dòng tiêu đề — phải có ĐỒNG THỜI ô email và ô lớp.
+
+       Lỗi cũ đã chặn cả màn hình này: bản cũ chỉ hỏi "ô nào chứa chữ email",
+       mà dòng thứ 4 của chính mẫu hệ thống tải xuống là câu "Hướng dẫn: Ghép
+       giáo viên theo cột Email — phải đúng email tài khoản…". Câu ấy chứa chữ
+       email nên bị nhận là dòng tiêu đề, mà nó không có chữ "lớp" nên hệ
+       thống báo "Tệp thiếu cột Email hoặc cột Lớp" và không nạp được gì.
+       Không nạp được phân công thì giáo viên bị chính sách xem_duoc_hoc_sinh
+       khoá khỏi dữ liệu lớp mình dạy. */
     let iTd = -1;
     for (let i = 0; i < Math.min(hang.length, 20); i++) {
-      if ((hang[i] || []).some(x => String(x).trim().toLowerCase().indexOf('email') >= 0)) { iTd = i; break; }
+      const d = (hang[i] || []).map(x => String(x).trim().toLowerCase());
+      if (d.some(x => x.indexOf('email') >= 0) && d.some(x => x.indexOf('lớp') >= 0)) {
+        iTd = i; break;
+      }
     }
-    if (iTd < 0) { notify('Không tìm thấy dòng tiêu đề có cột Email. Thầy cô dùng đúng mẫu hệ thống tải xuống.'); return; }
+    if (iTd < 0) {
+      notify('Không tìm thấy dòng tiêu đề. Tệp phải có một dòng vừa có cột Email '
+        + 'vừa có cột Lớp. Thầy cô dùng đúng mẫu hệ thống tải xuống, đừng sửa dòng tiêu đề.');
+      return;
+    }
 
     const td = (hang[iTd] || []).map(x => String(x).trim().toLowerCase());
     const iEmail = td.findIndex(t => t.indexOf('email') >= 0);
@@ -346,7 +398,11 @@
 
     hang.slice(iTd + 1).forEach(d => {
       const em = String(d[iEmail] == null ? '' : d[iEmail]).toLowerCase().trim();
-      const lop = String(d[iLop] == null ? '' : d[iLop]).trim();
+      /* Chuẩn hoá tên lớp về CHỮ HOA ngay lúc nạp — đây là gốc của lỗi "6a"
+         khác "6A". Hai bảng phan_cong_day và hoc_sinh_lop nạp từ hai tệp
+         Excel khác nhau, mà quyền xem và quyền ghi cam kết đều ghép bằng tên
+         lớp. Chuẩn hoá ở cửa vào thì máy chủ khỏi phải chữa cháy. */
+      const lop = String(d[iLop] == null ? '' : d[iLop]).trim().toUpperCase();
       if (!em && !lop) return;
       const g = theoEmail[em];
       if (!g) { if (em) emailLa.push(em); return; }

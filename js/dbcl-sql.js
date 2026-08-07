@@ -189,6 +189,32 @@
   /* ========================================================================
      TẢI DỮ LIỆU
      ======================================================================== */
+  /* Mỗi bản cam kết giáo viên có tới 33 chỉ tiêu × 4 khối ≈ 132 dòng. Máy chủ
+     chỉ trả tối đa 1000 dòng mỗi lần hỏi, nên hỏi một phát cho cả trường thì
+     từ bản cam kết thứ TÁM trở đi là mất số — mà mất im lặng, bảng vẫn hiện
+     ra bình thường với ô trống, thầy cô tưởng thầy cô đó chưa nhập.
+     Vì vậy chia danh sách thành từng mẻ nhỏ, và mỗi mẻ vẫn đọc theo trang. */
+  async function taiDongCamKet(ids) {
+    const ME = 40, BUOC = 1000, gom = [];
+    for (let i = 0; i < ids.length; i += ME) {
+      const me = ids.slice(i, i + ME);
+      let tuDau = 0;
+      for (;;) {
+        const r = await sb.from('dbcl_cam_ket_dong').select('*')
+          .in('cam_ket_id', me)
+          .order('id', { ascending: true })
+          .range(tuDau, tuDau + BUOC - 1);
+        if (r.error) throw r.error;
+        const d = r.data || [];
+        gom.push.apply(gom, d);
+        if (d.length < BUOC) break;
+        tuDau += BUOC;
+        if (tuDau > 60000) break;
+      }
+    }
+    return gom;
+  }
+
   async function taiDuLieu() {
     if (!sb || DANG_TAI) return;
     DANG_TAI = true;
@@ -198,7 +224,12 @@
         sb.from('dbcl_so_lieu').select('*').eq('nam_hoc', NAM_HOC),
         sb.from('dbcl_cam_ket').select('*').eq('nam_hoc', NAM_HOC).order('ho_ten')
       ]);
+      /* Phải soi lỗi CẢ BA câu hỏi. Trước đây chỉ soi câu đầu rồi viết
+         `sl.data || []`, nên khi máy chủ từ chối vì phân quyền thì bảng hiện
+         ra trống trơn như thật — thầy cô nhập lại từ đầu và ghi đè số cũ. */
       if (ct.error) throw ct.error;
+      if (sl.error) throw sl.error;
+      if (ck.error) throw ck.error;
       if (!ct.data || !ct.data.length) {
         throw new Error('Cơ sở dữ liệu chưa có bộ chỉ tiêu. Kiểm tra đã chạy tệp sql/15 chưa.');
       }
@@ -212,17 +243,37 @@
       CAM_KET = ck.data || [];
       CK_DONG = {};
       if (CAM_KET.length) {
-        const dong = await sb.from('dbcl_cam_ket_dong').select('*')
-          .in('cam_ket_id', CAM_KET.map(c => c.id));
-        (dong.data || []).forEach(d => {
+        (await taiDongCamKet(CAM_KET.map(c => c.id))).forEach(d => {
           (CK_DONG[d.cam_ket_id] = CK_DONG[d.cam_ket_id] || {})[d.khoi + '|' + d.chi_tieu_ma] = d.gia_tri;
         });
       }
 
+      const oL = document.getElementById('dbclLoi');
+      if (oL) oL.innerHTML = '';
       veTatCa();
     } catch (e) {
-      const o = document.getElementById('dbclBang');
-      if (o) o.innerHTML = '<div class="db-canh">Không tải được số liệu: ' + chan(e.message) + '</div>';
+      /* Báo lỗi vào ô RIÊNG luôn hiện, không vào dbclBang.
+         Hai lỗi cũ gộp ở đây:
+         · dbclBang bị veTatCa đặt display:none khi đang mở màn hình khác —
+           mà màn hình mặc định chính là màn khác. Đổi năm học mà máy chủ từ
+           chối thì màn hình không đổi gì, thầy cô tưởng năm đó chưa có số.
+         · veTatCa chỉ chạy khi tải xong, nên hỏng ngay lần đầu là không có
+           tab, không có ô chọn năm, không có đường quay lại. Nay vẫn dựng
+           thanh điều khiển và kèm nút thử lại. */
+      const oL = document.getElementById('dbclLoi');
+      if (oL) {
+        oL.innerHTML = '<div class="db-canh">Không tải được số liệu: ' + chan(e.message)
+          + '<br><button class="btn btn-out" id="dbclThuLai" style="margin-top:9px">↻ Thử lại</button></div>';
+        const n = document.getElementById('dbclThuLai');
+        if (n) n.addEventListener('click', taiDuLieu);
+      }
+      /* XOÁ SỐ CŨ đi rồi vẽ lại. Không xoá thì ô chọn năm hiện 2027-2028 mà
+         bảng bên dưới vẫn là số 2026-2027, giữa hai thứ đó là một dải báo
+         lỗi — thầy cô tưởng số năm cũ là của năm mới. Đổi chiều nhầm lẫn chứ
+         không sửa được gì. */
+      SO_LIEU = {}; CAM_KET = []; CK_DONG = {};
+      try { veTab(); veThanh(); veDe(); veNhanh(); veBangNhap(); veDoiSanh(); }
+      catch (e2) { /* chưa dựng được thì thôi, dải báo lỗi vẫn còn đó */ }
     } finally {
       DANG_TAI = false;
     }
@@ -571,8 +622,10 @@
       + nut.join('')
       + '</div>'
       + (laThucTrang
+          /* Câu này hiện thẳng cho thầy cô đọc. Bản cũ dùng chữ "bịa" — nghe
+             như nghi ngờ người đang dùng. Nói hậu quả là đủ. */
           ? '<p class="goi"><b>Bảng Thực trạng đầu năm luôn chép nguyên, không nâng</b> — '
-            + 'đây phải là số thực tế, nâng lên là bịa số liệu gốc.</p>'
+            + 'đây phải là số thực tế của nhà trường; nâng lên thì mọi đối sánh phía sau lệch theo.</p>'
           : '')
       + '<p class="goi"><b>Dán từ Excel:</b> bôi đen vùng ô trong bảng tính, bấm vào ô đầu tiên '
       + 'trong bảng dưới đây rồi Ctrl+V — hệ thống điền một lúc nhiều dòng, nhiều khối. '
@@ -617,24 +670,49 @@
       }
     });
 
-    /* Đối chiếu từng chỉ tiêu: kết quả thực hiện so với chuẩn đã cam kết */
+    /* Đối chiếu từng chỉ tiêu: kết quả thực hiện so với chuẩn đã cam kết.
+
+       LẤY CHUẨN CÙNG KỲ VỚI KẾT QUẢ. Trước đây luôn lấy chuẩn CẢ NĂM đem so
+       với kết quả đang xem, nên khi thầy cô mở "Học kì I" thì kết quả nửa năm
+       bị chấm bằng đích của cả năm — hàng loạt chỉ tiêu hiện đỏ "chưa đạt"
+       dù trường vẫn đang đi đúng tiến độ. Nếu trường chưa đặt chuẩn riêng cho
+       học kì I thì vẫn dùng chuẩn cả năm, nhưng phải nói rõ đây là mốc giữa
+       đường chứ không phải kết luận. */
+    /* Chọn nguồn chuẩn theo TỪNG Ô, không theo cả bảng. Nếu chỉ cần thấy MỘT
+       ô chuẩn học kì I là coi như cả bảng có chuẩn học kì I, thì trường nhập
+       thử một chỉ tiêu rồi bỏ dở sẽ làm 130 ô còn lại rơi hết khỏi phép đối
+       sánh — màn hình báo "1 chỉ tiêu đạt, không có chỉ tiêu nào hụt", một
+       kết luận trấn an sai. */
+    let dungChuanCaNam = false;
+
     const dong = [];
-    let soDat = 0, soHut = 0;
+    let soDat = 0, soHut = 0, soThieu = 0;
     CHI_TIEU.forEach(ct => {
       if (ct.don_vi === 'text') return;
       KHOI.forEach(k => {
         if (ct.chi_khoi_9 && k !== 9) return;
-        const c = SO_LIEU['chuan_dau_ra|ca_nam|' + k + '|' + ct.ma];
+        let c = SO_LIEU['chuan_dau_ra|' + KY + '|' + k + '|' + ct.ma];
+        let muonCaNam = false;
+        if ((!c || !c.gia_tri) && KY !== 'ca_nam') {
+          c = SO_LIEU['chuan_dau_ra|ca_nam|' + k + '|' + ct.ma];
+          muonCaNam = !!(c && c.gia_tri);
+        }
         const r = SO_LIEU['ket_qua|' + KY + '|' + k + '|' + ct.ma];
-        if (!c || !r || !c.gia_tri || !r.gia_tri) return;
+        /* Đếm số ô chưa đủ dữ liệu để nói ra, đừng bỏ qua im lặng — bỏ im
+           lặng thì màn hình báo "3 chỉ tiêu đạt, không có chỉ tiêu nào hụt"
+           trong khi 129 ô còn lại nằm ngoài phép đối sánh. */
+        if (!c || !r || !c.gia_tri || !r.gia_tri) { soThieu++; return; }
+        if (muonCaNam) dungChuanCaNam = true;
         const nc = so(c.gia_tri), nr = so(r.gia_tri);
-        if (nc == null || nr == null) return;
+        if (nc == null || nr == null) { soThieu++; return; }
         const dat = ct.chieu_tot === 'up' ? nr >= nc : nr <= nc;
         if (dat) { soDat++; return; }              // chỉ liệt kê chỗ chưa đạt
         soHut++;
         dong.push('<div class="db-ds-dong"><b>Khối ' + k + '</b> · ' + chan(ct.ten)
-          + '<span class="lech db-thieu">cam kết ' + chan(c.gia_tri)
-          + ' → đạt ' + chan(r.gia_tri) + '</span></div>');
+          + '<span class="lech db-thieu">cam kết '
+          + (muonCaNam ? 'cả năm ' : '') + chan(c.gia_tri)
+          + ' → ' + (KY === 'ca_nam' ? 'đạt ' : 'hết học kì I: ') + chan(r.gia_tri)
+          + '</span></div>');
       });
     });
 
@@ -647,11 +725,26 @@
       html += '<div class="db-canh db-ok">Chưa đủ dữ liệu để đối sánh. Cần nhập cả '
             + '<b>Chuẩn đầu ra</b> và <b>Kết quả thực hiện</b> của cùng năm học.</div>';
     } else {
+      /* Lời giải thích đặt TRƯỚC con số. Để sau thì thầy cô đọc "12 chỉ tiêu
+         chưa đạt" in đậm, hoảng lên rồi mới đọc tới dòng trấn an — nếu còn
+         đọc tiếp. */
+      if (dungChuanCaNam) {
+        html += '<div class="db-canh"><b>Đây là mốc giữa đường, chưa phải kết luận.</b><br>'
+              + 'Chuẩn đầu ra ở Phụ lục 2 và 16 là đích của <b>cả năm học</b>, '
+              + 'còn cột kết quả đang xem mới hết <b>học kì I</b>. '
+              + 'Chỉ tiêu còn cách đích lúc này là <b>bình thường</b> — dùng để biết chỗ nào cần dồn sức '
+              + 'trong học kì II, <b>không ghi vào báo cáo là chưa đạt cam kết</b>. '
+              + 'Kết luận đạt hay chưa chỉ đọc ở cột <b>Cả năm học</b>.</div>';
+      }
       html += '<div class="db-canh ' + (soHut ? '' : 'db-ok') + '">'
             + '<b>Đối sánh ' + chan(KY === 'ca_nam' ? 'cả năm' : 'học kì I') + ':</b> '
             + soDat + ' chỉ tiêu đạt hoặc vượt cam kết'
-            + (soHut ? ', <b>' + soHut + ' chỉ tiêu chưa đạt</b> — liệt kê bên dưới.'
-                     : '. Không có chỉ tiêu nào hụt.') + '</div>';
+            + (soHut
+                ? ', <b>' + soHut + ' chỉ tiêu '
+                  + (dungChuanCaNam ? 'còn cách đích cả năm' : 'chưa đạt') + '</b> — liệt kê bên dưới.'
+                : '. Không có chỉ tiêu nào hụt.')
+            + (soThieu ? ' Còn <b>' + soThieu + ' ô chưa đủ dữ liệu</b> nên chưa đối sánh được.' : '')
+            + '</div>';
       if (dong.length) html += '<div class="db-ds">' + dong.join('') + '</div>';
     }
     hop.innerHTML = html;
@@ -955,6 +1048,9 @@
     const p = plHienTai();
     const laCamKet = p.ma === '15';
     const laKhac = !!p.khac;
+    /* Dải báo lỗi là của LẦN TẢI đó, không được đeo bám sang màn hình khác */
+    const oL = document.getElementById('dbclLoi');
+    if (oL && !DANG_TAI) oL.innerHTML = '';
     veTab(); veThanh(); veDe();
 
     const hien = (id, co) => {
@@ -1009,6 +1105,8 @@
     return {
       namHoc: NAM_HOC, loai: LOAI, ky: KY,
       maPhuLuc: p.ma, tenPhuLuc: p.ten, tenBang: TEN_LOAI[LOAI],
+      /* Để phần đọc Excel hiện tên tiếng Việt thay vì mã cơ sở dữ liệu */
+      tenTheoLoai: TEN_LOAI,
       chiTieu: CHI_TIEU, khoi: KHOI,
       coQuyen: coQuyenNhap(),
       lay: function (khoi, ma) { return SO_LIEU[LOAI + '|' + KY + '|' + khoi + '|' + ma] || null; }

@@ -74,6 +74,13 @@
   `;
   document.head.insertAdjacentHTML('beforeend', '<style>' + css + '</style>');
 
+  /* Bọc mọi chuỗi trước khi nhét vào innerHTML. Câu lỗi của máy chủ có lúc
+     lặp lại nguyên giá trị dữ liệu người dùng vừa gửi lên. */
+  function chan(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
   function laQuanTri() {
     const u = window.NGUOI_DUNG;
     return !!u && ['admin', 'ban_giam_hieu'].includes(u.vai_tro);
@@ -97,7 +104,14 @@
         sb.from('ho_so').select('ma, ten, tieu_chi, trang_thai, link_drive'),
         sb.from('danh_gia_tieu_chuan').select('*').eq('nam_hoc', NAM_HOC)
       ]);
+      /* Soi lỗi CẢ BỐN câu hỏi. Trước đây chỉ soi câu đầu, nên khi máy chủ từ
+         chối ba câu sau thì màn hình vẫn vẽ đủ 15 tiêu chí nhưng mọi mức đều
+         trống — nhìn hệt như trường chưa tự đánh giá lần nào, và chấm lại là
+         ghi đè lên kết quả cũ. */
       if (tc.error) throw tc.error;
+      if (tdg.error) throw tdg.error;
+      if (hs.error) throw hs.error;
+      if (dgtc.error) throw dgtc.error;
 
       DGTC = {};
       (dgtc.data || []).forEach(r => { DGTC[r.tieu_chuan] = r; });
@@ -135,13 +149,37 @@
         });
       });
 
+      /* 15 tiêu chí vừa hiện ra màn hình đã là bằng chứng tải xong — không
+         báo việc bình thường, và đây cũng không phải kết quả của nút nào thầy
+         cô vừa bấm. */
       renderKdcl();
-      if (typeof notify === 'function') {
-        notify('Đã tải bộ tiêu chí và kết quả tự đánh giá năm học ' + NAM_HOC + '.');
-      }
     } catch (e) {
       console.error('[Tự đánh giá] Không tải được:', e);
-      if (typeof notify === 'function') notify('Không tải được dữ liệu tự đánh giá: ' + (e.message || e));
+      /* Phải CHE bảng mẫu đi, không chỉ báo một câu rồi thôi.
+         index.html vẽ sẵn 15 tiêu chí với mức tự đánh giá minh hoạ ngay lúc
+         mở trang. Tải hỏng mà để nguyên thì thầy cô ngồi nhìn kết quả tự
+         đánh giá GIẢ hiện y như thật, kể cả dòng kết luận "Đạt Mức 2", còn
+         câu báo lỗi thì đã tắt sau ba giây. */
+      /* Phải xoá CẢ BA ô, không chỉ danh sách tiêu chí. Ô kdStats in đậm 22px
+         chính là dòng kết luận "Đạt Mức 2" của số minh hoạ, và nó nằm PHÍA
+         TRÊN dải cảnh báo — con số nguy hiểm nhất lại là con số còn sót. */
+      ['kdStats', 'kdGiaiThich'].forEach(id => {
+        const x = document.getElementById(id);
+        if (x) x.innerHTML = '';
+      });
+      const o = document.getElementById('kdList');
+      if (o) {
+        o.innerHTML = '<div style="background:#fdf3f2;border:1.5px solid #f3c9c5;'
+          + 'border-left:5px solid #d05a4c;color:#8a3428;border-radius:12px;'
+          + 'padding:15px 18px;font-size:15.4px;line-height:1.7">'
+          + '<b>Chưa đọc được kết quả tự đánh giá của nhà trường.</b><br>'
+          + 'Bảng tiêu chí và dòng kết luận đã được ẩn đi để thầy cô không đọc nhầm '
+          + 'số minh hoạ thành số thật. Thầy cô đăng nhập lại rồi mở lại mục này. '
+          + 'Nếu vẫn vậy thì báo quản trị.<br>'
+          + '<span style="font-size:13.4px;color:#a0564a">Chi tiết: '
+          + chan(e.message || e) + '</span></div>';
+      }
+      if (typeof notify === 'function') notify('Không tải được dữ liệu tự đánh giá.');
     } finally {
       DANG_TAI = false;
     }

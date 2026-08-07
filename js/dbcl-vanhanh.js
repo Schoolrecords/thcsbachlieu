@@ -237,7 +237,8 @@
     }, { onConflict: 'nam_hoc' }).select().single();
 
     if (kq.error) { notify('Chưa công bố được: ' + kq.error.message); return; }
-    notify('Đã công bố chuẩn đầu ra năm học ' + NAM + '. Địa chỉ trang công khai: cong-bo.html');
+    notify('Đã công bố chuẩn đầu ra năm học ' + NAM
+      + '. Bấm nút "Xem trang công khai" để kiểm tra.');
   }
 
   /* ========================================================================
@@ -256,7 +257,16 @@
 
   async function veTo(hop) {
     hop.innerHTML = '<p style="color:#8a94a6;font-size:13.4px">Đang tải…</p>';
-    let to = (await sb.from('dbcl_to').select('*').eq('nam_hoc', NAM).maybeSingle()).data;
+    /* Soi lỗi trước khi kết luận "chưa có Tổ". Không soi thì máy chủ từ chối
+       cũng ra .data = null, màn hình mời thầy cô bấm "Lập Tổ" — bấm vào là
+       tạo tổ trùng hoặc nhận một câu lỗi khó hiểu. */
+    const rTo = await sb.from('dbcl_to').select('*').eq('nam_hoc', NAM).maybeSingle();
+    if (rTo.error) {
+      hop.innerHTML = '<div class="vh-canh">Không đọc được Tổ Đảm bảo chất lượng: '
+        + chan(rTo.error.message) + '</div>';
+      return;
+    }
+    let to = rTo.data;
     const sua = coQuyen();
 
     if (!to) {
@@ -266,10 +276,14 @@
       if (n) n.addEventListener('click', async () => {
         const kq = await sb.from('dbcl_to').insert({ nam_hoc: NAM }).select().single();
         if (kq.error) { notify('Chưa lập được: ' + kq.error.message); return; }
-        for (let i = 0; i < PHAN_CONG_MAU.length; i++) {
-          await sb.from('dbcl_phan_cong').insert({
-            to_id: kq.data.id, noi_dung: PHAN_CONG_MAU[i], so_tt: i + 1
-          });
+        /* Ghi cả 8 nội dung trong MỘT lệnh và soi lỗi. Bản cũ chèn từng dòng
+           rồi bỏ mặc kết quả — tổ lập xong mà bảng phân công thiếu dòng, chẳng
+           ai biết cho tới lúc in quyết định ra thấy hụt. */
+        const p = await sb.from('dbcl_phan_cong').insert(
+          PHAN_CONG_MAU.map((nd, i) => ({ to_id: kq.data.id, noi_dung: nd, so_tt: i + 1 })));
+        if (p.error) {
+          notify('Đã lập Tổ nhưng chưa ghi được bảng phân công: ' + p.error.message
+            + ' — thầy cô thêm tay ở bảng bên dưới.');
         }
         veTo(hop);
       });
@@ -281,6 +295,15 @@
       sb.from('dbcl_phan_cong').select('*').eq('to_id', to.id).order('so_tt'),
       sb.rpc('dbcl_kiem_tra_to', { p_nam_hoc: NAM })
     ]);
+    /* Soi lỗi trước khi vẽ. Không soi thì tổ hiện ra "0 thành viên" và màn
+       hình kết luận tổ chưa đủ 07 người theo Công văn 2180 — trong khi tổ vẫn
+       đủ, chỉ là câu hỏi bị máy chủ từ chối. */
+    const loi = tv.error || pc.error || kt.error;
+    if (loi) {
+      hop.innerHTML = '<div class="vh-canh">Không tải được Tổ Đảm bảo chất lượng: '
+        + chan(loi.message) + '</div>';
+      return;
+    }
     const dsTv = tv.data || [], dsPc = pc.data || [];
     const k = (kt.data && kt.data[0]) || {};
 
@@ -397,7 +420,16 @@
       sb.from('dbcl_tu_soat_kq').select('*').eq('nam_hoc', NAM),
       sb.from('tieu_chi').select('ma, ten, bat_buoc')
     ]);
-    if (ds.error || !ds.data || !ds.data.length) {
+    /* Lỗi máy chủ và "chưa chạy sql/16" là hai chuyện khác hẳn nhau — gộp
+       chung một câu báo thì thầy cô đi chạy lại tệp SQL trong khi thật ra chỉ
+       cần đăng nhập lại. Tách ra, và soi lỗi cả hai câu hỏi còn lại: thiếu
+       chỗ đó thì 28 nội dung hiện toàn "Chưa làm" dù đã soát xong. */
+    if (ds.error || kq.error || tc.error) {
+      hop.innerHTML = '<div class="vh-canh">Không tải được danh mục tự soát: '
+        + chan((ds.error || kq.error || tc.error).message) + '</div>';
+      return;
+    }
+    if (!ds.data || !ds.data.length) {
       hop.innerHTML = '<div class="vh-canh">Chưa có danh mục tự soát. '
         + 'Kiểm tra đã chạy tệp <code>sql/16</code> chưa.</div>';
       return;
@@ -490,13 +522,15 @@
     const TR = "font-family:'Times New Roman',serif;";
     const O = TR + 'border:1px solid #000;padding:5pt 7pt;font-size:12pt;vertical-align:middle;';
     const truong = CAU_HINH.TEN_TRUONG || 'Trường THCS Bạch Liêu';
+    const diaDanh = CAU_HINH.DIA_DANH || 'Yên Thành';
     const ngay = to.ngay_quyet_dinh
-      ? 'Yên Thành, ngày ' + ngayVN(to.ngay_quyet_dinh).replace(/\//g, ' tháng ').replace(/ tháng (\d{4})$/, ' năm $1')
-      : 'Yên Thành, ngày      tháng      năm ' + NAM.slice(0, 4);
+      ? diaDanh + ', ngày ' + ngayVN(to.ngay_quyet_dinh).replace(/\//g, ' tháng ').replace(/ tháng (\d{4})$/, ' năm $1')
+      : diaDanh + ', ngày      tháng      năm ' + NAM.slice(0, 4);
 
     const dau = '<table style="width:100%;border-collapse:collapse"><tr>'
       + '<td style="' + TR + 'width:45%;text-align:center;font-size:12pt;vertical-align:top">'
-      + 'UBND XÃ YÊN THÀNH<br><b>' + truong.toUpperCase() + '</b>'
+      + chan(CAU_HINH.DON_VI_CHU_QUAN || 'UBND XÃ YÊN THÀNH')
+      + '<br><b>' + truong.toUpperCase() + '</b>'
       + (so === 10 ? '<br>Số: ' + (to.so_quyet_dinh || '     /QĐ-THCSBL') : '') + '</td>'
       + '<td style="' + TR + 'text-align:center;font-size:12pt;vertical-align:top">'
       + '<b>CỘNG HOÀ XÃ HỘI CHỦ NGHĨA VIỆT NAM</b><br><b>Độc lập - Tự do - Hạnh phúc</b>'
