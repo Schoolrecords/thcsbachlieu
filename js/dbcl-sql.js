@@ -33,6 +33,10 @@
   let CAM_KET = [];      // danh sách cam kết của năm học đang chọn
   let CK_DONG = {};      // cam_ket_id -> { "khoi|ma": giá trị }
   let DANG_TAI = false;
+  /* Bật khi lần tải gần nhất hỏng. Khi bật thì KHOÁ mọi ô nhập — số thật vẫn
+     nằm nguyên trên máy chủ, chỉ là lần này chưa đọc được; gõ vào bảng rỗng
+     là ghi đè mất. */
+  let TAI_HONG = false;
 
   const KHOI = [6, 7, 8, 9];
 
@@ -182,6 +186,7 @@
   }
   /* Đúng theo chính sách dbclsl_sua đặt ở máy chủ */
   function coQuyenNhap() {
+    if (TAI_HONG) return false;   // chưa đọc được số cũ thì không cho ghi đè
     const u = window.NGUOI_DUNG;
     return !!u && (laQuanTri() || u.vai_tro === 'to_truong');
   }
@@ -250,6 +255,7 @@
 
       const oL = document.getElementById('dbclLoi');
       if (oL) oL.innerHTML = '';
+      TAI_HONG = false;
       veTatCa();
     } catch (e) {
       /* Báo lỗi vào ô RIÊNG luôn hiện, không vào dbclBang.
@@ -271,9 +277,16 @@
          bảng bên dưới vẫn là số 2026-2027, giữa hai thứ đó là một dải báo
          lỗi — thầy cô tưởng số năm cũ là của năm mới. Đổi chiều nhầm lẫn chứ
          không sửa được gì. */
+      TAI_HONG = true;
       SO_LIEU = {}; CAM_KET = []; CK_DONG = {};
-      try { veTab(); veThanh(); veDe(); veNhanh(); veBangNhap(); veDoiSanh(); }
-      catch (e2) { /* chưa dựng được thì thôi, dải báo lỗi vẫn còn đó */ }
+      /* Gọi veTatCa chứ không gọi rời sáu hàm vẽ. Gọi rời thì phép ẩn/hiện
+         khung không chạy: hỏng ngay lần đầu là thầy cô thấy cùng lúc tab
+         "Vận hành" sáng, tiêu đề màn hình Vận hành, mà bên dưới lại là bảng
+         nhập số liệu và hộp đối sánh của tab khác. Đổi năm học ở tab Học sinh
+         hay Cam kết thì hai khung đó cũng giữ nguyên nội dung năm cũ.
+         An toàn vì DANG_TAI còn true nên veTatCa không xoá dải báo lỗi. */
+      try { veTatCa(); }
+      catch (e2) { console.error('[ĐBCL] vẽ lại sau lỗi cũng hỏng:', e2); }
     } finally {
       DANG_TAI = false;
     }
@@ -722,8 +735,13 @@
             + venh.join('<br>') + '<br><i>Phải sửa cho khớp trước khi ký, vì Phụ lục 16 là bản gửi Sở.</i></div>';
     }
     if (!soDat && !soHut) {
-      html += '<div class="db-canh db-ok">Chưa đủ dữ liệu để đối sánh. Cần nhập cả '
-            + '<b>Chuẩn đầu ra</b> và <b>Kết quả thực hiện</b> của cùng năm học.</div>';
+      /* Không dùng màu xanh trấn an khi lần tải vừa hỏng — bảng trống lúc đó
+         không có nghĩa là "chưa nhập", mà là "chưa đọc được". */
+      html += '<div class="db-canh' + (TAI_HONG ? '' : ' db-ok') + '">'
+            + (TAI_HONG
+                ? 'Chưa đọc được số liệu nên chưa đối sánh được — xem dải báo lỗi phía trên.'
+                : 'Chưa đủ dữ liệu để đối sánh. Cần nhập cả <b>Chuẩn đầu ra</b> và '
+                  + '<b>Kết quả thực hiện</b> của cùng năm học.') + '</div>';
     } else {
       /* Lời giải thích đặt TRƯỚC con số. Để sau thì thầy cô đọc "12 chỉ tiêu
          chưa đạt" in đậm, hoảng lên rồi mới đọc tới dòng trấn an — nếu còn

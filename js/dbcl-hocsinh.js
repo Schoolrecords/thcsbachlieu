@@ -101,7 +101,20 @@
        20/05/2014 · 20-5-2014 · 2014-05-20 · số sê-ri của Excel (41779)
      Không hiểu thì trả null để bên gọi kể vào danh sách lỗi, đừng gửi đi. */
   function chuanNgay(v) {
-    const s = String(v == null ? '' : v).trim();
+    /* Ô đã là đối tượng ngày (khi thư viện đọc bằng cellDates) */
+    if (v instanceof Date && !isNaN(v)) {
+      return dungNgay(v.getFullYear(), v.getMonth() + 1, v.getDate());
+    }
+
+    let s = String(v == null ? '' : v).trim();
+    if (!s) return { ok: true, gt: null };
+
+    /* Gọt những thứ Excel hay chèn thêm mà vẫn là ngày hợp lệ:
+       "Ngày 20/05/2014" · "20 / 05 / 2014" · "20/05/2014 00:00:00" */
+    s = s.replace(/^ngày\s*/i, '')
+         .replace(/[\sT]\d{1,2}:\d{2}(:\d{2})?(\s*[AP]M)?\s*$/i, '')
+         .replace(/\s*([\/\-.])\s*/g, '$1')
+         .trim();
     if (!s) return { ok: true, gt: null };
 
     let m = s.match(/^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})$/);
@@ -115,19 +128,33 @@
       return dungNgay(nam, +m[2], +m[1]);
     }
 
-    /* Số sê-ri Excel: đếm ngày từ 30/12/1899 */
+    /* Số sê-ri Excel: đếm ngày từ 30/12/1899.
+       CỬA SỐ PHẢI HẸP. Bản trước nhận mọi số từ 1 đến 80000, nên thầy cô gõ
+       nhầm mỗi năm sinh "2014" vào ô Ngày sinh là ra ngày 06/7/1905 — hợp lệ
+       về cú pháp nên ghi thẳng vào cơ sở dữ liệu, không một lời cảnh báo.
+       Nay chỉ nhận khoảng có nghĩa với hồ sơ học sinh: 1941 đến 2064.
+       Dùng floor chứ không round: ô định dạng ngày-giờ có phần lẻ, làm tròn
+       lên là lệch mất một ngày. */
     if (/^\d+(\.\d+)?$/.test(s)) {
       const n = parseFloat(s);
-      if (n > 0 && n < 80000) {
-        const d = new Date(Date.UTC(1899, 11, 30) + Math.round(n) * 86400000);
+      if (n >= 15000 && n <= 60000) {
+        const d = new Date(Date.UTC(1899, 11, 30) + Math.floor(n) * 86400000);
         return dungNgay(d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate());
       }
     }
     return { ok: false, gt: null };
   }
+
   function dungNgay(nam, thang, ngay) {
     if (!(nam >= 1900 && nam <= 2100) || !(thang >= 1 && thang <= 12)
         || !(ngay >= 1 && ngay <= 31)) return { ok: false, gt: null };
+    /* PHẢI kiểm số ngày theo từng tháng. Chỉ chặn 1..31 thì 31/02/2014 và
+       29/02 năm không nhuận đều lọt qua, rồi máy chủ từ chối CẢ MẺ với câu
+       "date/time field value out of range" — đúng thảm hoạ hàm này sinh ra
+       để chặn. Dựng thử ngày rồi so lại là cách rẻ nhất. */
+    const d = new Date(Date.UTC(nam, thang - 1, ngay));
+    if (d.getUTCFullYear() !== nam || d.getUTCMonth() + 1 !== thang
+        || d.getUTCDate() !== ngay) return { ok: false, gt: null };
     const hai = n => (n < 10 ? '0' : '') + n;
     return { ok: true, gt: nam + '-' + hai(thang) + '-' + hai(ngay) };
   }
@@ -436,7 +463,12 @@
     const td = hang[iTd].map(x => String(x).trim());
     const cot = {};
     td.forEach((t, i) => { cot[t.toLowerCase()] = i; });
-    const than = hang.slice(iTd + 1).filter(d => String(d[cot['mã học sinh']] || '').trim() !== '');
+    /* Gắn kèm SỐ DÒNG EXCEL THẬT cho từng dòng dữ liệu. Trước đây báo lỗi
+       đếm theo vị trí trong mảng đã cắt, nên "Dòng 3" thật ra là dòng 14 của
+       tệp — thầy cô mở ra đếm xuống 3 dòng rồi sửa nhầm vào dòng hướng dẫn. */
+    const than = hang.slice(iTd + 1)
+      .map((d, k) => { d.__dong = iTd + 2 + k; return d; })
+      .filter(d => String(d[cot['mã học sinh']] || '').trim() !== '');
 
     if (!than.length) { notify('Tệp không có dòng dữ liệu nào.'); return; }
     if (CHE_DO === 'ds') return napDanhSach(than, cot, tep.name);
@@ -468,6 +500,10 @@
     const coNgayVao   = coCot('ngày vào học');
     const coTrangThai = coCot('trạng thái');
 
+    /* Giá trị đang có của từng em, để ô trống trong tệp không xoá mất số cũ */
+    const coMaCu = {}, cuLop = {};
+    DS.forEach(r => { if (r.hoc_sinh) { coMaCu[r.hoc_sinh.ma] = r.hoc_sinh; cuLop[r.hoc_sinh.ma] = r; } });
+
     const hs = [], hl = [], loi = [];
     const daGap = {};
     let boViDu = 0;
@@ -478,10 +514,12 @@
       /* Chữ hoa cho khớp với bảng phân công — quyền xem học sinh và quyền ghi
          cam kết đều ghép hai bảng bằng tên lớp, "6a" khác "6A" là mất quyền. */
       const lop = c(d, 'lớp').toUpperCase();
-      const dong = i + 1;
+      const dong = d.__dong || (i + 1);   // số dòng Excel thật, để thầy cô tìm đúng chỗ
       /* Bỏ hai dòng ví dụ của mẫu. Thầy cô điền tiếp bên dưới rồi nạp lên là
-         hai em không có thật vào thẳng cơ sở dữ liệu — nay chặn ở đây. */
-      if (/^VIDU/i.test(ma)) { boViDu++; return; }
+         hai em không có thật vào thẳng cơ sở dữ liệu — nay chặn ở đây.
+         Lọc theo CẢ mã lẫn tên: thầy cô rất dễ sửa mã ví dụ thành mã thật vì
+         đó là dòng đã có sẵn định dạng, mà quên đổi họ tên. */
+      if (/^VIDU/i.test(ma) || /\(ví dụ/i.test(ten)) { boViDu++; return; }
       if (daGap[ma]) { loi.push('Dòng ' + dong + ': mã ' + ma + ' bị lặp'); return; }
       if (!ten) { loi.push('Dòng ' + dong + ': thiếu họ tên'); return; }
       if (!lop) { loi.push('Dòng ' + dong + ': thiếu lớp'); return; }
@@ -503,8 +541,17 @@
       }
       daGap[ma] = true;
 
+      /* Ô TRỐNG cũng không được ghi đè. Nguyên tắc "tệp không có thì không
+         đụng" đặt đúng ở mức CỘT nhưng thủng ở mức Ô: tệp có cột Ngày sinh mà
+         bỏ trống 20 dòng là xoá mất ngày sinh của 20 em.
+
+         Nhưng KHÔNG được bỏ hẳn khoá đó ở riêng vài dòng — máy chủ nhận cả mẻ
+         một lúc và đòi mọi bản ghi cùng bộ khoá, thiếu một khoá là từ chối
+         sạch. Nên ô trống thì điền lại chính giá trị đang có của em đó. */
+      const cu = coMaCu[ma] || {};
       const bHs = { ma: ma, ho_ten: ten };
-      datNeuCo(bHs, 'ngay_sinh', coNgaySinh, ns.gt);
+      datNeuCo(bHs, 'ngay_sinh', coNgaySinh,
+               ns.gt !== null ? ns.gt : (cu.ngay_sinh || null));
       datNeuCo(bHs, 'gioi_tinh', coGioiTinh,
           ['Nam', 'Nữ'].indexOf(c(d, 'giới tính')) >= 0 ? c(d, 'giới tính') : null);
       datNeuCo(bHs, 'hoa_nhap', coHoaNhap,
@@ -513,7 +560,8 @@
       hs.push(bHs);
 
       const bHl = { hoc_sinh_ma: ma, nam_hoc: NAM, lop: lop, khoi: khoi };
-      datNeuCo(bHl, 'ngay_vao', coNgayVao, nv.gt);
+      datNeuCo(bHl, 'ngay_vao', coNgayVao,
+               nv.gt !== null ? nv.gt : (cuLop[ma] ? cuLop[ma].ngay_vao || null : null));
       /* Trạng thái thì luôn ghi: tệp không có cột này nghĩa là danh sách đầu
          năm, mọi em đều đang học — đó cũng chính là giá trị mặc định. */
       /* Trạng thái cũng theo đúng quy tắc "tệp không có cột thì không đụng".
@@ -586,11 +634,10 @@
                     'hoc_ki_1', 'hk1', 'hk i', 'hk 1'];
     const KY_CN  = ['cả năm', 'ca_nam', 'cn', 'cả năm học'];
     hangGoc.slice(0, 6).forEach(d => {
+      if (daThayKy) return;         // lấy ô Kỳ ĐẦU TIÊN, ô rác phía sau không đè
       const s = (d || []).map(x => String(x).trim());
       const i = s.indexOf('Kỳ');
       if (i < 0) return;
-      /* Đặt lại kyLa mỗi lần gặp ô Kỳ. Không đặt lại thì một ô sai ở dòng
-         trước làm chặn cả tệp dù ô sau ghi đúng. */
       daThayKy = true;
       const v = (s[i + 1] || '').toLowerCase();
       kyDoc = s[i + 1] || '';
@@ -640,7 +687,7 @@
        đây gõ nhầm "8,5đ" hay "Đạt " thừa dấu cách là ô đó rơi mất mà màn hình
        vẫn báo nạp thành công — điểm của em ấy trống, không ai biết vì sao. */
     const oLoi = [], rlLoi = [], maLap = [];
-    let coOLenLop = false;
+    let soODaDien = 0;   // số ô cột "Lên lớp" thật sự có nội dung
     than.forEach(d => {
       const ma = String(d[iMa] == null ? '' : d[iMa]).trim();
       if (!coMa[ma]) { maLa.push(ma); return; }
@@ -687,13 +734,13 @@
          ghi bừa là cả trường thành lưu ban, CT10 = 0%, CT11 = 100%. */
       if (iLL >= 0 && ky === 'ca_nam') {
         const v = String(d[iLL] == null ? '' : d[iLL]).trim();
-        if (v) coOLenLop = true;
+        if (v) soODaDien++;
         ll.push({ ma: ma, len: /^(x|có|1|true)$/i.test(v) });
       }
     });
 
     /* Cả cột để trống thì coi như trường chưa xét lên lớp — bỏ qua, đừng ghi */
-    if (!coOLenLop) ll.length = 0;
+    if (!soODaDien) ll.length = 0;
 
     const thieu = DS.filter(r => r.trang_thai === 'dang_hoc' && !daCo[r.hoc_sinh.ma]);
 
@@ -702,7 +749,7 @@
        câu hỏi ở cuối là thầy cô bấm Đồng ý mà chưa từng nhìn thấy nó. */
     let hoi = 'Nạp kết quả ' + (ky === 'hoc_ki_1' ? 'Học kì I' : 'Cả năm')
       + ' năm học ' + NAM + ' từ tệp "' + tenTep + '" chứ?\n'
-      + '(ô Kỳ trong tệp ghi: ' + (kyDoc || 'để trống, hiểu là Cả năm') + ')\n\n'
+      + '(ô Kỳ trong tệp ghi: ' + kyDoc + ')\n\n'
       + '✔ Khớp mã: ' + Object.keys(daCo).length + ' học sinh, ' + kq.length + ' ô điểm\n'
       + '   Đọc được ' + cotMon.length + '/' + MON.length + ' cột môn học\n';
     if (monThieu.length) {
@@ -714,6 +761,15 @@
       const soLen = ll.filter(x => x.len).length;
       hoi += '↑ Lên lớp: ' + soLen + ' em lên lớp, ' + (ll.length - soLen) + ' em Ở LẠI LỚP.\n'
         + '   → Con số này vào thẳng chỉ tiêu CT10 và CT11 gửi Sở. Rà kỹ trước khi đồng ý.\n';
+      /* Cột điền DỞ là chỗ nguy nhất: điền 20 ô thì 616 em còn lại thành ở
+         lại lớp. Phải hỏi riêng một câu, đừng để lẫn trong hộp thoại dài. */
+      if (soODaDien < ll.length) {
+        if (!window.confirm('⚠ Cột "Lên lớp" mới điền ' + soODaDien + '/' + ll.length + ' ô.\n\n'
+          + (ll.length - soODaDien) + ' em còn lại để trống sẽ được ghi là Ở LẠI LỚP, '
+          + 'và con số đó vào thẳng chỉ tiêu CT10, CT11 gửi Sở.\n\n'
+          + 'Nếu trường chưa xét lên lớp xong thì bấm Huỷ, xoá trắng cả cột rồi tải lại — '
+          + 'hệ thống sẽ bỏ qua cột đó.\n\nVẫn ghi như trên chứ?')) return;
+      }
     } else if (iLL >= 0 && ky === 'ca_nam') {
       hoi += 'ℹ Cột Lên lớp để trống hoàn toàn → chưa ghi kết luận lên lớp cho em nào.\n'
         + '   → Xét lên lớp xong thì điền cột đó rồi tải lên lần nữa.\n';
@@ -774,17 +830,26 @@
        chứ không vào thân yêu cầu, nên 636 mã một lệnh cho ra đường dẫn hơn
        8 KB — vượt ngưỡng máy chủ, trả về lỗi 414. Lỗi này chỉ lộ ở quy mô
        thật của trường, thử 5 em thì không thấy gì. */
-    let loiLL = '';
+    let loiLL = '', soGhiLL = 0;
     if (ll.length) {
       const nhom = [[true, ll.filter(x => x.len).map(x => x.ma)],
                     [false, ll.filter(x => !x.len).map(x => x.ma)]];
       for (const [len, mas] of nhom) {
         for (let i = 0; i < mas.length && !loiLL; i += 100) {
+          const me = mas.slice(i, i + 100);
+          /* .select() để ĐẾM số dòng thật sự ghi được. Không đếm thì khi hàng
+             rào máy chủ chặn hoặc năm học lệch, lệnh trả về không lỗi mà cũng
+             không ghi dòng nào — màn hình vẫn báo thành công. */
           const u = await sb.from('hoc_sinh_lop').update({ len_lop: len })
-            .eq('nam_hoc', NAM).in('hoc_sinh_ma', mas.slice(i, i + 100));
+            .eq('nam_hoc', NAM).in('hoc_sinh_ma', me).select('hoc_sinh_ma');
           if (u.error) loiLL = 'Cột Lên lớp CHƯA ghi được: ' + u.error.message;
+          else soGhiLL += (u.data || []).length;
         }
         if (loiLL) break;
+      }
+      if (!loiLL && soGhiLL < ll.length) {
+        loiLL = 'Cột Lên lớp chỉ ghi được ' + soGhiLL + '/' + ll.length + ' em — '
+              + 'số còn lại không khớp năm học ' + NAM + ' hoặc tài khoản không đủ quyền.';
       }
     }
 

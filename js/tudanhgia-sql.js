@@ -30,6 +30,8 @@
   let MC_THEO_TC = {};   // mã tiêu chí -> danh sách minh chứng
   let DGTC = {};         // số tiêu chuẩn -> bản ghi danh_gia_tieu_chuan
   let DANG_TAI = false;
+  /* Bật khi lần tải gần nhất hỏng — chặn renderKdcl vẽ lại số minh hoạ */
+  let TAI_HONG = false;
 
   const TEN_TIEU_CHUAN = {
     1: 'Quản trị nhà trường và bảo đảm chất lượng',
@@ -131,6 +133,8 @@
       Object.keys(MC_THEO_TC).forEach(k =>
         MC_THEO_TC[k].sort((a, b) => String(a.ma).localeCompare(String(b.ma), 'vi')));
 
+      /* Đọc được số thật rồi thì mở lại đường vẽ */
+      TAI_HONG = false;
       /* TIEU_CHI khai báo bằng const nên thay từng phần tử, không gán đè */
       TIEU_CHI.length = 0;
       tc.data.forEach(t => {
@@ -163,7 +167,8 @@
       /* Phải xoá CẢ BA ô, không chỉ danh sách tiêu chí. Ô kdStats in đậm 22px
          chính là dòng kết luận "Đạt Mức 2" của số minh hoạ, và nó nằm PHÍA
          TRÊN dải cảnh báo — con số nguy hiểm nhất lại là con số còn sót. */
-      ['kdStats', 'kdGiaiThich'].forEach(id => {
+      TAI_HONG = true;
+      ['kdStats', 'kdGiaiThich', 'kdDanhGiaChung'].forEach(id => {
         const x = document.getElementById(id);
         if (x) x.innerHTML = '';
       });
@@ -231,6 +236,12 @@
   }
 
   window.renderKdcl = function () {
+    /* Tải hỏng thì KHÔNG vẽ lại nữa. Thiếu chốt này thì hàng rào chỉ chặn
+       được đúng một lần: sau khi hiện dải báo lỗi, thầy cô chỉ cần đổi ô lọc
+       "Tiêu chuẩn" là ô kdStd gọi lại hàm này, bộ 15 tiêu chí minh hoạ gõ sẵn
+       trong trang hiện lại nguyên vẹn kèm dòng kết luận "Đạt Mức 2", còn dải
+       báo lỗi thì biến mất. */
+    if (TAI_HONG) return;
     const oStd = document.getElementById('kdStd');
     const f = oStd ? oStd.value : '';
     const list = TIEU_CHI.filter(c => !f || String(c.std) === f);
