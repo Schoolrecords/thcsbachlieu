@@ -206,7 +206,17 @@
   /* ========================================================================
      MÀN HÌNH
      ======================================================================== */
+  /* Hộp chứa màn hình này. Màn hình được gắn ở HAI nơi — mục Đảm bảo chất
+     lượng và tab Danh sách học sinh trong Quản trị hệ thống — nên tuyệt đối
+     không được gõ cứng id nào. Gõ cứng 'dbclKhac' thì nạp tệp từ bảng quản
+     trị xong sẽ vẽ lại vào ô của module kia đang bị ẩn: bảng không đổi, dải
+     cảnh báo không ai thấy, và tệ nhất là hai bản ô "Kỳ" cùng id nên nút
+     "Tính lại 33 chỉ tiêu" đọc nhầm ô ẩn rồi ghi đè số liệu SAI KỲ. */
+  let HOP_HS = null;
+
   async function ve(hop, namHoc) {
+    if (hop) HOP_HS = hop; else hop = HOP_HS;
+    if (!hop) return;
     if (namHoc) NAM = namHoc;
     if (!sb) sb = window.sbClient;
     if (!sb) { hop.innerHTML = '<div class="hs-canh">Thầy cô đăng nhập để xem phần này.</div>'; return; }
@@ -321,13 +331,16 @@
     html += '</table></div>';
 
     hop.innerHTML = html;
-    const sl = document.getElementById('hsLop');
+    /* querySelector TRONG hộp, không getElementById toàn tài liệu: khi màn
+       hình mở ở cả hai nơi thì mọi id đều có hai bản, tra toàn tài liệu là
+       luôn lấy bản đứng trước trong DOM — tức bản đang bị ẩn. */
+    const sl = hop.querySelector('#hsLop');
     if (sl) sl.addEventListener('change', function () { LOP = this.value; ve(hop); });
     ganNut(hop);
   }
 
   function ganNut(hop) {
-    const g = (id, fn) => { const e = document.getElementById(id); if (e) e.addEventListener('click', fn); };
+    const g = (id, fn) => { const e = hop.querySelector('#' + id); if (e) e.addEventListener('click', fn); };
     g('hsMauDS', mauDanhSach);
     g('hsMauKQ', mauKetQua);
     g('hsLenDS', () => chonTep('ds'));
@@ -586,7 +599,7 @@
         + loi.slice(0, 8).map(chan).join('<br>')
         + (loi.length > 8 ? '<br>… và ' + (loi.length - 8) + ' dòng nữa.' : '')
         + '</div>';
-      ve(document.getElementById('dbclKhac'));
+      ve();
       notify(loi.length + ' dòng có lỗi, chưa nạp gì cả — đọc chi tiết trên trang.');
       return;
     }
@@ -621,7 +634,7 @@
     if (b.error) { notify('Nạp được học sinh nhưng chưa gán lớp: ' + b.error.message); return; }
 
     notify('Đã nạp ' + hs.length + ' học sinh cho năm học ' + NAM + '.');
-    ve(document.getElementById('dbclKhac'));
+    ve();
   }
 
   /* ---------------- Nạp kết quả học tập ---------------- */
@@ -873,14 +886,17 @@
     notify(y.length
       ? 'Đã nạp xong nhưng có ' + y.length + ' điểm cần xem — đọc dải cảnh báo trên trang.'
       : 'Đã nạp ' + kq.length + ' ô điểm.');
-    ve(document.getElementById('dbclKhac'));
+    ve();
   }
 
   /* ========================================================================
      TÍNH 33 CHỈ TIÊU TỪ DỮ LIỆU HỌC SINH
      ======================================================================== */
   async function tinhChiTieu() {
-    const sel = document.getElementById('hsTinhKy');
+    /* Ô Kỳ cũng phải tra trong hộp đang mở. Đọc nhầm ô ẩn là tính rồi GHI ĐÈ
+       bảng Kết quả thực hiện sai kỳ, không báo gì. */
+    const sel = (HOP_HS ? HOP_HS.querySelector('#hsTinhKy') : null)
+              || document.getElementById('hsTinhKy');
     const ky = sel ? sel.value : 'ca_nam';
     if (!window.confirm('Tính lại 33 chỉ tiêu của năm học ' + NAM + ' từ dữ liệu từng học sinh?\n\n'
       + 'Kỳ: ' + (ky === 'hoc_ki_1' ? 'Học kỳ I' : 'Cả năm') + '\n\n'

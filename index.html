@@ -1991,6 +1991,10 @@ renderDbcl();
 <script src="js/xuat-bieu-mau.js"></script>
 <script src="js/xuat-bao-cao-tdg.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<!-- ExcelJS chỉ dùng để TẠO mẫu có trang trí: bản miễn phí của xlsx ở trên
+     không viết được màu nền, khung viền hay khổ giấy A4 ngang. Phần ĐỌC tệp
+     tải lên vẫn dùng xlsx như cũ, không đụng gì tới các màn hình đang chạy. -->
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 <script src="js/dbcl-sql.js"></script>
 <script src="js/xuat-phu-luc-dbcl.js"></script>
 <script src="js/dbcl-excel.js"></script>
@@ -1998,5 +2002,11 @@ renderDbcl();
 <script src="js/dbcl-hocsinh.js"></script>
 <script src="js/dbcl-phancong.js"></script>
 <script src="js/dbcl-camket-hs.js"></script>
+<!-- Các tab thêm vào bảng Quản trị hệ thống. Phải nạp SAU dbcl-hocsinh.js vì
+     tab "Danh sách học sinh" dùng lại đúng màn hình của tệp đó, và nạp sau
+     dangnhap.js vì chúng tự đăng ký vào window.qtTabPhu. -->
+<script src="js/quantri-nhansu.js"></script>
+<script src="js/quantri-hocsinh.js"></script>
+<script src="js/quantri-hoso.js"></script>
 </body>
 </html>

@@ -313,6 +313,8 @@
             <button class="on" data-tab="tq">Tổng quan</button>
             <button data-tab="nd">Người dùng</button>
             <button data-tab="moi">Danh sách mời</button>
+            ${(window.qtTabPhu || []).map(t =>
+              `<button data-tab="${t.ma}">${t.ten}</button>`).join('')}
             <button data-tab="nk">Nhật ký</button>
             <button data-tab="sl">Sao lưu</button>
           </div>
@@ -331,6 +333,11 @@
     }
     bangQT.classList.add('hien');
     document.body.style.overflow = 'hidden';
+    /* Trả nút sáng về Tổng quan cho khớp với thân bảng. Thiếu dòng này thì
+       xem tab khác rồi đóng, mở lại sẽ thấy thân là Tổng quan mà nút sáng vẫn
+       là tab cũ. */
+    bangQT.querySelectorAll('.qt-tab button')
+      .forEach((x, i) => x.classList.toggle('on', i === 0));
     veTab('tq');
   }
 
@@ -348,6 +355,21 @@
     if (tab === 'moi') return veTabMoi();
     if (tab === 'nk') return veTabNhatKy();
     if (tab === 'sl') return veTabSaoLuu();
+    /* Tab do tệp khác đăng ký — mỗi tệp lo phần của mình, khỏi phình tệp này */
+    const phu = (window.qtTabPhu || []).find(t => t.ma === tab);
+    if (phu && typeof phu.ve === 'function') {
+      try { return await phu.ve(than()); }
+      catch (e) {
+        console.error('[Quản trị] Tab ' + tab + ' hỏng:', e);
+        /* Bọc escape: câu lỗi của máy chủ có lúc lặp lại nguyên giá trị dữ
+           liệu người dùng vừa gửi lên, mà dữ liệu đó đến từ ô Excel. */
+        const s = String(e.message || e)
+          .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        than().innerHTML = '<div class="qt-trong">Không mở được mục này: ' + s + '</div>';
+      }
+      return;
+    }
+    than().innerHTML = '<div class="qt-trong">Chưa nạp được mục này, thầy cô tải lại trang.</div>';
   }
 
   /* --- Tab 0: TỔNG QUAN — sức khoẻ hệ thống trong một màn hình ---
