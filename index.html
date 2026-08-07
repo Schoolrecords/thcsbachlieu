@@ -3,6 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Bắt trình duyệt hỏi lại máy chủ mỗi lần mở trang.
+     Điện thoại giữ bản cũ rất dai: thầy cô đăng xuất rồi đăng nhập lại vẫn
+     thấy giao diện cũ, vì đăng xuất chỉ bỏ phiên đăng nhập chứ không đụng
+     tới bộ nhớ đệm. Tệ hơn nữa là tải được index.html mới mà các tệp .js
+     vẫn bản cũ — màn hình lai nửa mới nửa cũ, nút bấm không ăn vì phần tử
+     mới không có mã đi kèm. Mỗi thẻ script bên dưới còn gắn thêm ?v= đổi
+     theo từng lần đẩy, để tệp .js cũng buộc tải lại. -->
+<meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
 <title>Hồ sơ số — Trường THCS Bạch Liêu</title>
 <meta name="description" content="Hệ thống Hồ sơ số, Kiểm định chất lượng và Đảm bảo chất lượng giáo dục — Trường THCS Bạch Liêu, xã Yên Thành, tỉnh Nghệ An.">
 <meta name="theme-color" content="#14306b">
@@ -231,6 +239,17 @@ input,select{font-family:inherit;font-size:inherit}
 .toolbar{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:12px;display:flex;flex-wrap:wrap;gap:9px;align-items:center;box-shadow:var(--shadow);margin-bottom:18px}
 .toolbar input[type=search],.toolbar select{border:1px solid #cfd8e6;border-radius:9px;padding:9px 12px;background:#fff;color:var(--ink);min-height:42px}
 .toolbar input[type=search]{flex:1;min-width:190px;width:100%}
+/* Trên điện thoại, hàng công cụ co lại còn hơn 300px mà vẫn cố xếp ô lọc và
+   hai nút trên cùng một dòng. Nút "Danh mục minh chứng (Phụ lục IV)" chữ dài
+   bị bóp còn hơn 100px, mỗi chữ rơi xuống một dòng, nút cao lêu nghêu che cả
+   khối bên dưới. Màn hẹp thì cho mỗi thứ một dòng nguyên vẹn. */
+@media(max-width:640px){
+  .toolbar{padding:11px}
+  .toolbar>*,.toolbar .tim-boc,.toolbar select,.toolbar .btn{
+    flex:1 1 100%!important;min-width:0!important;width:100%}
+  .toolbar .btn{justify-content:center;white-space:normal;text-align:center;
+    line-height:1.35;padding:11px 14px}
+}
 /* ---- Ô tìm có gợi ý xổ xuống (kiểu ô tìm của Google) ----
    Gõ vài chữ đầu là hiện luôn tên các hồ sơ khớp, bấm một cái ra ngay hồ sơ
    đó. Trước phải gõ xong rồi tự dò trong bảng kết quả bên dưới. */
@@ -347,8 +366,13 @@ input,select{font-family:inherit;font-size:inherit}
 .st-co{background:var(--ok-bg);color:var(--ok)}
 .st-dang{background:var(--warn-bg);color:var(--warn)}
 .st-chua{background:var(--miss-bg);color:var(--miss)}
-.drive{width:34px;height:32px;border-radius:8px;border:1px solid #f0e0bb;background:var(--gold-soft);display:inline-grid;place-items:center;font-size:15px;margin-left:8px;vertical-align:middle}
+.drive{width:34px;height:32px;border-radius:8px;border:1px solid #f0e0bb;background:var(--gold-soft);display:inline-grid;place-items:center;font-size:15px;margin-left:8px;vertical-align:middle;text-decoration:none}
 .drive:hover{background:#f9edd2}
+/* Ngón tay không bấm trúng ô 34×32. Trên máy cảm ứng nới lên 44×44 — mức tối
+   thiểu để bấm một lần là trúng, khỏi bấm ba lần rồi tưởng nút hỏng. */
+@media(hover:none){
+  .drive{width:44px;height:44px;font-size:18px;margin-left:6px}
+}
 td.tdst{white-space:nowrap;text-align:right}
 
 /* ---------------- Hồ sơ CBGV-NV ---------------- */
@@ -1767,7 +1791,13 @@ function rowHtml(it){
     <td class="code">${ma}${maCu?`<span class="ma-cu">${maCu}</span>`:''}</td>
     <td class="rname">${ten}<span class="crits">${crit.map(c=>`<span class="tag-crit" onclick="event.stopPropagation();showCrit('${c}')">Tiêu chí ${c}</span>`).join('')}</span></td>
     <td class="owner tdow">${ng}</td>
-    <td class="tdst"><span class="st st-${st}">${ST_LABEL[st]}</span><button class="drive" title="Mở thư mục trên Drive" onclick="event.stopPropagation();openDrive('${ma} ${ten.replace(/'/g,'')}')">📂</button></td>
+    <!-- openDrive nhận HAI tham số (mã, tên) và tra thư mục theo MÃ. Bản trước
+         ghép mã với tên thành một chuỗi rồi truyền vào một chỗ, nên tra không
+         bao giờ ra: bấm 📂 chỉ hiện câu "chưa gán thư mục", không mở Drive.
+         Hàm này là bản dự phòng, chỉ chạy khi chưa nối được cơ sở dữ liệu —
+         đúng lúc thầy cô cần biết mình đang xem bản mẫu, nên càng không được
+         để nút hỏng làm họ tưởng hệ thống hỏng. -->
+    <td class="tdst"><span class="st st-${st}">${ST_LABEL[st]}</span><button class="drive" title="Mở thư mục trên Drive" onclick="event.stopPropagation();openDrive('${ma}','${String(ten).replace(/'/g,'')}')">📂</button></td>
   </tr>`;
 }
 
@@ -2351,14 +2381,14 @@ renderDbcl();
      Ba tệp dưới đây chỉ hoạt động khi js/cauhinh.js đã được điền địa chỉ
      cơ sở dữ liệu. Chưa điền thì trang chạy y như trước, không đòi đăng nhập. -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/cauhinh.js"></script>
-<script src="js/dangnhap.js"></script>
-<script src="js/hoso-sql.js"></script>
-<script src="js/tudanhgia-sql.js"></script>
-<script src="js/nhansu-sql.js"></script>
-<script src="js/kiemtra-drive.js"></script>
-<script src="js/xuat-bieu-mau.js"></script>
-<script src="js/xuat-bao-cao-tdg.js"></script>
+<script src="js/cauhinh.js?v=202608080126"></script>
+<script src="js/dangnhap.js?v=202608080126"></script>
+<script src="js/hoso-sql.js?v=202608080126"></script>
+<script src="js/tudanhgia-sql.js?v=202608080126"></script>
+<script src="js/nhansu-sql.js?v=202608080126"></script>
+<script src="js/kiemtra-drive.js?v=202608080126"></script>
+<script src="js/xuat-bieu-mau.js?v=202608080126"></script>
+<script src="js/xuat-bao-cao-tdg.js?v=202608080126"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <!-- ExcelJS chỉ dùng để TẠO mẫu có trang trí: bản miễn phí của xlsx ở trên
      không viết được màu nền, khung viền hay khổ giấy A4 ngang. Phần ĐỌC tệp
@@ -2366,27 +2396,27 @@ renderDbcl();
 <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 <!-- Bộ tạo mẫu dùng chung: mọi mẫu Excel của hệ thống đi qua đây nên trông
      giống nhau và in ra dùng được ngay. Phải nạp TRƯỚC các màn hình gọi nó. -->
-<script src="js/mau-excel.js"></script>
-<script src="js/dbcl-sql.js"></script>
-<script src="js/xuat-phu-luc-dbcl.js"></script>
-<script src="js/dbcl-excel.js"></script>
-<script src="js/dbcl-vanhanh.js"></script>
-<script src="js/dbcl-hocsinh.js"></script>
+<script src="js/mau-excel.js?v=202608080126"></script>
+<script src="js/dbcl-sql.js?v=202608080126"></script>
+<script src="js/xuat-phu-luc-dbcl.js?v=202608080126"></script>
+<script src="js/dbcl-excel.js?v=202608080126"></script>
+<script src="js/dbcl-vanhanh.js?v=202608080126"></script>
+<script src="js/dbcl-hocsinh.js?v=202608080126"></script>
 <!-- Nạp SAU dbcl-hocsinh.js: dùng lại window.hsChuanNgay và window.hsVeLai -->
-<script src="js/vnedu-nhap.js"></script>
+<script src="js/vnedu-nhap.js?v=202608080126"></script>
 <!-- Nối màn hình "Quản lý học sinh" với dữ liệu thật, thay bản xem thử -->
-<script src="js/hocsinh-that.js"></script>
-<script src="js/tinhtien-lop.js"></script>
-  <script src="js/quy-mo.js"></script>
-<script src="js/dbcl-phancong.js"></script>
-<script src="js/dbcl-camket-hs.js"></script>
+<script src="js/hocsinh-that.js?v=202608080126"></script>
+<script src="js/tinhtien-lop.js?v=202608080126"></script>
+  <script src="js/quy-mo.js?v=202608080126"></script>
+<script src="js/dbcl-phancong.js?v=202608080126"></script>
+<script src="js/dbcl-camket-hs.js?v=202608080126"></script>
 <!-- Các tab thêm vào bảng Quản trị hệ thống. Phải nạp SAU dbcl-hocsinh.js vì
      tab "Danh sách học sinh" dùng lại đúng màn hình của tệp đó, và nạp sau
      dangnhap.js vì chúng tự đăng ký vào window.qtTabPhu. -->
-<script src="js/quantri-nhansu.js"></script>
-<script src="js/quantri-hocsinh.js"></script>
-<script src="js/quantri-hoso.js"></script>
+<script src="js/quantri-nhansu.js?v=202608080126"></script>
+<script src="js/quantri-hocsinh.js?v=202608080126"></script>
+<script src="js/quantri-hoso.js?v=202608080126"></script>
 <!-- Nạp SAU cùng: hướng dẫn lọc nội dung theo vai trò nên cần window.NGUOI_DUNG -->
-<script src="js/huong-dan.js"></script>
+<script src="js/huong-dan.js?v=202608080126"></script>
 </body>
 </html>

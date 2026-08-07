@@ -231,9 +231,18 @@
       <td class="owner tdow">${ng || '—'}</td>
       <td class="tdst">
         <span class="st st-${st}">${ST_LABEL[st]}</span>
-        <button class="drive" title="${coLink ? 'Mở thư mục trên Drive' : 'Chưa gán thư mục Drive'}"
-                style="${coLink ? '' : 'opacity:.4'}"
-                onclick="event.stopPropagation();openDrive('${ma}','${tenSach}')">📂</button>
+        ${coLink
+          /* Đã có thư mục thì dùng THẺ LIÊN KẾT THẬT, không dùng window.open.
+             Trên điện thoại, window.open bị Chrome và Safari coi là cửa sổ
+             bật lên và chặn thẳng — thầy cô bấm 📂 thì không có gì xảy ra,
+             tưởng nút hỏng. Điều hướng từ một liên kết thì trình duyệt nào
+             cũng cho qua, lại còn giữ được thao tác "mở trong tab mới". */
+          ? `<a class="drive" href="${String(hs.link_drive).replace(/"/g, '&quot;')}"
+                target="_blank" rel="noopener"
+                title="Mở thư mục trên Drive"
+                onclick="event.stopPropagation()">📂</a>`
+          : `<button class="drive" style="opacity:.4" title="Chưa gán thư mục Drive"
+                onclick="event.stopPropagation();openDrive('${ma}','${tenSach}')">📂</button>`}
         ${suaDuoc ? `<button class="drive hs-sua" title="Sửa hồ sơ này"
                 onclick="event.stopPropagation();moSuaHoSo('${ma}')">✏️</button>` : ''}
       </td>
