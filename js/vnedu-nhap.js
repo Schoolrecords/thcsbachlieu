@@ -758,6 +758,11 @@
       + '</div><div id="vnKiem"></div><div class="vn-chon">'
       + (ok ? '<button class="btn btn-pri" id="vnKiemChung">🔍 Đọc ngược từ máy chủ để kiểm chứng</button>' : '')
       + '<button class="btn btn-out" id="vnVe">← Về màn hình học sinh</button></div>');
+    /* Nạp xong thì bảo màn hình "Quản lý học sinh" đọc lại — không thì thầy cô
+       sang xem vẫn thấy số cũ và tưởng nạp hỏng. */
+    if (ok && typeof window.hocSinhNoiLai === 'function') {
+      window.hocSinhNoiLai().catch(e => console.error('[Học sinh] nối lại hỏng:', e));
+    }
     const k = document.getElementById('vnKiemChung');
     if (k) k.addEventListener('click', () => kiemChung(namHoc));
     const v = document.getElementById('vnVe');

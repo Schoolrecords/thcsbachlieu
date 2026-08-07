@@ -403,6 +403,10 @@ td.tdst{white-space:nowrap;text-align:right}
   color:#7a5410;border-radius:12px;padding:15px 18px;margin:0 0 20px;
   font-size:16px;line-height:1.7}
 .hs-mau-canh b{color:#6b4409}
+/* Khi đã nối được dữ liệu thật thì đổi sang tông xanh — cùng một dải, hai
+   trạng thái, để thầy cô nhìn màu là biết đang xem số thật hay số minh hoạ */
+.hs-mau-canh.hs-that{background:#f2fdf6;border-color:#bfe8cd;border-left-color:#2f9e5f;color:#1a6437}
+.hs-mau-canh.hs-that b{color:#15803d}
 @media(min-width:900px){.hs-mau-canh{font-size:17px}}
 /* Dòng nhắc "DỮ LIỆU MẪU" trong thead của bảng danh sách minh hoạ.
    Trên màn hình để nhạt cho đỡ chói; khi IN thì đậm lên và in đủ mực.
@@ -663,7 +667,7 @@ footer .legal{border-top:1px solid rgba(255,255,255,.15);padding-top:15px;font-s
         <div class="mod-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 10 12 5 2 10l10 5 10-5Z"/><path d="M6 12.5V17c3.5 3 8.5 3 12 0v-4.5"/><path d="M22 10v6"/></svg></div>
         <h3>Quản lý học sinh</h3>
         <div class="chips"><span class="chip">4 khối</span><span class="chip">16 lớp</span></div>
-        <p>Bản xem thử bố cục danh sách học sinh theo khối và lớp. Tên và sĩ số trong đây là <b>số liệu giả</b> để minh hoạ giao diện — dữ liệu thật nằm ở mục Đảm bảo chất lượng.</p>
+        <p>Danh sách học sinh theo khối và lớp, đọc thẳng từ cơ sở dữ liệu nhà trường. Chưa đăng nhập thì chỉ thấy bản xem thử bố cục.</p>
         <span class="mod-go">Xem các khối</span>
               <span class="mod-hinh" aria-hidden="true"><svg viewBox="0 0 64 64"><path d="M8 26l22-11 22 11-22 11z"/><path d="M17 31v11c7 6 19 6 26 0V31"/><path d="M52 26v14"/><circle cx="52" cy="44" r="3"/></svg></span>
       </button>
@@ -2154,6 +2158,8 @@ renderDbcl();
 <script src="js/dbcl-hocsinh.js"></script>
 <!-- Nạp SAU dbcl-hocsinh.js: dùng lại window.hsChuanNgay và window.hsVeLai -->
 <script src="js/vnedu-nhap.js"></script>
+<!-- Nối màn hình "Quản lý học sinh" với dữ liệu thật, thay bản xem thử -->
+<script src="js/hocsinh-that.js"></script>
 <script src="js/dbcl-phancong.js"></script>
 <script src="js/dbcl-camket-hs.js"></script>
 <!-- Các tab thêm vào bảng Quản trị hệ thống. Phải nạp SAU dbcl-hocsinh.js vì
