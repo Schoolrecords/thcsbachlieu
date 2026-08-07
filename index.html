@@ -617,18 +617,15 @@ footer{background:var(--navy);color:#c2d1ea;padding:30px 0;margin-top:44px;font-
 footer .fgrid{display:grid;gap:16px}
 footer b{color:#fff;display:block;margin-bottom:6px;font-size:14.6px;font-family:var(--serif)}
 footer .legal{border-top:1px solid rgba(255,255,255,.15);padding-top:15px;font-size:12.2px;opacity:.75;grid-column:1/-1}
-/* Dòng tác giả không kẻ thêm đường ngang — ngay trên đã có một đường của
-   khối pháp lý rồi, kẻ tiếp thành hai vạch sát nhau nhìn rối. Chỉ tách bằng
-   khoảng trắng, và để sáng hơn dòng pháp lý một chút cho đọc được số. */
-footer .tacgia{grid-column:1/-1;margin-top:-4px;display:flex;flex-wrap:wrap;
-  gap:5px 14px;align-items:center;font-size:12.6px;opacity:.9}
-footer .tacgia b{display:inline;margin:0;font-size:12.6px;font-family:inherit}
-footer .tacgia a{color:var(--gold-2);text-decoration:none;font-weight:700;
-  border:1px solid rgba(229,177,58,.34);border-radius:999px;padding:4px 13px;
-  transition:.15s;white-space:nowrap}
-footer .tacgia a:hover{background:rgba(229,177,58,.16);border-color:var(--gold-2)}
-/* Ngón tay cần vùng bấm đủ rộng, mà đây lại đúng là chỗ hay bấm trên điện thoại */
-@media(hover:none){footer .tacgia a{padding:9px 16px;font-size:13.4px}}
+/* Dòng tác giả để y hệt dòng pháp lý ngay trên — cùng cỡ chữ, cùng độ mờ,
+   không đậm, không viền, không màu riêng. Đây là dòng ghi công ở chân trang
+   chứ không phải lời mời gọi; làm nó nổi lên thì thành ra quảng cáo giữa
+   phần pháp lý của nhà trường.
+   Không kẻ thêm đường ngang: khối pháp lý đã có một đường rồi. */
+footer .tacgia{grid-column:1/-1;margin-top:-6px;font-size:12.2px;opacity:.75}
+/* Số vẫn gói trong thẻ tel: để điện thoại bấm là gọi được, nhưng gỡ sạch
+   kiểu dáng mặc định của liên kết cho nó lẫn vào dòng chữ. */
+footer .tacgia a{color:inherit;text-decoration:none}
 
 /* ---------------- Màn hình lớn ---------------- */
 @media (min-width:640px){
@@ -1134,10 +1131,7 @@ footer .tacgia a:hover{background:rgba(229,177,58,.16);border-color:var(--gold-2
          vừa là đầu mối gọi khi thầy cô gặp trục trặc — mà lúc bí thì người ta
          kéo xuống chân trang tìm số liên hệ. Số gói trong thẻ tel: để trên
          điện thoại bấm một cái là gọi được luôn, khỏi chép tay. -->
-    <div class="tacgia">
-      <span>Thiết kế và phát triển: <b>Chung Trần</b></span>
-      <a href="tel:0913031073">📞 0913031073</a>
-    </div>
+    <div class="tacgia">Thiết kế và phát triển: Chung Trần - <a href="tel:0913031073">0913031073</a></div>
   </div>
 </footer>
 
@@ -2401,14 +2395,14 @@ renderDbcl();
      Ba tệp dưới đây chỉ hoạt động khi js/cauhinh.js đã được điền địa chỉ
      cơ sở dữ liệu. Chưa điền thì trang chạy y như trước, không đòi đăng nhập. -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/cauhinh.js?v=202608080350"></script>
-<script src="js/dangnhap.js?v=202608080350"></script>
-<script src="js/hoso-sql.js?v=202608080350"></script>
-<script src="js/tudanhgia-sql.js?v=202608080350"></script>
-<script src="js/nhansu-sql.js?v=202608080350"></script>
-<script src="js/kiemtra-drive.js?v=202608080350"></script>
-<script src="js/xuat-bieu-mau.js?v=202608080350"></script>
-<script src="js/xuat-bao-cao-tdg.js?v=202608080350"></script>
+<script src="js/cauhinh.js?v=202608080402"></script>
+<script src="js/dangnhap.js?v=202608080402"></script>
+<script src="js/hoso-sql.js?v=202608080402"></script>
+<script src="js/tudanhgia-sql.js?v=202608080402"></script>
+<script src="js/nhansu-sql.js?v=202608080402"></script>
+<script src="js/kiemtra-drive.js?v=202608080402"></script>
+<script src="js/xuat-bieu-mau.js?v=202608080402"></script>
+<script src="js/xuat-bao-cao-tdg.js?v=202608080402"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <!-- ExcelJS chỉ dùng để TẠO mẫu có trang trí: bản miễn phí của xlsx ở trên
      không viết được màu nền, khung viền hay khổ giấy A4 ngang. Phần ĐỌC tệp
@@ -2416,27 +2410,27 @@ renderDbcl();
 <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 <!-- Bộ tạo mẫu dùng chung: mọi mẫu Excel của hệ thống đi qua đây nên trông
      giống nhau và in ra dùng được ngay. Phải nạp TRƯỚC các màn hình gọi nó. -->
-<script src="js/mau-excel.js?v=202608080350"></script>
-<script src="js/dbcl-sql.js?v=202608080350"></script>
-<script src="js/xuat-phu-luc-dbcl.js?v=202608080350"></script>
-<script src="js/dbcl-excel.js?v=202608080350"></script>
-<script src="js/dbcl-vanhanh.js?v=202608080350"></script>
-<script src="js/dbcl-hocsinh.js?v=202608080350"></script>
+<script src="js/mau-excel.js?v=202608080402"></script>
+<script src="js/dbcl-sql.js?v=202608080402"></script>
+<script src="js/xuat-phu-luc-dbcl.js?v=202608080402"></script>
+<script src="js/dbcl-excel.js?v=202608080402"></script>
+<script src="js/dbcl-vanhanh.js?v=202608080402"></script>
+<script src="js/dbcl-hocsinh.js?v=202608080402"></script>
 <!-- Nạp SAU dbcl-hocsinh.js: dùng lại window.hsChuanNgay và window.hsVeLai -->
-<script src="js/vnedu-nhap.js?v=202608080350"></script>
+<script src="js/vnedu-nhap.js?v=202608080402"></script>
 <!-- Nối màn hình "Quản lý học sinh" với dữ liệu thật, thay bản xem thử -->
-<script src="js/hocsinh-that.js?v=202608080350"></script>
-<script src="js/tinhtien-lop.js?v=202608080350"></script>
-  <script src="js/quy-mo.js?v=202608080350"></script>
-<script src="js/dbcl-phancong.js?v=202608080350"></script>
-<script src="js/dbcl-camket-hs.js?v=202608080350"></script>
+<script src="js/hocsinh-that.js?v=202608080402"></script>
+<script src="js/tinhtien-lop.js?v=202608080402"></script>
+  <script src="js/quy-mo.js?v=202608080402"></script>
+<script src="js/dbcl-phancong.js?v=202608080402"></script>
+<script src="js/dbcl-camket-hs.js?v=202608080402"></script>
 <!-- Các tab thêm vào bảng Quản trị hệ thống. Phải nạp SAU dbcl-hocsinh.js vì
      tab "Danh sách học sinh" dùng lại đúng màn hình của tệp đó, và nạp sau
      dangnhap.js vì chúng tự đăng ký vào window.qtTabPhu. -->
-<script src="js/quantri-nhansu.js?v=202608080350"></script>
-<script src="js/quantri-hocsinh.js?v=202608080350"></script>
-<script src="js/quantri-hoso.js?v=202608080350"></script>
+<script src="js/quantri-nhansu.js?v=202608080402"></script>
+<script src="js/quantri-hocsinh.js?v=202608080402"></script>
+<script src="js/quantri-hoso.js?v=202608080402"></script>
 <!-- Nạp SAU cùng: hướng dẫn lọc nội dung theo vai trò nên cần window.NGUOI_DUNG -->
-<script src="js/huong-dan.js?v=202608080350"></script>
+<script src="js/huong-dan.js?v=202608080402"></script>
 </body>
 </html>
