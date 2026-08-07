@@ -224,7 +224,25 @@ input,select{font-family:inherit;font-size:inherit}
 /* ---------------- Thanh công cụ ---------------- */
 .toolbar{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:12px;display:flex;flex-wrap:wrap;gap:9px;align-items:center;box-shadow:var(--shadow);margin-bottom:18px}
 .toolbar input[type=search],.toolbar select{border:1px solid #cfd8e6;border-radius:9px;padding:9px 12px;background:#fff;color:var(--ink);min-height:42px}
-.toolbar input[type=search]{flex:1;min-width:190px}
+.toolbar input[type=search]{flex:1;min-width:190px;width:100%}
+/* ---- Ô tìm có gợi ý xổ xuống (kiểu ô tìm của Google) ----
+   Gõ vài chữ đầu là hiện luôn tên các hồ sơ khớp, bấm một cái ra ngay hồ sơ
+   đó. Trước phải gõ xong rồi tự dò trong bảng kết quả bên dưới. */
+.tim-boc{position:relative;flex:1;min-width:220px;display:flex}
+.tim-xo{position:absolute;top:calc(100% + 5px);left:0;right:0;z-index:70;
+  background:#fff;border:1px solid #d7dfec;border-radius:12px;overflow:hidden;
+  box-shadow:0 12px 34px rgba(16,32,64,.19);display:none;max-height:340px;overflow-y:auto}
+.tim-xo.hien{display:block}
+.tim-xo .muc{display:flex;gap:11px;align-items:flex-start;padding:10px 13px;cursor:pointer;
+  border-bottom:1px solid #f1f4f9;text-align:left;width:100%;background:#fff}
+.tim-xo .muc:last-child{border-bottom:0}
+.tim-xo .muc:hover,.tim-xo .muc.chon{background:#eef4ff}
+.tim-xo .ma{font-family:ui-monospace,Menlo,monospace;font-size:12.4px;font-weight:700;
+  color:var(--navy-2);flex:none;min-width:88px;padding-top:1px}
+.tim-xo .ten{font-size:13.7px;color:var(--ink);line-height:1.45}
+.tim-xo .phu{display:block;font-size:11.6px;color:var(--muted);margin-top:2px}
+.tim-xo mark{background:#fde68a;color:inherit;padding:0 1px;border-radius:3px}
+.tim-xo .het{padding:12px 14px;font-size:13.2px;color:var(--muted)}
 .btn{padding:9px 16px;border-radius:9px;font-weight:600;font-size:14px;min-height:42px;display:inline-flex;align-items:center;gap:7px;transition:filter .15s,background .15s}
 .btn-pri{background:var(--navy);color:#fff}
 .btn-pri:hover{filter:brightness(1.18)}
@@ -725,14 +743,19 @@ footer .legal{border-top:1px solid rgba(255,255,255,.15);padding-top:15px;font-s
     <div class="stats" id="hsStats"></div>
 
     <div class="toolbar">
-      <input type="search" id="hsSearch" placeholder="🔍 Tìm theo mã mới, mã cũ, tên hồ sơ, người phụ trách hoặc tiêu chí…" oninput="searchHoSo()">
+      <div class="tim-boc">
+        <input type="search" id="hsSearch" autocomplete="off"
+               placeholder="🔍 Gõ vài chữ đầu của tên hồ sơ, hoặc mã mới, mã cũ, người phụ trách…"
+               oninput="searchHoSo()">
+        <div class="tim-xo" id="hsGoiY" role="listbox"></div>
+      </div>
       <select id="hsFilter" onchange="searchHoSo()">
         <option value="">Tất cả trạng thái</option>
         <option value="co">Đã có</option>
         <option value="dang">Đang cập nhật</option>
         <option value="chua">Chưa có</option>
       </select>
-      <button class="btn btn-gold" id="btnHoSoCuaToi" onclick="hoSoCuaToi()">👤 Hồ sơ của tôi</button>
+      <span id="hsNeoNut"></span>
     </div>
 
     <div id="hsSearchResult"></div>
@@ -1566,24 +1589,128 @@ function closeSheet(){
   document.body.style.overflow='';
 }
 
-/* ---- Hồ sơ của tôi ----
-   Lọc ra những minh chứng mà người đang đăng nhập được giao phụ trách.
-   Nhận biết bằng địa chỉ Gmail đăng nhập, không cần quản trị gán từng người. */
+/* Nút "Hồ sơ của tôi" đã thay bằng ô tìm có gợi ý xổ xuống.
+   Giữ lại biến và hàm lọc: phần vẽ bảng kết quả bên dưới còn tham chiếu tới,
+   và nếu sau này muốn đưa nút trở lại thì không phải viết lại từ đầu. */
 let CHI_HO_SO_CUA_TOI = false;
 
-function hoSoCuaToi(){
-  const u = window.NGUOI_DUNG;
-  if(!u){
-    notify('Chức năng này cần đăng nhập để biết thầy cô là ai.');
+/* ============================================================
+   Ô TÌM CÓ GỢI Ý XỔ XUỐNG — kiểu ô tìm của Google
+
+   Gõ vài chữ đầu là hiện luôn tên các hồ sơ khớp, bấm một cái ra ngay hồ sơ
+   đó. Trước phải gõ xong rồi tự dò trong bảng kết quả bên dưới.
+
+   Xếp hạng: khớp từ ĐẦU chuỗi đứng trước khớp ở giữa, vì thầy cô gõ chữ đầu
+   của tên hồ sơ là chính. Trong cùng hạng thì mã minh chứng đứng trước tên.
+   ============================================================ */
+let GY_CHON = -1, GY_DS = [];
+
+function boDau(s){
+  return String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'')
+    .replace(/đ/g,'d').replace(/Đ/g,'D').toLowerCase();
+}
+function toDam(chu, kw){
+  const t = boDau(chu), k = boDau(kw);
+  const i = k ? t.indexOf(k) : -1;
+  if(i < 0) return escHtml(chu);
+  return escHtml(chu.slice(0,i)) + '<mark>' + escHtml(chu.slice(i, i+kw.length))
+       + '</mark>' + escHtml(chu.slice(i+kw.length));
+}
+function escHtml(s){
+  return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function veGoiY(){
+  const o = document.getElementById('hsSearch');
+  const xo = document.getElementById('hsGoiY');
+  if(!o || !xo) return;
+  const kw = (o.value||'').trim();
+  GY_CHON = -1;
+
+  if(kw.length < 2){ xo.classList.remove('hien'); xo.innerHTML=''; GY_DS=[]; return; }
+  const k = boDau(kw);
+
+  const gom = [];
+  CATS.forEach(c=>c.subs.forEach(s=>s.items.forEach(i=>{
+    const ma = String(i[0]||''), ten = String(i[1]||''), maCu = String(i[5]||'');
+    const tMa = boDau(ma), tTen = boDau(ten), tCu = boDau(maCu);
+    let hang = -1;
+    if(tTen.indexOf(k) === 0) hang = 0;          // tên bắt đầu bằng chữ đã gõ
+    else if(tMa.indexOf(k) === 0) hang = 1;       // mã bắt đầu bằng chữ đã gõ
+    else if(tCu.indexOf(k) === 0) hang = 2;       // mã cũ bắt đầu bằng
+    else if(tTen.indexOf(k) > 0) hang = 3;        // khớp ở giữa tên
+    else if(tMa.indexOf(k) > 0 || tCu.indexOf(k) > 0) hang = 4;
+    if(hang >= 0) gom.push({hang, ma, ten, maCu, hop: s.name});
+  })));
+
+  gom.sort((a,b)=> a.hang - b.hang || a.ma.localeCompare(b.ma,'vi'));
+  GY_DS = gom.slice(0, 8);
+
+  if(!GY_DS.length){
+    xo.innerHTML = '<div class="het">Không có hồ sơ nào khớp “'+escHtml(kw)+'”.</div>';
+    xo.classList.add('hien');
     return;
   }
-  CHI_HO_SO_CUA_TOI = !CHI_HO_SO_CUA_TOI;
-  const nut = document.getElementById('btnHoSoCuaToi');
-  nut.classList.toggle('btn-gold', !CHI_HO_SO_CUA_TOI);
-  nut.classList.toggle('btn-pri', CHI_HO_SO_CUA_TOI);
-  nut.textContent = CHI_HO_SO_CUA_TOI ? '👥 Xem lại tất cả' : '👤 Hồ sơ của tôi';
-  searchHoSo();
+  xo.innerHTML = GY_DS.map((g,idx)=>`
+    <button type="button" class="muc" data-i="${idx}" role="option">
+      <span class="ma">${toDam(g.ma, kw)}</span>
+      <span class="ten">${toDam(g.ten, kw)}
+        <span class="phu">${escHtml(g.hop)}${g.maCu?' · mã cũ '+toDam(g.maCu,kw):''}</span>
+      </span>
+    </button>`).join('') + (gom.length > 8
+      ? '<div class="het">…và '+(gom.length-8)+' hồ sơ nữa — nhấn Enter để xem hết.</div>' : '');
+  xo.classList.add('hien');
+
+  xo.querySelectorAll('.muc').forEach(b=>
+    b.addEventListener('mousedown', e=>{ e.preventDefault(); chonGoiY(+b.dataset.i); }));
 }
+
+/* Chọn một gợi ý: điền MÃ vào ô tìm rồi chạy tìm kiếm — ra đúng một hồ sơ đó,
+   kèm nút mở Drive và nút sửa như mọi dòng khác. */
+function chonGoiY(i){
+  const g = GY_DS[i];
+  if(!g) return;
+  const o = document.getElementById('hsSearch');
+  o.value = g.ma;
+  dongGoiY();
+  searchHoSo();
+  const kq = document.getElementById('hsSearchResult');
+  if(kq) kq.scrollIntoView({behavior:'smooth', block:'start'});
+}
+function dongGoiY(){
+  const xo = document.getElementById('hsGoiY');
+  if(xo){ xo.classList.remove('hien'); }
+  GY_CHON = -1;
+}
+function toSangGoiY(){
+  const xo = document.getElementById('hsGoiY');
+  if(!xo) return;
+  xo.querySelectorAll('.muc').forEach((b,i)=> b.classList.toggle('chon', i === GY_CHON));
+  const oc = xo.querySelector('.muc.chon');
+  if(oc) oc.scrollIntoView({block:'nearest'});
+}
+
+document.addEventListener('DOMContentLoaded', function(){
+  const o = document.getElementById('hsSearch');
+  if(!o) return;
+  o.addEventListener('input', veGoiY);
+  o.addEventListener('focus', veGoiY);
+  o.addEventListener('keydown', function(e){
+    const mo = document.getElementById('hsGoiY').classList.contains('hien');
+    if(e.key === 'ArrowDown' && mo){ e.preventDefault(); GY_CHON = Math.min(GY_CHON+1, GY_DS.length-1); toSangGoiY(); }
+    else if(e.key === 'ArrowUp' && mo){ e.preventDefault(); GY_CHON = Math.max(GY_CHON-1, -1); toSangGoiY(); }
+    else if(e.key === 'Enter'){
+      if(mo && GY_CHON >= 0){ e.preventDefault(); chonGoiY(GY_CHON); }
+      else { dongGoiY(); searchHoSo(); }
+    }
+    else if(e.key === 'Escape'){ dongGoiY(); }
+  });
+  /* Bấm ra ngoài thì đóng. Dùng mousedown ở phần chọn gợi ý nên không đụng nhau. */
+  document.addEventListener('click', function(e){
+    if(!e.target.closest('.tim-boc')) dongGoiY();
+  });
+});
 
 /* Minh chứng này có phải phần việc của người đang đăng nhập không */
 function laCuaToi(ma){

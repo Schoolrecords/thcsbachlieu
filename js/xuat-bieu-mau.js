@@ -322,13 +322,13 @@
      để gọi lại được nếu sau này cần, khỏi phải viết lại từ đầu. */
   window.xuatExcelHoSo = xuatExcelThat;
 
-  /* Neo vào nút "Hồ sơ của tôi", KHÔNG neo vào nút "Xuất Excel" nữa.
-     Thầy Chung bỏ hai nút "Xuất Excel" và "In danh mục" khỏi màn hình này —
-     mà bản cũ lại tìm đúng nút Excel để chèn hai nút quan trọng vào sau nó.
-     Bỏ nút Excel là mất luôn "Xuất Word" và "Danh mục minh chứng (Phụ lục
-     IV)", trong khi Phụ lục IV chính là bản nộp Sở. */
+  /* Neo vào một thẻ TRỐNG đặt sẵn (#hsNeoNut), không neo vào nút nào cả.
+     Đã hai lần suýt mất nút vì neo nhầm: neo vào "Xuất Excel" rồi nút đó bị
+     bỏ, neo tiếp vào "Hồ sơ của tôi" thì nút đó cũng bị thay. Mà hai nút gắn
+     vào đây — "Xuất Word" và "Danh mục minh chứng (Phụ lục IV)" — là bản nộp
+     Sở, mất là hỏng việc. Thẻ neo trống thì không ai xoá nhầm. */
   function ganNut() {
-    var neo = document.getElementById('btnHoSoCuaToi');
+    var neo = document.getElementById('hsNeoNut');
     if (!neo || document.getElementById('nutXuatWord')) return;
 
     var nutWord = document.createElement('button');
