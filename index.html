@@ -664,10 +664,12 @@ footer .tacgia a{color:inherit;text-decoration:none}
   .rec-tbl tbody td.tdow::before{content:"Phụ trách: ";color:var(--muted);font-size:12.4px}
   .rec-tbl tbody td.rname{font-size:15px;font-weight:600}
   /* Ở đây mỗi ô đã là một dòng riêng, không còn cột nào để phân định nữa.
-     Không tắt thì kẻ dọc của quy tắc chung biến thành một vạch đứt treo bên
-     phải từng ô, chẳng ngăn cách gì mà chỉ làm rối. Phải !important vì bên
-     kia cũng !important. */
-  .rec-tbl td,.rec-tbl th{border-right:0!important}
+     Phải tắt CẢ HAI chiều: kẻ dọc thì thành vạch treo bên phải từng ô, còn
+     kẻ ngang thì gạch ngang giữa mã, tên, người phụ trách và trạng thái của
+     CÙNG một hồ sơ — nhìn như bốn hồ sơ khác nhau. Ranh giới giữa các hồ sơ
+     đã do đường viền dưới của tr lo rồi.
+     Phải !important vì bên kia cũng !important. */
+  .rec-tbl td,.rec-tbl th{border-right:0!important;border-bottom:0!important}
 }
 @media (max-width:520px){
   .sec-head h2{font-size:26px}
@@ -738,6 +740,11 @@ footer .tacgia a{color:inherit;text-decoration:none}
 
    Nét ĐỨT chứ không liền: bảng nhiều cột mà kẻ liền hết thì thành ô lưới
    kín, nặng mắt. Nét đứt đủ để phân định mà vẫn nhẹ.
+
+   HAI CHIỀU PHẢI CÂN NHAU — bản trước kẻ dọc 1.5px màu sẫm còn kẻ ngang
+   1px màu #e8edf5 gần như vô hình. Mắt bị các vạch dọc kéo đi, bảng nhìn
+   như bị chia thành mấy cột rời rạc thay vì một lưới liền mạch. Nay cả hai
+   chiều dùng CHUNG một độ dày và một màu, không chiều nào lấn chiều nào.
    ============================================================================ */
 .rec-tbl td,   .rec-tbl th,
 .qt-bang td,   .qt-bang th,
@@ -750,7 +757,22 @@ footer .tacgia a{color:inherit;text-decoration:none}
 .pc-bang td,   .pc-bang th,
 .hs-bang td,   .hs-bang th,
 .hd-bang td,   .hd-bang th{
-  border-right:1.5px dashed #9db4d6!important;
+  border-right:1px dashed #c6d2e3!important;
+}
+/* Kẻ ngang cùng nét, cùng màu với kẻ dọc */
+.rec-tbl tbody td, .qt-bang tbody td, .vn-bang tbody td, .vh-bang tbody td,
+.ns-bang tbody td, .db-tbl tbody td,  .tt-bang tbody td, .qh-bang tbody td,
+.pc-bang tbody td, .hs-bang tbody td, .hd-bang tbody td{
+  border-bottom:1px dashed #c6d2e3!important;
+}
+/* Dòng cuối không kẻ đáy — kẻ nữa thành viền dưới của cả bảng */
+.rec-tbl tbody tr:last-child td, .qt-bang tbody tr:last-child td,
+.vn-bang tbody tr:last-child td, .vh-bang tbody tr:last-child td,
+.ns-bang tbody tr:last-child td, .db-tbl  tbody tr:last-child td,
+.tt-bang tbody tr:last-child td, .qh-bang tbody tr:last-child td,
+.pc-bang tbody tr:last-child td, .hs-bang tbody tr:last-child td,
+.hd-bang tbody tr:last-child td{
+  border-bottom:0!important;
 }
 /* Ô cuối hàng không kẻ — kẻ nữa thành viền ngoài, thừa và làm bảng chật */
 .rec-tbl td:last-child,   .rec-tbl th:last-child,
@@ -766,16 +788,24 @@ footer .tacgia a{color:inherit;text-decoration:none}
 .hd-bang td:last-child,   .hd-bang th:last-child{
   border-right:0!important;
 }
-/* Bảng Hướng dẫn có dòng tiêu đề nền navy — kẻ xanh sẫm chìm mất trên đó,
+/* Bảng Hướng dẫn có dòng tiêu đề nền navy — kẻ xanh nhạt chìm mất trên đó,
    phải đổi sang nét sáng mới nhìn ra. */
 .hd-bang th{border-right-color:rgba(255,255,255,.42)!important}
-/* In ra giấy: mực xanh nhạt gần như mất, đổi sang xám đậm cho rõ */
+/* Dòng tiêu đề tách khỏi phần thân bằng một vạch LIỀN đậm hơn: đó là ranh
+   giới giữa tên cột và dữ liệu, khác hẳn ranh giới giữa hai dòng dữ liệu
+   với nhau, nên không dùng chung nét đứt. */
+.rec-tbl thead th, .qt-bang thead th, .vn-bang thead th, .vh-bang thead th,
+.ns-bang thead th, .db-tbl thead th,  .tt-bang thead th, .qh-bang thead th,
+.pc-bang thead th, .hs-bang thead th{
+  border-bottom:1px solid #b9c6da!important;
+}
+/* In ra giấy: mực xanh nhạt gần như mất, đổi sang xám cho rõ */
 @media print{
   .rec-tbl td,.rec-tbl th,.qt-bang td,.qt-bang th,.vn-bang td,.vn-bang th,
   .vh-bang td,.vh-bang th,.ns-bang td,.ns-bang th,.db-tbl td,.db-tbl th,
   .tt-bang td,.tt-bang th,.qh-bang td,.qh-bang th,.pc-bang td,.pc-bang th,
   .hs-bang td,.hs-bang th,.hd-bang td,.hd-bang th{
-    border-right-color:#666!important;
+    border-right-color:#888!important;border-bottom-color:#888!important;
   }
 }
 </style>
@@ -2462,14 +2492,14 @@ renderDbcl();
      Ba tệp dưới đây chỉ hoạt động khi js/cauhinh.js đã được điền địa chỉ
      cơ sở dữ liệu. Chưa điền thì trang chạy y như trước, không đòi đăng nhập. -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/cauhinh.js?v=202608080417"></script>
-<script src="js/dangnhap.js?v=202608080417"></script>
-<script src="js/hoso-sql.js?v=202608080417"></script>
-<script src="js/tudanhgia-sql.js?v=202608080417"></script>
-<script src="js/nhansu-sql.js?v=202608080417"></script>
-<script src="js/kiemtra-drive.js?v=202608080417"></script>
-<script src="js/xuat-bieu-mau.js?v=202608080417"></script>
-<script src="js/xuat-bao-cao-tdg.js?v=202608080417"></script>
+<script src="js/cauhinh.js?v=202608080422"></script>
+<script src="js/dangnhap.js?v=202608080422"></script>
+<script src="js/hoso-sql.js?v=202608080422"></script>
+<script src="js/tudanhgia-sql.js?v=202608080422"></script>
+<script src="js/nhansu-sql.js?v=202608080422"></script>
+<script src="js/kiemtra-drive.js?v=202608080422"></script>
+<script src="js/xuat-bieu-mau.js?v=202608080422"></script>
+<script src="js/xuat-bao-cao-tdg.js?v=202608080422"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <!-- ExcelJS chỉ dùng để TẠO mẫu có trang trí: bản miễn phí của xlsx ở trên
      không viết được màu nền, khung viền hay khổ giấy A4 ngang. Phần ĐỌC tệp
@@ -2477,27 +2507,27 @@ renderDbcl();
 <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 <!-- Bộ tạo mẫu dùng chung: mọi mẫu Excel của hệ thống đi qua đây nên trông
      giống nhau và in ra dùng được ngay. Phải nạp TRƯỚC các màn hình gọi nó. -->
-<script src="js/mau-excel.js?v=202608080417"></script>
-<script src="js/dbcl-sql.js?v=202608080417"></script>
-<script src="js/xuat-phu-luc-dbcl.js?v=202608080417"></script>
-<script src="js/dbcl-excel.js?v=202608080417"></script>
-<script src="js/dbcl-vanhanh.js?v=202608080417"></script>
-<script src="js/dbcl-hocsinh.js?v=202608080417"></script>
+<script src="js/mau-excel.js?v=202608080422"></script>
+<script src="js/dbcl-sql.js?v=202608080422"></script>
+<script src="js/xuat-phu-luc-dbcl.js?v=202608080422"></script>
+<script src="js/dbcl-excel.js?v=202608080422"></script>
+<script src="js/dbcl-vanhanh.js?v=202608080422"></script>
+<script src="js/dbcl-hocsinh.js?v=202608080422"></script>
 <!-- Nạp SAU dbcl-hocsinh.js: dùng lại window.hsChuanNgay và window.hsVeLai -->
-<script src="js/vnedu-nhap.js?v=202608080417"></script>
+<script src="js/vnedu-nhap.js?v=202608080422"></script>
 <!-- Nối màn hình "Quản lý học sinh" với dữ liệu thật, thay bản xem thử -->
-<script src="js/hocsinh-that.js?v=202608080417"></script>
-<script src="js/tinhtien-lop.js?v=202608080417"></script>
-  <script src="js/quy-mo.js?v=202608080417"></script>
-<script src="js/dbcl-phancong.js?v=202608080417"></script>
-<script src="js/dbcl-camket-hs.js?v=202608080417"></script>
+<script src="js/hocsinh-that.js?v=202608080422"></script>
+<script src="js/tinhtien-lop.js?v=202608080422"></script>
+  <script src="js/quy-mo.js?v=202608080422"></script>
+<script src="js/dbcl-phancong.js?v=202608080422"></script>
+<script src="js/dbcl-camket-hs.js?v=202608080422"></script>
 <!-- Các tab thêm vào bảng Quản trị hệ thống. Phải nạp SAU dbcl-hocsinh.js vì
      tab "Danh sách học sinh" dùng lại đúng màn hình của tệp đó, và nạp sau
      dangnhap.js vì chúng tự đăng ký vào window.qtTabPhu. -->
-<script src="js/quantri-nhansu.js?v=202608080417"></script>
-<script src="js/quantri-hocsinh.js?v=202608080417"></script>
-<script src="js/quantri-hoso.js?v=202608080417"></script>
+<script src="js/quantri-nhansu.js?v=202608080422"></script>
+<script src="js/quantri-hocsinh.js?v=202608080422"></script>
+<script src="js/quantri-hoso.js?v=202608080422"></script>
 <!-- Nạp SAU cùng: hướng dẫn lọc nội dung theo vai trò nên cần window.NGUOI_DUNG -->
-<script src="js/huong-dan.js?v=202608080417"></script>
+<script src="js/huong-dan.js?v=202608080422"></script>
 </body>
 </html>
