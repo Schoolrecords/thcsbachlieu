@@ -53,6 +53,9 @@
     { ma: 'to', loai: null, nhan: 'Tổ ĐBCL', khac: true,
       ten: 'Tổ đảm bảo chất lượng',
       mo: 'Quyết định thành lập và bảng phân công nhiệm vụ — Phụ lục 10 và 11.' },
+    { ma: 'hs', loai: null, nhan: 'Học sinh', khac: true,
+      ten: 'Dữ liệu học sinh và kết quả từng môn',
+      mo: 'Bảng gốc của cả module. Khai báo danh sách đầu năm, tải kết quả từng kỳ, hệ thống tự tính 33 chỉ tiêu.' },
     { ma: '1',  loai: 'thuc_trang',   ten: 'Thực trạng nhà trường',
       mo: 'Số liệu thực tế đầu năm học, làm gốc để xây dựng chuẩn đầu ra.',
       xuat: 'xuatPhuLuc1' },
@@ -882,7 +885,11 @@
     hien('dbclKhac', laKhac);
 
     if (laKhac) {
-      if (typeof window.dbclVeManHinh === 'function') {
+      /* Mỗi tệp tự đăng ký màn hình của mình vào window.dbclManHinh */
+      const kho = window.dbclManHinh || {};
+      if (typeof kho[p.ma] === 'function') {
+        kho[p.ma](document.getElementById('dbclKhac'), NAM_HOC);
+      } else if (typeof window.dbclVeManHinh === 'function') {
         window.dbclVeManHinh(p.ma, document.getElementById('dbclKhac'), NAM_HOC);
       } else {
         const o1 = document.getElementById('dbclKhac');
