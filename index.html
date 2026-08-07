@@ -572,7 +572,7 @@ footer .legal{border-top:1px solid rgba(255,255,255,.15);padding-top:15px;font-s
       <div class="hero-stats">
         <div class="hstat"><div class="ic">🗂</div><div><b id="hsTotalTop">0</b><span>đầu hồ sơ<br>được quản lý</span></div></div>
         <div class="hstat"><div class="ic">👥</div><div><b id="hsCbgvTop">38</b><span>cán bộ, giáo viên,<br>nhân viên</span></div></div>
-        <div class="hstat"><div class="ic">🎓</div><div><b>16</b><span>lớp · 616<br>học sinh</span></div></div>
+        <div class="hstat"><div class="ic">🎓</div><div><b>16</b><span>lớp · 636<br>học sinh</span></div></div>
         <div class="hstat"><div class="ic">📋</div><div><b>15</b><span>tiêu chí<br>tự đánh giá</span></div></div>
       </div>
     </div>
@@ -719,7 +719,7 @@ footer .legal{border-top:1px solid rgba(255,255,255,.15);padding-top:15px;font-s
     <div class="stu-hero">
       <h2>Quản lý Học sinh</h2>
       <p>Chọn từng khối để xem các lớp và danh sách học sinh. Dữ liệu đồng bộ trực tiếp từ bảng dữ liệu của nhà trường.</p>
-      <span class="stu-pill" id="stuPill">Toàn trường · 24 lớp · 963 học sinh</span>
+      <span class="stu-pill" id="stuPill">Toàn trường · 16 lớp · 636 học sinh</span>
     </div>
     <div class="khoi-grid" id="khoiGrid"></div>
     <div id="lopArea" style="margin-top:26px"></div>
@@ -935,7 +935,7 @@ const CATS = [
       ]},
       { code:'2.2', name:'Hồ sơ tổ chức dạy học', items:[
         ['2.2.1','Thời khoá biểu các học kỳ','Phó HT chuyên môn','co',['3.1']],
-        ['2.2.2','Sổ ghi đầu bài (24 lớp)','Phó HT chuyên môn','co',['3.1']],
+        ['2.2.2','Sổ ghi đầu bài (16 lớp)','Phó HT chuyên môn','co',['3.1']],
         ['2.2.3','Hồ sơ phân công giảng dạy','Phó HT chuyên môn','co',['1.2','2.2']],
         ['2.2.4','Hồ sơ dự giờ, thao giảng, hội giảng','Phó HT chuyên môn','co',['3.2']],
         ['2.2.5','Hồ sơ sinh hoạt chuyên môn theo nghiên cứu bài học','Phó HT chuyên môn','dang',['3.2']]
@@ -1300,17 +1300,21 @@ const NHAN_SU = [
   ['nv','Trần Văn Thắng','Nhân viên bảo vệ','10/12/1978','Trung cấp']
 ];
 
-/* ---- Học sinh: 4 khối, 24 lớp ---- */
+/* ---- Học sinh: quy mô THẬT của trường — 4 khối, mỗi khối 4 lớp, 16 lớp,
+   khoảng 636 học sinh. Trước đây dựng 24 lớp và 963 học sinh là số bịa từ
+   đợt dựng giao diện, không đúng trường.
+   Đây vẫn là DỮ LIỆU MẪU cho phần xem thử; số thật sẽ thay khi nhà trường
+   khai báo danh sách học sinh ở tab Học sinh của module Đảm bảo chất lượng. ---- */
 const KHOI = [
-  { k:6, em:'📗', lops:['6A','6B','6C','6D','6E','6G'], si:[41,40,42,39,41,40] },
-  { k:7, em:'📘', lops:['7A','7B','7C','7D','7E','7G'], si:[40,41,39,42,40,38] },
-  { k:8, em:'📙', lops:['8A','8B','8C','8D','8E','8G'], si:[42,40,41,39,40,41] },
-  { k:9, em:'🎓', lops:['9A','9B','9C','9D','9E','9G'], si:[39,40,42,41,40,39] }
+  { k:6, em:'📗', lops:['6A','6B','6C','6D'], si:[40,40,39,39] },
+  { k:7, em:'📘', lops:['7A','7B','7C','7D'], si:[40,40,40,39] },
+  { k:8, em:'📙', lops:['8A','8B','8C','8D'], si:[40,40,39,39] },
+  { k:9, em:'🎓', lops:['9A','9B','9C','9D'], si:[40,40,40,41] }
 ];
-const GVCN = ['Lê Thị Thanh Mai','Nguyễn Đức Long','Phan Thị Hương Lan','Lê Đình Phúc','Nguyễn Thị Phương Thảo','Nguyễn Văn Tuấn',
-  'Nguyễn Thị Hoài Thu','Phạm Thị Kim Oanh','Trương Đình Nam','Trần Thị Ngọc Diệp','Hoàng Thị Mỹ Linh','Lê Thị Kiều Trang',
-  'Hoàng Văn Bình','Lê Văn Cường','Đặng Thị Thu Hà','Nguyễn Hữu Đạt','Trần Văn Khánh','Phạm Văn Đức',
-  'Trần Thị Lệ Quyên','Nguyễn Thị Bích Ngọc','Nguyễn Văn Sơn','Nguyễn Thị Hồng Vân','Trần Thị Mai Trang','Nguyễn Văn Hiếu'];
+const GVCN = ['Lê Thị Thanh Mai','Nguyễn Đức Long','Phan Thị Hương Lan','Lê Đình Phúc',
+  'Nguyễn Thị Phương Thảo','Nguyễn Văn Tuấn','Nguyễn Thị Hoài Thu','Phạm Thị Kim Oanh',
+  'Trương Đình Nam','Trần Thị Ngọc Diệp','Hoàng Thị Mỹ Linh','Lê Thị Kiều Trang',
+  'Hoàng Văn Bình','Lê Văn Cường','Đặng Thị Thu Hà','Nguyễn Hữu Đạt'];
 
 const HO = ['Nguyễn','Trần','Lê','Phạm','Hoàng','Phan','Vũ','Đặng','Bùi','Đỗ','Hồ','Ngô','Dương','Lý','Cao','Trương','Đinh','Võ'];
 const DEM_NAM = ['Văn','Đức','Hữu','Đình','Quang','Minh','Trọng','Xuân','Anh','Tuấn'];
@@ -1367,7 +1371,7 @@ const TASKS = [
     goal:'Hoàn thành kiểm kê, dán mã và lập sổ theo dõi thiết bị các phòng chức năng',
     who:'Nhân viên thiết bị', due:'31/8/2026', state:'done',
     sol:'Kiểm kê toàn bộ thiết bị, đối chiếu sổ sách, đề xuất thanh lý thiết bị hỏng, bổ sung thiết bị thiếu' },
-  { name:'Thiết lập kênh thông tin hai chiều với cha mẹ học sinh 24 lớp', crit:'4.3',
+  { name:'Thiết lập kênh thông tin hai chiều với cha mẹ học sinh 16 lớp', crit:'4.3',
     goal:'100% lớp có kênh liên lạc chính thức và biên bản họp cha mẹ học sinh đầy đủ',
     who:'Các giáo viên chủ nhiệm', due:'30/10/2026', state:'done',
     sol:'Thống nhất một kênh dùng chung; quy định thông tin định kỳ hằng tháng về chuyên cần và kết quả học tập' }

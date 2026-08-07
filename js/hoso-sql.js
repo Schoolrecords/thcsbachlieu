@@ -80,6 +80,31 @@
   bangTai.textContent = 'Đang tải dữ liệu hồ sơ…';
   document.body.appendChild(bangTai);
 
+  /* Giáo viên chưa được giao hồ sơ nào — KHÔNG phải lỗi.
+     Quan trọng: phải dọn sạch danh mục mẫu trên trang, nếu không thầy cô sẽ
+     thấy nguyên danh mục giả của toàn trường và tưởng đó là dữ liệu thật. */
+  function veTrangKhongCoHoSo() {
+    if (Array.isArray(window.CATS)) window.CATS.length = 0;
+    const oCats = document.getElementById('hsCats');
+    const oStats = document.getElementById('hsStats');
+    const oTong = document.getElementById('hsTotalTop');
+    if (oTong) oTong.textContent = '0';
+    if (oStats) oStats.innerHTML = '';
+    if (oCats) {
+      oCats.innerHTML =
+        '<div style="background:#eef4ff;border:1px solid #cfe0ff;color:#1d4ed8;'
+        + 'border-radius:12px;padding:20px 22px;font-size:14px;line-height:1.7">'
+        + '<b>Thầy cô chưa được giao hồ sơ nào.</b><br>'
+        + 'Hệ thống chỉ hiện những hồ sơ mà thầy cô được phân công phụ trách. '
+        + 'Nếu thầy cô đang phụ trách hồ sơ mà chưa thấy ở đây, đề nghị báo '
+        + 'Ban giám hiệu gán người phụ trách trong danh mục hồ sơ.'
+        + '</div>';
+    }
+    if (typeof notify === 'function') {
+      notify('Thầy cô chưa được giao hồ sơ nào. Đây không phải lỗi hệ thống.');
+    }
+  }
+
   /* ========================================================================
      TẢI DỮ LIỆU VÀ ĐỔ VÀO MẢNG CATS CÓ SẴN
      ======================================================================== */
@@ -94,8 +119,23 @@
 
       const loi = nhom.error || nhomCon.error || hoSo.error;
       if (loi) throw loi;
+
+      /* Không có hồ sơ nào — từ khi siết phân quyền ở tệp sql/18 thì đây có
+         HAI nguyên nhân khác hẳn nhau, phải phân biệt:
+           · Người xem hết mà vẫn trống  -> đúng là cơ sở dữ liệu chưa có gì.
+           · Giáo viên, nhân viên trống  -> BÌNH THƯỜNG, chỉ là chưa được giao
+             hồ sơ nào. Trước đây báo "chưa chạy tệp 02" là sai và làm thầy cô
+             hoảng, lại còn rơi về dữ liệu mẫu nên hiện cả danh mục giả của
+             toàn trường. */
       if (!hoSo.data || !hoSo.data.length) {
-        throw new Error('Cơ sở dữ liệu chưa có hồ sơ nào. Kiểm tra lại đã chạy tệp 02-du-lieu-danh-muc.sql chưa.');
+        const u = window.NGUOI_DUNG;
+        const xemHet = !!u && ['admin', 'ban_giam_hieu', 'to_truong'].includes(u.vai_tro);
+        if (xemHet) {
+          throw new Error('Cơ sở dữ liệu chưa có hồ sơ nào. Kiểm tra lại đã chạy tệp '
+            + '02-du-lieu-danh-muc.sql chưa.');
+        }
+        veTrangKhongCoHoSo();
+        return;
       }
 
       ANH_XA = {};
