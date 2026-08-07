@@ -142,31 +142,44 @@ input,select{font-family:inherit;font-size:inherit}
    dùng emoji — emoji mỗi máy hiện một kiểu, có máy còn ra ô vuông. */
 .mods{display:grid;grid-template-columns:repeat(auto-fit,minmax(296px,1fr));gap:18px;
   margin-top:26px;position:relative;z-index:5;margin-bottom:44px}
+/* Nền thẻ pha nhẹ màu nhận dạng, tiêu đề cũng lấy màu đó — nhìn từ xa phân
+   biệt được ngay mà không cần đọc chữ. Hình mờ ở góc dưới phải chỉ là trang
+   trí, để rất nhạt cho khỏi tranh chỗ với nội dung. */
 .mod{--m:#1e4593;--m-nen:#eef3fd;
-  background:var(--card);border:1px solid var(--line);border-radius:18px;padding:24px 22px 20px;
+  background:linear-gradient(158deg,#fff 0%,#fff 42%,var(--m-nen) 100%);
+  border:1px solid var(--line);border-radius:20px;padding:24px 22px 20px;
   box-shadow:0 1px 2px rgba(16,32,64,.05),0 6px 18px rgba(16,32,64,.07);
   transition:transform .2s,box-shadow .2s,border-color .2s;
   text-align:left;width:100%;position:relative;overflow:hidden;
-  display:flex;flex-direction:column}
-.mod::before{content:"";position:absolute;left:0;right:0;top:0;height:4px;background:var(--m)}
-.mod:hover{transform:translateY(-5px);border-color:var(--m);
-  box-shadow:0 2px 4px rgba(16,32,64,.06),0 16px 34px rgba(16,32,64,.15)}
-.mod-ico{width:56px;height:56px;border-radius:16px;display:grid;place-items:center;margin-bottom:15px;
-  background:var(--m-nen);color:var(--m);border:1px solid color-mix(in srgb,var(--m) 18%,transparent);
-  transition:background .2s,color .2s}
-.mod-ico svg{width:28px;height:28px;stroke:currentColor;stroke-width:1.9;fill:none;
+  display:flex;flex-direction:column;min-height:230px}
+.mod:hover{transform:translateY(-5px);border-color:color-mix(in srgb,var(--m) 45%,transparent);
+  box-shadow:0 2px 4px rgba(16,32,64,.06),0 18px 38px rgba(16,32,64,.16)}
+.mod-ico{width:60px;height:60px;border-radius:18px;display:grid;place-items:center;margin-bottom:14px;
+  background:var(--m-nen);color:var(--m);
+  box-shadow:0 3px 10px color-mix(in srgb,var(--m) 22%,transparent);
+  transition:background .2s,color .2s,transform .2s}
+.mod-ico svg{width:30px;height:30px;stroke:currentColor;stroke-width:1.9;fill:none;
   stroke-linecap:round;stroke-linejoin:round}
-.mod:hover .mod-ico{background:var(--m);color:#fff}
-.mod h3{font-family:var(--serif);font-size:20px;color:var(--navy);margin-bottom:9px;line-height:1.3}
-.mod p{font-size:13.7px;color:var(--muted);margin-bottom:15px;line-height:1.62;flex:1}
-.mod .chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.mod:hover .mod-ico{background:var(--m);color:#fff;transform:scale(1.05)}
+.mod h3{font-family:var(--serif);font-size:21px;color:var(--m);margin-bottom:10px;line-height:1.3}
+.mod p{font-size:13.7px;color:#4a5a75;margin-bottom:15px;line-height:1.62;flex:1;
+  position:relative;z-index:2;max-width:88%}
+.mod .chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:13px}
 .chip{background:#f2f6fc;border:1px solid var(--line);color:var(--muted);font-size:11.4px;padding:3px 10px;border-radius:999px;font-weight:600}
-.mod .chip{background:var(--m-nen);border-color:color-mix(in srgb,var(--m) 20%,transparent);
-  color:color-mix(in srgb,var(--m) 78%,#000)}
-.mod-go{font-size:13.4px;font-weight:700;color:var(--m);display:inline-flex;align-items:center;gap:6px;
-  margin-top:auto}
-.mod-go::after{content:"→";transition:transform .2s;display:inline-block}
-.mod:hover .mod-go::after{transform:translateX(4px)}
+.mod .chip{background:color-mix(in srgb,var(--m) 11%,#fff);
+  border-color:color-mix(in srgb,var(--m) 24%,transparent);
+  color:color-mix(in srgb,var(--m) 82%,#000);font-size:11.8px;padding:4px 12px}
+/* Hình mờ trang trí ở góc dưới phải */
+.mod-hinh{position:absolute;right:-6px;bottom:-6px;width:132px;height:132px;
+  color:var(--m);opacity:.13;pointer-events:none;z-index:1}
+.mod-hinh svg{width:100%;height:100%;stroke:currentColor;stroke-width:1.4;fill:none;
+  stroke-linecap:round;stroke-linejoin:round}
+.mod-go{font-size:13.6px;font-weight:700;color:var(--m);display:inline-flex;align-items:center;gap:9px;
+  margin-top:auto;position:relative;z-index:2}
+.mod-go::after{content:"→";display:grid;place-items:center;width:30px;height:30px;border-radius:50%;
+  border:1.6px solid color-mix(in srgb,var(--m) 42%,transparent);font-size:14px;
+  transition:transform .2s,background .2s,color .2s,border-color .2s}
+.mod:hover .mod-go::after{transform:translateX(4px);background:var(--m);color:#fff;border-color:var(--m)}
 /* Màu nhận dạng của từng mô-đun */
 .mod.m-hoso    {--m:#1e4593;--m-nen:#eef3fd}
 .mod.m-cbgv    {--m:#0d7d72;--m-nen:#e8f7f5}
@@ -570,6 +583,7 @@ footer .legal{border-top:1px solid rgba(255,255,255,.15);padding-top:15px;font-s
         <div class="chips"><span class="chip">5 bộ phận · 18 hộp</span><span class="chip">Điều 21 TT 15/2026</span></div>
         <p>Danh mục hồ sơ toàn trường có mã hoá đến từng đầu mục. Mỗi hồ sơ biết rõ ai phụ trách, đã có hay chưa, lưu ở thư mục nào và phục vụ tiêu chí nào.</p>
         <span class="mod-go">Mở danh mục</span>
+              <span class="mod-hinh" aria-hidden="true"><svg viewBox="0 0 64 64"><path d="M8 14h12v34H8z"/><path d="M22 12h12v36H22z"/><path d="M36 15l11 2-5 34-11-2z"/><path d="M12 22h4M26 22h4"/></svg></span>
       </button>
       <button class="mod m-cbgv" data-go="cbgv">
         <div class="mod-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
@@ -577,6 +591,7 @@ footer .legal{border-top:1px solid rgba(255,255,255,.15);padding-top:15px;font-s
         <div class="chips"><span class="chip">Ban giám hiệu</span><span class="chip">Giáo viên</span><span class="chip">Nhân viên</span></div>
         <p>Hồ sơ cá nhân của từng cán bộ, giáo viên, nhân viên: thông tin cơ bản, trình độ đào tạo và đường dẫn tới hồ sơ trên Drive.</p>
         <span class="mod-go">Xem đội ngũ</span>
+              <span class="mod-hinh" aria-hidden="true"><svg viewBox="0 0 64 64"><circle cx="21" cy="18" r="8"/><path d="M7 48c0-8 6-13 14-13s14 5 14 13"/><circle cx="42" cy="22" r="6"/><path d="M36 48c0-6 4-10 10-10s10 4 10 10"/></svg></span>
       </button>
       <button class="mod m-hocsinh" data-go="hocsinh">
         <div class="mod-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 10 12 5 2 10l10 5 10-5Z"/><path d="M6 12.5V17c3.5 3 8.5 3 12 0v-4.5"/><path d="M22 10v6"/></svg></div>
@@ -584,6 +599,7 @@ footer .legal{border-top:1px solid rgba(255,255,255,.15);padding-top:15px;font-s
         <div class="chips"><span class="chip">4 khối</span><span class="chip">16 lớp</span></div>
         <p>Danh sách học sinh theo khối và lớp, đồng bộ trực tiếp từ bảng dữ liệu của nhà trường, tra cứu nhanh trên điện thoại.</p>
         <span class="mod-go">Xem các khối</span>
+              <span class="mod-hinh" aria-hidden="true"><svg viewBox="0 0 64 64"><path d="M8 26l22-11 22 11-22 11z"/><path d="M17 31v11c7 6 19 6 26 0V31"/><path d="M52 26v14"/><circle cx="52" cy="44" r="3"/></svg></span>
       </button>
       <button class="mod m-kdcl" data-go="kdcl">
         <div class="mod-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><rect width="8" height="4" x="8" y="2" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></svg></div>
@@ -591,6 +607,7 @@ footer .legal{border-top:1px solid rgba(255,255,255,.15);padding-top:15px;font-s
         <div class="chips"><span class="chip">4 tiêu chuẩn</span><span class="chip">15 tiêu chí</span></div>
         <p>Tự đánh giá hằng năm theo bộ tiêu chuẩn mới. Chọn mức đạt, gắn minh chứng sẵn có từ kho hồ sơ số, hệ thống tổng hợp và kết xuất báo cáo.</p>
         <span class="mod-go">Vào tự đánh giá</span>
+              <span class="mod-hinh" aria-hidden="true"><svg viewBox="0 0 64 64"><rect x="14" y="10" width="32" height="42" rx="4"/><rect x="23" y="6" width="14" height="8" rx="2"/><path d="M21 26l4 4 8-9M21 38l4 4 8-9"/></svg></span>
       </button>
       <button class="mod m-dbcl" data-go="dbcl">
         <div class="mod-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="m7 15 3.5-4 3 3L20 7"/><path d="M15 7h5v5"/></svg></div>
@@ -598,6 +615,7 @@ footer .legal{border-top:1px solid rgba(255,255,255,.15);padding-top:15px;font-s
         <div class="chips"><span class="chip">Chuẩn đầu ra</span><span class="chip">Cam kết chất lượng</span><span class="chip">Kế hoạch cải tiến</span></div>
         <p>Nhập một bộ chỉ tiêu, tự sinh Phụ lục 1, 2, 5, 15, 16 và tự đối chiếu kết quả với chuẩn đầu ra đã cam kết. Kèm kế hoạch cải tiến và bộ chỉ số nhiều năm.</p>
         <span class="mod-go">Xem theo dõi</span>
+              <span class="mod-hinh" aria-hidden="true"><svg viewBox="0 0 64 64"><path d="M8 52V34M20 52V24M32 52V38M44 52V14"/><path d="M6 56h50"/><path d="M10 26l12-10 10 8 14-14"/></svg></span>
       </button>
     </div>
 

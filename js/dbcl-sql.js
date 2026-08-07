@@ -46,37 +46,51 @@
      liệu — tách hai bảng thì thầy cô sẽ nhập hai lần rồi vênh nhau, đúng lỗi
      167/4 với 166/4 trong bộ hồ sơ giấy. Nên hai tab dùng chung dữ liệu và
      có dòng nhắc rõ ràng. */
+  /* Mười một màn hình xếp một hàng thì điện thoại phải cuộn ngang mới thấy
+     hết, mà cuộn ngang là thứ thầy cô hay bỏ sót. Nên chia làm ba nhóm theo
+     đúng trình tự công việc: dựng bộ máy → khai báo dữ liệu → kết xuất giấy tờ.
+     Mỗi nhóm nhiều nhất 5 thẻ, vừa một màn hình điện thoại. */
+  const NHOM = [
+    { ma: 'vh', ten: 'Bộ máy và theo dõi',
+      mo: 'Dựng Tổ đảm bảo chất lượng, theo dõi mốc công việc, tự soát trước khi Sở kiểm tra.' },
+    { ma: 'dl', ten: 'Dữ liệu và cam kết',
+      mo: 'Khai báo học sinh, phân công giảng dạy, đặt chuẩn đầu ra cho từng em.' },
+    { ma: 'pl', ten: 'Kết xuất phụ lục',
+      mo: 'Năm phụ lục dùng chung một bộ chỉ tiêu, kết xuất ra tệp Word.' }
+  ];
+  let NHOM_MO = 'vh';
+
   const PHU_LUC = [
-    { ma: 'vh', loai: null, nhan: 'Vận hành', khac: true,
+    { ma: 'vh', nhom: 'vh', loai: null, nhan: 'Vận hành', khac: true,
       ten: 'Vận hành công tác đảm bảo chất lượng',
       mo: 'Vòng Plan – Do – Check – Action và các mốc phải hoàn thành theo Công văn 2180 của Sở.' },
-    { ma: 'to', loai: null, nhan: 'Tổ ĐBCL', khac: true,
+    { ma: 'to', nhom: 'vh', loai: null, nhan: 'Tổ ĐBCL', khac: true,
       ten: 'Tổ đảm bảo chất lượng',
       mo: 'Quyết định thành lập và bảng phân công nhiệm vụ — Phụ lục 10 và 11.' },
-    { ma: 'hs', loai: null, nhan: 'Học sinh', khac: true,
+    { ma: 'hs', nhom: 'dl', loai: null, nhan: 'Học sinh', khac: true,
       ten: 'Dữ liệu học sinh và kết quả từng môn',
       mo: 'Bảng gốc của cả module. Khai báo danh sách đầu năm, tải kết quả từng kỳ, hệ thống tự tính 33 chỉ tiêu.' },
-    { ma: 'pc', loai: null, nhan: 'Phân công', khac: true,
+    { ma: 'pc', nhom: 'dl', loai: null, nhan: 'Phân công', khac: true,
       ten: 'Phân công giảng dạy',
       mo: 'Quyết định ai xem và sửa được dữ liệu lớp nào, môn nào. Nhập thủ công từng dòng hoặc tải Excel hàng loạt.' },
-    { ma: 'ck', loai: null, nhan: 'Cam kết HS', khac: true,
+    { ma: 'ck', nhom: 'dl', loai: null, nhan: 'Cam kết HS', khac: true,
       ten: 'Cam kết chuẩn đầu ra tới từng học sinh',
       mo: 'Nội dung Sở kiểm tra: làm rõ thực trạng và chuẩn đầu ra với từng học sinh tương ứng với từng môn học, có xác nhận của học sinh và cha mẹ học sinh.' },
-    { ma: '1',  loai: 'thuc_trang',   ten: 'Thực trạng nhà trường',
+    { ma: '1',  nhom: 'pl', loai: 'thuc_trang',   ten: 'Thực trạng nhà trường',
       mo: 'Số liệu thực tế đầu năm học, làm gốc để xây dựng chuẩn đầu ra.',
       xuat: 'xuatPhuLuc1' },
-    { ma: '2',  loai: 'chuan_dau_ra', ten: 'Chuẩn đầu ra chất lượng học tập của học sinh',
+    { ma: '2',  nhom: 'pl', loai: 'chuan_dau_ra', ten: 'Chuẩn đầu ra chất lượng học tập của học sinh',
       mo: 'Chỉ tiêu Nhà trường phấn đấu đạt được trong năm học.',
       chung: 'Phụ lục 16', xuat: 'xuatPhuLuc2' },
-    { ma: '5',  loai: 'ket_qua',      ten: 'Kết quả học tập và rèn luyện',
+    { ma: '5',  nhom: 'pl', loai: 'ket_qua',      ten: 'Kết quả học tập và rèn luyện',
       mo: 'Số liệu thực hiện được, hệ thống tự đối chiếu với chuẩn đầu ra đã cam kết.',
       xuat: 'xuatPhuLuc5' },
-    { ma: '15', loai: null,           ten: 'Bản cam kết của giáo viên với Hiệu trưởng',
+    { ma: '15', nhom: 'pl', loai: null,           ten: 'Bản cam kết của giáo viên với Hiệu trưởng',
       mo: 'Mỗi thầy cô tự lập cam kết cho các lớp mình phụ trách; ban giám hiệu xem và kết xuất toàn bộ.' },
-    { ma: '16', loai: 'chuan_dau_ra', ten: 'Bản cam kết chất lượng giáo dục của nhà trường',
+    { ma: '16', nhom: 'pl', loai: 'chuan_dau_ra', ten: 'Bản cam kết chất lượng giáo dục của nhà trường',
       mo: 'Gửi UBND xã Yên Thành và Sở Giáo dục và Đào tạo Nghệ An.',
       chung: 'Phụ lục 2', xuat: 'xuatPhuLuc16' },
-    { ma: 'ts', loai: null, nhan: 'Tự soát', khac: true,
+    { ma: 'ts', nhom: 'vh', loai: null, nhan: 'Tự soát', khac: true,
       ten: 'Tự soát trước khi Sở kiểm tra',
       mo: '28 nội dung lấy từ Quyết định 1426 và 2616 của Sở, mỗi nội dung gắn với một tiêu chí Thông tư 57.' }
   ];
@@ -132,6 +146,14 @@
   .db-nhanh .btn{padding:8px 13px;font-size:13.4px}
   .db-nhanh .goi{font-size:11.8px;color:#8a94a6;margin-top:9px;line-height:1.6}
   .db-nhanh .goi b{color:#5b6b85}
+  .db-nhomtab{display:flex;gap:4px;background:#eef2f9;border:1px solid #dfe6f2;
+    border-radius:12px;padding:4px;margin-bottom:11px;overflow-x:auto}
+  .db-nhomtab button{flex:1;min-width:132px;padding:10px 14px;font-size:13.6px;font-weight:700;
+    color:#5b6b85;border-radius:9px;white-space:nowrap;transition:background .15s,color .15s}
+  .db-nhomtab button:hover{color:var(--navy)}
+  .db-nhomtab button.on{background:#fff;color:var(--navy);
+    box-shadow:0 1px 3px rgba(16,32,64,.14)}
+  .db-nhommo{font-size:12.8px;color:var(--muted);margin:0 0 12px;line-height:1.55}
   .db-tab{display:flex;gap:5px;flex-wrap:wrap;border-bottom:2px solid #e2e8f2;
     margin-bottom:16px;padding-bottom:0}
   .db-tab button{padding:11px 17px;font-size:14px;font-weight:600;color:#5b6b85;
@@ -821,19 +843,40 @@
   function veTab() {
     const hop = document.getElementById('dbclTab');
     if (!hop) return;
-    hop.innerHTML = '<div class="db-tab">'
-      + PHU_LUC.map(p => '<button data-pl="' + p.ma + '"' + (p.ma === PL ? ' class="on"' : '')
+    /* Nhóm nào chứa màn hình đang mở thì nhóm đó sáng */
+    const p0 = plHienTai();
+    if (p0.nhom) NHOM_MO = p0.nhom;
+    const nh = NHOM.find(n => n.ma === NHOM_MO) || NHOM[0];
+    const the = PHU_LUC.filter(p => p.nhom === NHOM_MO);
+
+    hop.innerHTML = '<div class="db-nhomtab">'
+      + NHOM.map(n => '<button data-nhom="' + n.ma + '"' + (n.ma === NHOM_MO ? ' class="on"' : '')
+          + '>' + chan(n.ten) + '</button>').join('')
+      + '</div>'
+      + '<p class="db-nhommo">' + chan(nh.mo) + '</p>'
+      + '<div class="db-tab">'
+      + the.map(p => '<button data-pl="' + p.ma + '"' + (p.ma === PL ? ' class="on"' : '')
           + '>' + chan(p.nhan || ('Phụ lục ' + p.ma)) + '</button>').join('')
       + '</div>';
-    hop.querySelectorAll('[data-pl]').forEach(b =>
+
+    hop.querySelectorAll('[data-nhom]').forEach(b =>
       b.addEventListener('click', function () {
-        PL = this.dataset.pl;
-        const p = plHienTai();
-        if (p.loai) LOAI = p.loai;
-        if (LOAI !== 'ket_qua') KY = 'ca_nam';
-        veTatCa();
-        hop.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        if (this.dataset.nhom === NHOM_MO) return;
+        NHOM_MO = this.dataset.nhom;
+        const dau = PHU_LUC.find(p => p.nhom === NHOM_MO);
+        if (dau) doiMan(dau.ma, hop);
       }));
+    hop.querySelectorAll('[data-pl]').forEach(b =>
+      b.addEventListener('click', function () { doiMan(this.dataset.pl, hop); }));
+  }
+
+  function doiMan(ma, hop) {
+    PL = ma;
+    const p = plHienTai();
+    if (p.loai) LOAI = p.loai;
+    if (LOAI !== 'ket_qua') KY = 'ca_nam';
+    veTatCa();
+    if (hop) hop.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   /* ---------------- Tiêu đề phụ lục và thanh công cụ ---------------- */
