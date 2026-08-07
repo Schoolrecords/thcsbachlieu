@@ -74,6 +74,18 @@
   `;
   document.head.insertAdjacentHTML('beforeend', '<style>' + css + '</style>');
 
+
+  /* Bộ tạo mẫu nằm ở tệp riêng (mau-excel.js). Tệp đó không tải được thì
+     window.taoMauExcel là undefined, gọi vào là TypeError im lặng. */
+  function coBoTaoMau() {
+    if (typeof window.taoMauExcel === 'function') return true;
+    if (typeof notify === 'function') {
+      notify('Chưa nạp được bộ tạo mẫu Excel. Thầy cô kiểm tra kết nối mạng '
+        + 'rồi tải lại trang (Ctrl+F5).');
+    }
+    return false;
+  }
+
   function chan(s) {
     return String(s == null ? '' : s)
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -425,6 +437,7 @@
           [2, 'VIDU-02', '', 'Trần Thị B (ví dụ — xoá dòng này)', '03/11/2014', 'Nữ', '6A', 'x', 'Giáo dục thể chất', '', '']
         ];
 
+    if (!coBoTaoMau()) return;
     window.taoMauExcel({
       ten: 'Danh sach hoc sinh',
       ngang: true,
@@ -497,6 +510,7 @@
     const mons = monTheoVnEdu();
     const dangHoc = DS.filter(r => r.trang_thai === 'dang_hoc');
 
+    if (!coBoTaoMau()) return;
     window.taoMauExcel({
       ten: 'Ket qua hoc tap',
       ngang: true,

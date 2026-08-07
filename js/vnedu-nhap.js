@@ -210,12 +210,24 @@
   /* ==========================================================================
      CHỌN TỆP
      ========================================================================== */
+  /* Danh sách tệp đang gom, KHÔNG đọc ngay.
+     Học kỳ I và học kỳ II nằm ở HAI thư mục khác nhau, mà hộp chọn tệp của
+     trình duyệt chỉ mở được một thư mục mỗi lần — không có cách nào chọn cả
+     8 tệp trong một lượt. Nên gom dần: chọn 4 tệp thư mục này, bấm thêm, chọn
+     4 tệp thư mục kia, rồi mới đọc. Kéo thả cả thư mục vào cũng được. */
+  let DS_TEP = [];
+
   function chonTep(hop) {
     HOP = hop || document.getElementById('dbclKhac');
     if (typeof XLSX === 'undefined') {
       bao('Chưa nạp được thư viện đọc Excel. Thầy cô kiểm tra mạng rồi tải lại trang.');
       return;
     }
+    DS_TEP = [];
+    veChonTep();
+  }
+
+  function moHopChon() {
     let inp = document.getElementById('vnTep');
     if (!inp) {
       inp = document.createElement('input');
@@ -223,11 +235,86 @@
       inp.multiple = true; inp.style.display = 'none';
       document.body.appendChild(inp);
       inp.addEventListener('change', function () {
-        if (this.files && this.files.length) doc(Array.from(this.files));
+        if (this.files && this.files.length) themTep(Array.from(this.files));
       });
     }
     inp.value = '';
     inp.click();
+  }
+
+  function themTep(ts) {
+    let trung = 0;
+    ts.forEach(t => {
+      if (!/\.xlsx?$/i.test(t.name)) return;
+      /* Cùng tên và cùng cỡ thì coi như đã có — thầy cô hay bấm nhầm hai lần */
+      if (DS_TEP.some(x => x.name === t.name && x.size === t.size)) { trung++; return; }
+      DS_TEP.push(t);
+    });
+    veChonTep(trung);
+  }
+
+  function veChonTep(trung) {
+    let h = '<div class="vn-canh"><b>📥 Nạp thẳng sổ điểm VnEdu</b><br>'
+      + 'Học kỳ I và học kỳ II nằm ở hai thư mục khác nhau, mà hộp chọn tệp của máy '
+      + 'chỉ mở được một thư mục mỗi lần. Nên thầy cô làm hai lượt:<br>'
+      + '<b>1.</b> Bấm "Chọn tệp", vào thư mục <b>HK1</b>, bấm Ctrl+A rồi Open.<br>'
+      + '<b>2.</b> Bấm "Chọn tệp" lần nữa, vào thư mục <b>HK2</b>, Ctrl+A rồi Open.<br>'
+      + '<b>3.</b> Bấm "Đọc và xem trước".<br>'
+      + '<span class="vn-nho">Hoặc kéo thẳng các tệp từ File Explorer thả vào khung bên dưới.</span>'
+      + '</div>';
+
+    if (trung) {
+      h += '<div class="vn-canh vn-vang">Đã bỏ ' + trung + ' tệp trùng tên với tệp đã chọn.</div>';
+    }
+
+    h += '<div id="vnTha" style="border:2px dashed #b9cbe8;border-radius:14px;'
+      + 'padding:26px 18px;text-align:center;background:#f7faff;margin:12px 0;'
+      + 'font-size:14px;color:#3b5fa8">'
+      + '⬇ Kéo tệp từ File Explorer thả vào đây<br>'
+      + '<span class="vn-nho">hoặc dùng nút bên dưới</span></div>';
+
+    if (DS_TEP.length) {
+      h += '<div class="vn-canh vn-ok"><b>Đã chọn ' + DS_TEP.length + ' tệp:</b><br>'
+        + DS_TEP.map((t, i) => '· ' + chan(t.name)
+            + ' <button class="vn-bo" data-bo="' + i + '" style="border:0;background:none;'
+            + 'color:#b3261e;cursor:pointer;font-size:12.5px">✕ bỏ</button>').join('<br>')
+        + '</div>';
+    }
+
+    h += '<div class="vn-chon">'
+      + '<button class="btn btn-out" id="vnChon">📂 Chọn tệp' + (DS_TEP.length ? ' (thêm nữa)' : '') + '</button>'
+      + (DS_TEP.length ? '<button class="btn btn-pri" id="vnDoc">🔎 Đọc và xem trước '
+          + DS_TEP.length + ' tệp</button>' : '')
+      + (DS_TEP.length ? '<button class="btn btn-out" id="vnXoaHet">Bỏ hết</button>' : '')
+      + '<button class="btn btn-out" id="vnThoat">Quay lại</button></div>';
+
+    veKq(h);
+
+    const g = id => document.getElementById(id);
+    if (g('vnChon')) g('vnChon').addEventListener('click', moHopChon);
+    if (g('vnDoc')) g('vnDoc').addEventListener('click', () => doc(DS_TEP));
+    if (g('vnXoaHet')) g('vnXoaHet').addEventListener('click', () => { DS_TEP = []; veChonTep(); });
+    if (g('vnThoat')) g('vnThoat').addEventListener('click', () => {
+      DS_TEP = []; if (window.hsVeLai) window.hsVeLai(HOP);
+    });
+    (HOP || document).querySelectorAll('[data-bo]').forEach(b =>
+      b.addEventListener('click', () => { DS_TEP.splice(+b.dataset.bo, 1); veChonTep(); }));
+
+    const tha = g('vnTha');
+    if (tha) {
+      ['dragenter', 'dragover'].forEach(e => tha.addEventListener(e, ev => {
+        ev.preventDefault(); ev.stopPropagation();
+        tha.style.borderColor = '#1d4ed8'; tha.style.background = '#e8f0fe';
+      }));
+      ['dragleave', 'drop'].forEach(e => tha.addEventListener(e, ev => {
+        ev.preventDefault(); ev.stopPropagation();
+        tha.style.borderColor = '#b9cbe8'; tha.style.background = '#f7faff';
+      }));
+      tha.addEventListener('drop', ev => {
+        const ts = ev.dataTransfer && ev.dataTransfer.files;
+        if (ts && ts.length) themTep(Array.from(ts));
+      });
+    }
   }
 
   async function doc(teps) {

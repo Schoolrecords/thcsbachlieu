@@ -189,5 +189,21 @@
     return true;
   }
 
-  window.taoMauExcel = taoMau;
+  /* Bọc ngoài để KHÔNG BAO GIỜ hỏng im lặng.
+     Bản trước gọi thẳng taoMau: thư viện ExcelJS chưa nạp được (mạng trường
+     chập, CDN bị chặn) hoặc bất kỳ lỗi nào bên trong là bấm nút không có gì
+     xảy ra — không tệp, không thông báo, chỉ một dòng đỏ trong console mà
+     thầy cô không bao giờ mở tới. */
+  window.taoMauExcel = function (opts) {
+    return Promise.resolve()
+      .then(() => taoMau(opts))
+      .catch(e => {
+        console.error('[Mẫu Excel] Không tạo được:', e);
+        if (typeof notify === 'function') {
+          notify('Chưa tạo được tệp mẫu: ' + (e && e.message ? e.message : e)
+            + '. Thầy cô tải lại trang rồi thử lại; nếu vẫn vậy thì báo quản trị.');
+        }
+        return false;
+      });
+  };
 })();
