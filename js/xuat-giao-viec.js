@@ -35,6 +35,47 @@
     return (typeof CAU_HINH !== 'undefined' && CAU_HINH[khoa]) || mac;
   }
 
+  /* ==========================================================================
+     TÊN HIỆU TRƯỞNG — LẤY TỪ DANH SÁCH CBGV, KHÔNG GÕ CỨNG
+
+     Hiệu trưởng đổi người là chuyện của mỗi vài năm. Gõ cứng tên vào cauhinh.js
+     thì đến lúc ấy phải sửa mã nguồn rồi đẩy lại web — việc mà nhà trường
+     không tự làm được, phải chờ người viết phần mềm.
+
+     Nay đọc từ bảng CBGV-NV: ai có chức vụ ghi "Hiệu trưởng" thì tên người ấy
+     ra bản in. Nhà trường chỉ cần sửa chức vụ trong Quản trị hệ thống → Danh
+     sách CBGV-NV, hoặc tải lên tệp Excel mới, là mọi văn bản xuất ra đổi theo.
+
+     Tên trong cauhinh.js giữ lại làm số dự phòng cho lúc chưa đăng nhập hoặc
+     mạng hỏng — thà in tên cũ còn hơn để trống chỗ ký.
+     ========================================================================== */
+  let HT_CSDL = null;
+
+  async function napHieuTruong() {
+    const sb = window.sbClient;
+    if (!sb) return;
+    try {
+      const r = await sb.from('moi_tai_khoan')
+        .select('ho_ten, chuc_vu')
+        .eq('chuc_vu', 'Hiệu trưởng')
+        .limit(1);
+      /* supabase-js trả {data, error} chứ không ném lỗi — phải tự xét */
+      if (!r.error && r.data && r.data.length && r.data[0].ho_ten) {
+        HT_CSDL = String(r.data[0].ho_ten).trim();
+      }
+    } catch (e) {
+      console.error('[Xuất Word] chưa đọc được tên Hiệu trưởng:', e);
+    }
+  }
+
+  function tenHieuTruong() {
+    return HT_CSDL || cauHinh('HIEU_TRUONG', '');
+  }
+
+  document.addEventListener('dangnhap-xong', napHieuTruong);
+  /* Mở trang khi đã có phiên đăng nhập sẵn thì sự kiện trên không bắn nữa */
+  if (window.sbClient) napHieuTruong();
+
   function ngayVN(d) {
     const t = d ? new Date(d) : new Date();
     return 'ngày ' + String(t.getDate()).padStart(2, '0')
@@ -92,19 +133,25 @@
       + chan(diaDanh()) + ', ' + ngayVN() + '</p>';
   }
 
-  /* Khối ký: bên trái người nhận việc, bên phải Hiệu trưởng */
-  function khoiKy(nhanChuc, nhanTen) {
+  /* Khối ký: bên trái người nhận việc, bên phải Hiệu trưởng.
+
+     Bên TRÁI để trống chỗ tên. Dòng "(Ký, ghi rõ họ tên)" đã bảo người ký tự
+     ghi tên mình, in sẵn nữa là thừa — mà bản trước còn in nhầm CHỨC DANH
+     ("Hiệu trưởng") vào chỗ đáng lẽ là họ tên, đọc rất kỳ.
+     Bên PHẢI vẫn in tên Hiệu trưởng vì đó là người duyệt và đóng dấu, tên
+     phải có sẵn trên văn bản theo lối hành chính. */
+  function khoiKy(nhanChuc) {
     return '<table style="border:none;width:100%;margin-top:16pt"><tr>'
       + '<td style="border:none;width:50%;text-align:center;font-size:12pt">'
       + '<b>' + chan(nhanChuc || 'NGƯỜI NHẬN VIỆC') + '</b><br>'
       + '<span class="nghieng">(Ký, ghi rõ họ tên)</span>'
       + '<div style="height:56pt"></div>'
-      + (nhanTen ? '<b>' + chan(nhanTen) + '</b>' : '') + '</td>'
+      + '<span style="letter-spacing:1pt">.....................................</span></td>'
       + '<td style="border:none;width:50%;text-align:center;font-size:12pt">'
       + '<b>HIỆU TRƯỞNG</b><br>'
       + '<span class="nghieng">(Ký tên, đóng dấu)</span>'
       + '<div style="height:56pt"></div>'
-      + '<b>' + chan(cauHinh('HIEU_TRUONG', '')) + '</b></td>'
+      + '<b>' + chan(tenHieuTruong()) + '</b></td>'
       + '</tr></table>';
   }
 
@@ -196,7 +243,7 @@
       + 'Hồ sơ nộp lên thư mục Google Drive của từng minh chứng; hệ thống tự '
       + 'cập nhật trạng thái sau khi quét.</p>'
 
-      + khoiKy(phuTrach ? 'NGƯỜI PHỤ TRÁCH' : 'NGƯỜI NHẬN VIỆC', phuTrach);
+      + khoiKy('NGƯỜI PHỤ TRÁCH');
 
     const tenTep = 'phieu-giao-viec-' + chan(sub.code).replace(/[^0-9A-Za-z.]/g, '')
       + '-' + cauHinh('NAM_HOC', '') + '.doc';
@@ -247,13 +294,11 @@
       + '<th style="width:18%">Ghi chú</th>'
       + '</tr></thead><tbody>' + dong + '</tbody></table>'
 
-      /* Nhắc ngay trên bản in: bản giấy ra khỏi hệ thống là hết hàng rào bảo
-         vệ của máy chủ, người cầm tờ giấy phải tự giữ. */
-      + '<p class="nghieng" style="font-size:11.5pt;margin:10pt 0 0">'
-      + 'Thông tin cá nhân của học sinh được bảo vệ theo Nghị định 13/2023/NĐ-CP. '
-      + 'Số định danh cá nhân không in trong danh sách này.</p>'
-
-      + khoiKy('GIÁO VIÊN CHỦ NHIỆM', chuNhiem);
+      /* Không in dòng nhắc Nghị định 13/2023 ở đây — thầy Chung yêu cầu bỏ.
+         Danh sách lớp là văn bản dùng nội bộ nhà trường, thêm một đoạn pháp
+         quy vào giữa bảng và chỗ ký chỉ làm rối bản in. Việc không in số định
+         danh cá nhân thì vẫn giữ nguyên trong mã. */
+      + khoiKy('GIÁO VIÊN CHỦ NHIỆM');
 
     const tenTep = 'danh-sach-lop-' + String(lop).toLowerCase().replace(/[^0-9a-z]/g, '')
       + '-' + namHoc + '.doc';
