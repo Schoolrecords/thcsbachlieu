@@ -47,6 +47,12 @@
      167/4 với 166/4 trong bộ hồ sơ giấy. Nên hai tab dùng chung dữ liệu và
      có dòng nhắc rõ ràng. */
   const PHU_LUC = [
+    { ma: 'vh', loai: null, nhan: 'Vận hành', khac: true,
+      ten: 'Vận hành công tác đảm bảo chất lượng',
+      mo: 'Vòng Plan – Do – Check – Action và các mốc phải hoàn thành theo Công văn 2180 của Sở.' },
+    { ma: 'to', loai: null, nhan: 'Tổ ĐBCL', khac: true,
+      ten: 'Tổ đảm bảo chất lượng',
+      mo: 'Quyết định thành lập và bảng phân công nhiệm vụ — Phụ lục 10 và 11.' },
     { ma: '1',  loai: 'thuc_trang',   ten: 'Thực trạng nhà trường',
       mo: 'Số liệu thực tế đầu năm học, làm gốc để xây dựng chuẩn đầu ra.',
       xuat: 'xuatPhuLuc1' },
@@ -60,9 +66,12 @@
       mo: 'Mỗi thầy cô tự lập cam kết cho các lớp mình phụ trách; ban giám hiệu xem và kết xuất toàn bộ.' },
     { ma: '16', loai: 'chuan_dau_ra', ten: 'Bản cam kết chất lượng giáo dục của nhà trường',
       mo: 'Gửi UBND xã Yên Thành và Sở Giáo dục và Đào tạo Nghệ An.',
-      chung: 'Phụ lục 2', xuat: 'xuatPhuLuc16' }
+      chung: 'Phụ lục 2', xuat: 'xuatPhuLuc16' },
+    { ma: 'ts', loai: null, nhan: 'Tự soát', khac: true,
+      ten: 'Tự soát trước khi Sở kiểm tra',
+      mo: '28 nội dung lấy từ Quyết định 1426 và 2616 của Sở, mỗi nội dung gắn với một tiêu chí Thông tư 57.' }
   ];
-  let PL = '2';
+  let PL = 'vh';
 
   function plHienTai() { return PHU_LUC.find(p => p.ma === PL) || PHU_LUC[1]; }
 
@@ -772,7 +781,7 @@
     if (!hop) return;
     hop.innerHTML = '<div class="db-tab">'
       + PHU_LUC.map(p => '<button data-pl="' + p.ma + '"' + (p.ma === PL ? ' class="on"' : '')
-          + '>Phụ lục ' + p.ma + '</button>').join('')
+          + '>' + chan(p.nhan || ('Phụ lục ' + p.ma)) + '</button>').join('')
       + '</div>';
     hop.querySelectorAll('[data-pl]').forEach(b =>
       b.addEventListener('click', function () {
@@ -799,7 +808,7 @@
     }
 
     hop.innerHTML = '<div class="db-de">'
-      + '<h3>Phụ lục ' + chan(p.ma) + ' — ' + chan(p.ten) + '</h3>'
+      + '<h3>' + (p.khac ? '' : 'Phụ lục ' + chan(p.ma) + ' — ') + chan(p.ten) + '</h3>'
       + '<p class="mo">Năm học ' + chan(NAM_HOC)
       + (p.ma === '5' ? ' · ' + (KY === 'hoc_ki_1' ? 'Học kì I' : 'Cả năm học') : '')
       + ' · ' + chan(p.mo) + '</p>'
@@ -854,18 +863,34 @@
     });
   }
 
-  /* Bật tắt từng khối theo tab đang mở */
+  /* Bật tắt từng khối theo tab đang mở.
+     Ba loại màn hình: số liệu (Phụ lục 1, 2, 5, 16) · cam kết giáo viên
+     (Phụ lục 15) · màn hình vận hành do tệp dbcl-vanhanh.js dựng. */
   function veTatCa() {
-    const laCamKet = plHienTai().ma === '15';
+    const p = plHienTai();
+    const laCamKet = p.ma === '15';
+    const laKhac = !!p.khac;
     veTab(); veThanh(); veDe();
 
-    ['dbclNhanh', 'dbclBang', 'dbclDoiSanh'].forEach(id => {
+    const hien = (id, co) => {
       const o1 = document.getElementById(id);
-      if (o1) o1.style.display = laCamKet ? 'none' : '';
-    });
-    const ck = document.getElementById('dbclCamKet');
-    if (ck) ck.style.display = laCamKet ? '' : 'none';
+      if (o1) o1.style.display = co ? '' : 'none';
+    };
+    ['dbclNhanh', 'dbclBang', 'dbclDoiSanh'].forEach(id =>
+      hien(id, !laCamKet && !laKhac));
+    hien('dbclCamKet', laCamKet);
+    hien('dbclKhac', laKhac);
 
+    if (laKhac) {
+      if (typeof window.dbclVeManHinh === 'function') {
+        window.dbclVeManHinh(p.ma, document.getElementById('dbclKhac'), NAM_HOC);
+      } else {
+        const o1 = document.getElementById('dbclKhac');
+        if (o1) o1.innerHTML = '<div class="db-canh">Chưa nạp được phần vận hành. '
+          + 'Thầy cô tải lại trang.</div>';
+      }
+      return;
+    }
     if (laCamKet) { veCamKet(); return; }
     veNhanh(); veBangNhap(); veDoiSanh();
   }
