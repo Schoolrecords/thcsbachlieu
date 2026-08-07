@@ -317,19 +317,26 @@
 
   /* ---------------- gắn vào các nút của màn hình Hồ sơ số ---------------- */
 
-  window.exportExcel = xuatExcelThat;   // nút "Xuất Excel" cũ gọi hàm này
   window.xuatDanhMucMinhChung = xuatMinhChung;
+  /* Nút Xuất Excel đã bỏ khỏi màn hình theo yêu cầu. Giữ hàm và mở qua window
+     để gọi lại được nếu sau này cần, khỏi phải viết lại từ đầu. */
+  window.xuatExcelHoSo = xuatExcelThat;
 
+  /* Neo vào nút "Hồ sơ của tôi", KHÔNG neo vào nút "Xuất Excel" nữa.
+     Thầy Chung bỏ hai nút "Xuất Excel" và "In danh mục" khỏi màn hình này —
+     mà bản cũ lại tìm đúng nút Excel để chèn hai nút quan trọng vào sau nó.
+     Bỏ nút Excel là mất luôn "Xuất Word" và "Danh mục minh chứng (Phụ lục
+     IV)", trong khi Phụ lục IV chính là bản nộp Sở. */
   function ganNut() {
-    var nutExcel = document.querySelector('button[onclick="exportExcel()"]');
-    if (!nutExcel || document.getElementById('nutXuatWord')) return;
+    var neo = document.getElementById('btnHoSoCuaToi');
+    if (!neo || document.getElementById('nutXuatWord')) return;
 
     var nutWord = document.createElement('button');
     nutWord.id = 'nutXuatWord';
-    nutWord.className = nutExcel.className;
+    nutWord.className = 'btn btn-out';
     nutWord.textContent = '📝 Xuất Word';
     nutWord.addEventListener('click', xuatWord);
-    nutExcel.insertAdjacentElement('afterend', nutWord);
+    neo.insertAdjacentElement('afterend', nutWord);
 
     var nutMC = document.createElement('button');
     nutMC.id = 'nutDanhMucMinhChung';
@@ -338,13 +345,10 @@
     nutMC.title = 'Kết xuất danh mục minh chứng đúng mẫu Phụ lục IV Thông tư 57 để nộp Sở';
     nutMC.addEventListener('click', xuatMinhChung);
     nutWord.insertAdjacentElement('afterend', nutMC);
-
-    var nutIn = document.querySelector('#view-hoso button[onclick="window.print()"]');
-    if (nutIn) {
-      nutIn.removeAttribute('onclick');
-      nutIn.addEventListener('click', inDanhMuc);
-    }
+    /* Nút "In danh mục" đã bỏ khỏi màn hình, không còn gì để gắn.
+       Hàm inDanhMuc vẫn giữ, gọi được từ window nếu sau này cần dùng lại. */
   }
+  window.inDanhMucHoSo = inDanhMuc;
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', ganNut);

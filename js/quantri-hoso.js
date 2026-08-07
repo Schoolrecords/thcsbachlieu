@@ -350,5 +350,7 @@
   }
 
   window.qtTabPhu = window.qtTabPhu || [];
-  window.qtTabPhu.push({ ma: 'qhs', ten: 'Danh mục Hồ sơ số', ve: ve });
+  /* tt = số thứ tự trong hàng tab, do thầy Chung chốt: việc thường ngày của
+     nhà trường xếp trước, việc quản trị tài khoản xếp sau. */
+  window.qtTabPhu.push({ ma: 'qhs', ten: 'Danh mục Hồ sơ số', tt: 20, ve: ve });
 })();

@@ -912,6 +912,7 @@
   window.qtTabPhu.push({
     ma: 'ns',
     ten: 'Danh sách CBGV-NV',
+    tt: 30,
     ve: function (hop) { HOP = hop; return ve(hop); }
   });
 })();

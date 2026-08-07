@@ -124,12 +124,19 @@
     border-radius:9px;cursor:pointer;font-size:16px;font-family:inherit}
   /* Hàng tab đứng yên: flex:none nên không cuộn theo nội dung. Thêm đường kẻ
      và bóng nhẹ cho thấy rõ đây là thanh cố định, nội dung trượt bên dưới. */
-  .qt-tab{display:flex;gap:4px;padding:10px 14px 0;background:#f8fafc;flex:none;
-    overflow-x:auto;border-bottom:1px solid #e2e8f2;box-shadow:0 2px 6px rgba(15,32,70,.05)}
-  .qt-tab button{border:0;background:transparent;padding:11px 15px;cursor:pointer;font-size:14px;
-    color:#64748b;border-bottom:2.5px solid transparent;font-family:inherit;white-space:nowrap}
-  .qt-tab button:hover{color:#14306b;background:#eef3fb;border-radius:8px 8px 0 0}
-  .qt-tab button.on{color:#14306b;font-weight:600;border-bottom-color:#c8901c}
+  /* Mỗi tab là một KHỐI NỔI riêng, cùng lối với thanh điều hướng trên trang.
+     Bản cũ là chữ trơn gạch chân — cả hàng đọc như một dòng liền, phải dò mới
+     ra ranh giới giữa các mục. */
+  .qt-tab{display:flex;gap:7px;padding:12px 16px;background:#f4f7fc;flex:none;
+    overflow-x:auto;border-bottom:1px solid #e2e8f2;box-shadow:0 2px 8px rgba(15,32,70,.06)}
+  .qt-tab button{border:1px solid #dbe3ef;background:#fff;padding:9px 15px;cursor:pointer;
+    font-size:13.6px;font-weight:600;color:#54637c;border-radius:11px;font-family:inherit;
+    white-space:nowrap;box-shadow:0 1px 3px rgba(15,32,70,.08);
+    transition:background .15s,color .15s,box-shadow .15s,transform .15s}
+  .qt-tab button:hover{background:#eaf1fb;color:#14306b;border-color:#bfd2ee;
+    transform:translateY(-1px)}
+  .qt-tab button.on{background:#14306b;color:#fff;border-color:#14306b;font-weight:700;
+    box-shadow:0 4px 12px rgba(20,48,107,.34)}
   /* scrollbar-gutter giữ chỗ sẵn cho thanh cuộn: tab nào nội dung ngắn thì
      nội dung cũng không bị xê ngang khi thanh cuộn hiện ra rồi mất đi. */
   .qt-than{padding:16px 18px;overflow:auto;flex:1;-webkit-overflow-scrolling:touch;
@@ -331,13 +338,8 @@
             <button id="qtDong">✕</button>
           </div>
           <div class="qt-tab">
-            <button class="on" data-tab="tq">Tổng quan</button>
-            <button data-tab="nd">Người dùng</button>
-            <button data-tab="moi">Danh sách mời</button>
-            ${(window.qtTabPhu || []).map(t =>
-              `<button data-tab="${t.ma}">${t.ten}</button>`).join('')}
-            <button data-tab="nk">Nhật ký</button>
-            <button data-tab="sl">Sao lưu</button>
+            ${dsTab().map((t, i) =>
+              `<button${i === 0 ? ' class="on"' : ''} data-tab="${t.ma}">${t.ten}</button>`).join('')}
           </div>
           <div class="qt-than" id="qtThan"></div>
         </div>`;
@@ -368,6 +370,25 @@
   }
 
   const than = () => document.getElementById('qtThan');
+
+  /* Thứ tự tab do thầy Chung chốt: việc thường ngày của nhà trường xếp trước,
+     việc quản trị tài khoản xếp sau.
+       Tổng quan → Danh mục Hồ sơ số → CBGV-NV → Học sinh
+       → Người dùng → Danh sách mời → Nhật ký → Sao lưu
+     Tab do tệp khác đăng ký mang sẵn số thứ tự riêng, trộn vào đúng chỗ chứ
+     không dồn hết về một cụm. */
+  const TAB_CHINH = [
+    { ma: 'tq',  ten: 'Tổng quan',      tt: 10 },
+    { ma: 'nd',  ten: 'Người dùng',     tt: 50 },
+    { ma: 'moi', ten: 'Danh sách mời',  tt: 60 },
+    { ma: 'nk',  ten: 'Nhật ký',        tt: 70 },
+    { ma: 'sl',  ten: 'Sao lưu',        tt: 80 }
+  ];
+  function dsTab() {
+    return TAB_CHINH.concat(window.qtTabPhu || [])
+      .slice()
+      .sort((a, b) => (a.tt == null ? 99 : a.tt) - (b.tt == null ? 99 : b.tt));
+  }
 
   async function veTab(tab) {
     /* Về đầu trang mỗi khi đổi tab — không thì tab mới mở ra ở lưng chừng

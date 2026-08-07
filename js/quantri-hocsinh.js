@@ -53,5 +53,5 @@
   }
 
   window.qtTabPhu = window.qtTabPhu || [];
-  window.qtTabPhu.push({ ma: 'qths', ten: 'Danh sách học sinh', ve: ve });
+  window.qtTabPhu.push({ ma: 'qths', ten: 'Danh sách học sinh', tt: 40, ve: ve });
 })();
