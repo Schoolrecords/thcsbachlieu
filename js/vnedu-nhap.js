@@ -51,6 +51,9 @@
 
   const sb = () => window.sbClient;
   let HOP = null, KQ = null;   // KQ = kết quả đọc được, chờ duyệt
+  /* Cột buổi nghỉ chỉ có sau khi chạy sql/26. Dò một lần lúc đọc tệp, chưa có
+     thì bỏ qua phần đó chứ không để máy chủ từ chối cả mẻ. */
+  let COT_BUOI_NGHI = false;
 
   const css = `
   .vn-canh{background:#eef4ff;border:1px solid #cfe0ff;color:#1d4ed8;border-radius:10px;
@@ -113,6 +116,25 @@
     const iNs = chiSo('ngày sinh');
     const iRl = td.findIndex(x => khongDau(x) === 'ket qua ren luyen');
     const iHt = td.findIndex(x => khongDau(x) === 'ket qua hoc tap');
+
+    /* BUỔI NGHỈ — điều kiện (c) khoản 1 Điều 12 Thông tư 22: không quá 45
+       buổi cả năm. Sổ VnEdu để tiêu đề "Buổi nghỉ" ở dòng tiêu đề, còn ba cột
+       con P · K · Tổng nằm ở DÒNG PHỤ ngay dưới. Nên phải dò ở dòng phụ, đếm
+       từ vị trí cột "Buổi nghỉ" trở đi. */
+    const iBn = td.findIndex(x => khongDau(x) === 'buoi nghi');
+    let iP = -1, iK = -1, iTong = -1;
+    if (iBn >= 0 && hang[iTd + 1]) {
+      const phu = (hang[iTd + 1] || []).map(x => khongDau(x));
+      for (let c = iBn; c < Math.min(phu.length, iBn + 4); c++) {
+        if (phu[c] === 'p') iP = c;
+        else if (phu[c] === 'k') iK = c;
+        else if (phu[c] === 'tong') iTong = c;
+      }
+    }
+    const soNguyen = v => {
+      const n = parseInt(String(v == null ? '' : v).trim(), 10);
+      return isNaN(n) || n < 0 || n > 250 ? null : n;
+    };
 
     /* Cột môn — bỏ qua mọi cột không phải môn (Kết quả…, Buổi nghỉ, Ghi chú) */
     const cotMon = [];
@@ -201,7 +223,14 @@
       }
       const xlVnEdu = iHt >= 0 ? String(d[iHt] == null ? '' : d[iHt]).trim() : '';
 
-      em.push({ ma, ten, dd: dd || null, ns: ns.gt, lop, khoi, diem, rl, xlVnEdu });
+      const bnP = iP >= 0 ? soNguyen(d[iP]) : null;
+      const bnK = iK >= 0 ? soNguyen(d[iK]) : null;
+      /* Cột "Tổng" của VnEdu có lúc để trống — cộng lại từ P và K cho chắc */
+      const bnT = (iTong >= 0 ? soNguyen(d[iTong]) : null)
+                ?? ((bnP != null || bnK != null) ? (bnP || 0) + (bnK || 0) : null);
+
+      em.push({ ma, ten, dd: dd || null, ns: ns.gt, lop, khoi, diem, rl, xlVnEdu,
+                bnP: bnP, bnK: bnK, bnT: bnT });
     }
 
     return { bo: false, lop, khoi, kyTep, kySo, namTep, em, oLoi, cotMon: cotMon.length };
@@ -323,6 +352,11 @@
     if (mh.error) { bao('Không đọc được danh mục môn: ' + mh.error.message); return; }
     const MON = mh.data || [];
     if (!MON.length) { bao('Cơ sở dữ liệu chưa có danh mục môn học. Kiểm tra đã chạy sql/17 chưa.'); return; }
+
+    /* Hỏi thẳng máy chủ xem cột buổi nghỉ đã có chưa — rẻ hơn nhiều so với
+       gửi cả mẻ lên rồi bị từ chối và phải đoán vì sao. */
+    const thu = await s.from('hoc_sinh_lop').select('so_buoi_nghi').limit(1);
+    COT_BUOI_NGHI = !thu.error;
 
     const lops = [], loiTep = [], oLoi = [];
     const kyTep = {}, namTep = {};
@@ -675,7 +709,16 @@
        trong một mẻ ghi — nạp cả hai kỳ thì mỗi em xuất hiện hai lần. */
     function ghiEm(e) {
       hs[e.ma] = { ma: e.ma, ho_ten: e.ten, ngay_sinh: e.ns, so_dinh_danh: e.dd };
-      hl[e.ma] = { hoc_sinh_ma: e.ma, nam_hoc: namHoc, lop: e.lop, khoi: e.khoi };
+      const b = { hoc_sinh_ma: e.ma, nam_hoc: namHoc, lop: e.lop, khoi: e.khoi };
+      /* Số buổi nghỉ chỉ ghi từ sổ HỌC KỲ II, vì cột đó của VnEdu là số luỹ kế
+         cả năm. Ghi từ HK I sẽ đè lên bằng con số nửa năm.
+         Chưa chạy sql/26 thì bảng chưa có cột — bỏ qua, không chặn cả mẻ. */
+      if (COT_BUOI_NGHI && e.bnT != null) {
+        b.so_buoi_nghi = e.bnT;
+        b.buoi_nghi_co_phep = e.bnP;
+        b.buoi_nghi_khong_phep = e.bnK;
+      }
+      hl[e.ma] = Object.assign(hl[e.ma] || {}, b);
     }
     function ghiDiem(e, ky) {
       e.diem.forEach(x => kq.push({
@@ -688,6 +731,8 @@
     /* Học kỳ I ghi nguyên vào ô 'hoc_ki_1'. Học kỳ II KHÔNG ghi riêng — lược
        đồ chỉ có hai ô, và theo Điều 9 khoản 1 thì cái đi vào báo cáo là điểm
        CẢ NĂM đã tính từ hai kỳ, chứ không phải điểm học kỳ II. */
+    /* Thứ tự quan trọng: HỌC KỲ I trước rồi HỌC KỲ II sau, để số buổi nghỉ
+       của học kỳ II (luỹ kế cả năm) đè lên chứ không ngược lại. */
     KQ.lops.filter(l => l.kySo === 1).forEach(l => l.em.forEach(e => {
       ghiEm(e); ghiDiem(e, 'hoc_ki_1');
     }));

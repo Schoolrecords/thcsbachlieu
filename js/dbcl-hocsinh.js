@@ -324,6 +324,12 @@
       + 'Một lần vào cả <b>danh sách học sinh</b> lẫn <b>điểm 12 môn</b> — '
       + 'không phải chép sang mẫu, không có chỗ cho lỗi chép nhầm.</p>'
       + (qt ? '<button class="btn btn-pri" id="hsVnEdu">📥 Nạp tệp VnEdu</button>' : '')
+      + '</div>'
+      + '<div class="hs-o"><h4>↗ Tịnh tiến lên lớp — đầu năm học mới</h4>'
+      + '<p>Khối 6 năm cũ thành khối 7 năm mới, 7 thành 8, 8 thành 9. Giữ nguyên '
+      + '<b>mã học sinh</b>, số định danh, họ tên, ngày sinh — không phải gõ lại gì. '
+      + 'Khối 9 ra trường; khối 6 mới nhập riêng.</p>'
+      + (qt ? '<button class="btn btn-out" id="hsTinhTien">↗ Tịnh tiến lên lớp</button>' : '')
       + '</div></div>';
 
     if (!DS.length) {
@@ -406,6 +412,10 @@
     g('hsVnEdu', () => {
       if (typeof window.vneduChonTep === 'function') window.vneduChonTep(hop);
       else notify('Chưa nạp được phần đọc tệp VnEdu, thầy cô tải lại trang.');
+    });
+    g('hsTinhTien', () => {
+      if (typeof window.tinhTienLop === 'function') window.tinhTienLop(hop);
+      else notify('Chưa nạp được phần tịnh tiến lên lớp, thầy cô tải lại trang.');
     });
   }
 
