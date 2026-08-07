@@ -128,34 +128,61 @@
     const pill = document.getElementById('stuPill');
     if (pill) pill.textContent = 'Năm học ' + NAM + ' · ' + tongLop + ' lớp · ' + tongHS + ' học sinh';
 
-    /* Đổi dải cảnh báo "dữ liệu mẫu" thành dòng nói rõ đang xem năm nào.
-       Còn để nguyên chữ "bản xem thử" trong khi số đã thật là nói dối ngược
-       lại — cũng tệ như lúc trước nói thật trong khi số là bịa. */
-    const canh = document.querySelector('#view-hocsinh .hs-mau-canh');
-    if (canh) {
-      const cuoi = CAC_NAM[0];
-      const khac = NAM !== CAU_HINH.NAM_HOC;
-      canh.className = 'hs-mau-canh' + (khac ? '' : ' hs-that');
-      canh.innerHTML = '<b>' + (khac ? '⚠ Đang xem năm học ' + chan(NAM) : '✅ Số liệu thật')
-        + '</b> — đọc trực tiếp từ cơ sở dữ liệu của nhà trường.'
-        + (khac
-            ? ' Năm hiện hành của hệ thống là <b>' + chan(CAU_HINH.NAM_HOC)
-              + '</b> nhưng chưa có danh sách học sinh. Con số dưới đây là của năm '
-              + chan(NAM) + ', <b>đừng dùng làm số của năm nay</b>.'
-            : '')
-        + (CAC_NAM.length > 1
-            ? '<div style="margin-top:9px"><label style="font-size:13px;font-weight:600">Xem năm học </label>'
-              + '<select id="hsNamChon" style="padding:6px 10px;border:1.5px solid #d7dde8;'
-              + 'border-radius:8px;font-size:13.5px;font-family:inherit">'
-              + CAC_NAM.map(n => '<option value="' + chan(n) + '"'
-                  + (n === NAM ? ' selected' : '') + '>' + chan(n) + '</option>').join('')
-              + '</select></div>'
-            : '');
+    const khac = NAM !== CAU_HINH.NAM_HOC;
+
+    /* Ô chọn năm học chuyển vào khối tiêu đề, ngay dưới dòng sĩ số. Trước đây
+       nó nằm nhờ trong dải cảnh báo; bỏ dòng "Số liệu thật" đi thì dải ấy chỉ
+       còn mỗi ô xổ, teo lại lệch hẳn so với khối bên dưới.
+       Liệt kê MỌI năm có trong bảng xếp lớp chứ không riêng năm hiện hành —
+       thầy cô hay cần bấm ngược lại năm cũ để lấy số ngay. */
+    const boc = document.getElementById('stuNamBoc');
+    if (boc) {
+      /* Trường mới dùng, chỉ có một năm thì chẳng có gì để chọn — để ô xổ trơ
+         ra chỉ tổ rối mắt mà bấm vào không đổi được gì. */
+      boc.innerHTML = CAC_NAM.length > 1
+        ? '<div class="stu-nam"><label for="hsNamChon">Xem năm học</label>'
+          + '<select id="hsNamChon">'
+          + CAC_NAM.map(n => '<option value="' + chan(n) + '"'
+              + (n === NAM ? ' selected' : '') + '>' + chan(n) + '</option>').join('')
+          + '</select></div>'
+        : '';
+      /* Đọc hỏng thì TRẢ NĂM VỀ NHƯ CŨ, không để ô xổ một đằng số liệu một
+         nẻo. Bản trước đổi NAM trước rồi mới tải: tải hỏng là veKhoi() không
+         chạy, bảng và sĩ số giữ nguyên năm cũ trong khi NAM đã sang năm mới —
+         mà veDsHs() lại in "· Năm học " + NAM lên đầu danh sách lớp VÀ lên
+         bản in. Thầy cô bấm In danh sách là tờ giấy ghi sai năm học. */
       const o = document.getElementById('hsNamChon');
       if (o) o.addEventListener('change', async function () {
+        const cu = NAM;
         NAM = this.value;
-        try { await tai(); veKhoi(); } catch (e) { console.error(e); }
+        try {
+          await tai();
+          veKhoi();
+        } catch (e) {
+          console.error(e);
+          NAM = cu;
+          this.value = cu;
+          if (typeof notify === 'function') {
+            notify('Chưa đọc được dữ liệu năm học vừa chọn. Màn hình giữ nguyên năm ' + cu + '.');
+          }
+        }
       });
+    }
+
+    /* Dải trên cùng nay chỉ còn một nhiệm vụ: CẢNH BÁO khi đang xem năm khác
+       năm hiện hành. Xem đúng năm thì ẩn hẳn — thông báo "số liệu thật" hiện
+       ở mọi lần mở màn hình là thứ thầy cô đọc một lần rồi thôi, để mãi chỉ
+       chiếm chỗ. Việc bình thường thì không cần báo; báo là để chặn cái sai. */
+    const canh = document.querySelector('#view-hocsinh .hs-mau-canh');
+    if (canh) {
+      canh.className = 'hs-mau-canh';
+      canh.style.display = khac ? '' : 'none';
+      canh.innerHTML = khac
+        ? '<b>⚠ Đang xem năm học ' + chan(NAM) + '</b> — đọc trực tiếp từ cơ sở '
+          + 'dữ liệu của nhà trường. Năm hiện hành của hệ thống là <b>'
+          + chan(CAU_HINH.NAM_HOC) + '</b>. Con số dưới đây là của năm '
+          + chan(NAM) + ', <b>đừng dùng làm số của năm nay</b>.'
+        : '';
     }
 
     const grid = document.getElementById('khoiGrid');

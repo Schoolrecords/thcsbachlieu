@@ -121,11 +121,17 @@
     });
     hd.height = 32;
     ws.views = [{ state: 'frozen', ySplit: dHd }];   // khoá dòng tiêu đề khi cuộn
+    /* Khoá khi CUỘN màn hình khác với lặp khi IN. Danh sách chỉ tiêu dài hơn
+       một trang giấy: thiếu dòng này thì tờ thứ hai trở đi chỉ còn một dãy số
+       không có tên cột, thầy cô cầm bản in ra họp mà phải lật ngược về trang
+       đầu để dò xem cột nào là khối nào. */
+    ws.pageSetup.printTitlesRow = dHd + ':' + dHd;
 
     /* ---- Thân bảng ---- */
     for (let r = 0; r < Math.max(soDong, 1); r++) {
       const gt = (opts.dong || [])[r] || [];
       const row = ws.getRow(dDau + r);
+      let tran = false;   // dòng này có ô nào dài quá bề rộng cột không
       cot.forEach((c, i) => {
         const o = row.getCell(i + 1);
         o.value = gt[i] === undefined ? '' : gt[i];
@@ -136,8 +142,13 @@
           vertical: 'middle',
           wrapText: !!c.xuongDong
         };
+        if (c.xuongDong && String(o.value || '').length > (c.rong || 14)) tran = true;
       });
-      row.height = 19;
+      /* Ép chiều cao 19 cho mọi dòng thì ô đã bật xuống dòng bị CẮT MẤT phần
+         chữ tràn — mẫu trống không thấy vì ô nào cũng rỗng, nhưng mẫu đã điền
+         sẵn số liệu thì tên chỉ tiêu dài chỉ hiện được một dòng đầu. Dòng nào
+         có chữ dài hơn bề rộng cột thì để trống chiều cao cho Excel tự giãn. */
+      if (!tran) row.height = 19;
     }
 
     /* Danh sách xổ xuống: đặt MỘT LẦN cho cả cột, không đặt từng ô.
@@ -160,7 +171,10 @@
 
     /* ---- Hướng dẫn: TRANG TÍNH RIÊNG ---- */
     if (opts.huongDan && opts.huongDan.length) {
-      const w2 = wb.addWorksheet('Huong dan', {
+      /* Tên trang tính viết có dấu cho thầy cô dễ đọc. Chỗ đọc tệp lên
+         (dbcl-hocsinh.js:612) đã lọc theo cả hai lối viết "Huong dan" và
+         "Hướng dẫn" nên tệp mẫu cũ tải về trước đây vẫn nạp lên bình thường. */
+      const w2 = wb.addWorksheet('Hướng dẫn', {
         pageSetup: { paperSize: 9, orientation: 'portrait',
           margins: { left: .6, right: .6, top: .6, bottom: .6, header: .2, footer: .2 } }
       });
@@ -173,7 +187,11 @@
         o.value = t;
         o.font = { name: V, size: 11.5, bold: /^[A-ZÀ-Ỹ\s—·]+$/.test(t.slice(0, 18)) };
         o.alignment = { horizontal: 'left', vertical: 'top', wrapText: true };
-        w2.getRow(i + 3).height = t.length > 90 ? 30 : 17;
+        /* KHÔNG ép chiều cao khi câu dài — đúng cái bẫy bảng chính đã tránh
+           ở trên. Cột rộng 108 ký tự, ép cứng 30 là vừa hai dòng; ai viết
+           câu hướng dẫn dài hơn thì chữ bị cắt mất mà không ai biết. Câu
+           ngắn thì đặt 17 cho gọn, câu dài để Excel tự giãn theo wrapText. */
+        if (t.length <= 90) w2.getRow(i + 3).height = 17;
       });
     }
 

@@ -30,6 +30,9 @@
   const TR = "font-family:'Times New Roman',serif;";
   const O  = TR + 'border:1px solid #000;padding:4pt 6pt;font-size:11.5pt;vertical-align:middle;';
   const OC = O + 'text-align:center;';
+  /* Ô tiêu đề bảng dùng chung cho cả năm phụ lục: nền xám nhạt, chữ đậm, căn
+     giữa. Bản cũ chỉ tô đậm nên in trắng đen ra nhìn không khác dòng dữ liệu. */
+  const OT = OC + 'font-weight:bold;background:#e8e8e8;';
   /* Lấy từ cauhinh.js — một nguồn duy nhất, khỏi mỗi tệp một giá trị */
   const XA = CAU_HINH.DON_VI_CHU_QUAN || 'UBND XÃ YÊN THÀNH';
   const DIA_DANH = CAU_HINH.DIA_DANH || 'Yên Thành';
@@ -59,7 +62,9 @@
       +   XA + '<br><b>' + chan(tenTruong()).toUpperCase() + '</b>'
       +   '<div style="border-top:1px solid #000;width:62%;margin:2pt auto 0"></div></td>'
       + '<td style="' + TR + 'text-align:center;font-size:12pt;vertical-align:top">'
-      +   '<b>CỘNG HOÀ XÃ HỘI CHỦ NGHĨA VIỆT NAM</b><br><b>Độc lập - Tự do - Hạnh phúc</b>'
+      /* Viết "CỘNG HÒA" theo đúng Phụ lục I Nghị định 30/2020/NĐ-CP, không
+         viết "CỘNG HOÀ" như thói quen cũ — để cả năm tệp xuất ra giống nhau. */
+      +   '<b>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</b><br><b>Độc lập - Tự do - Hạnh phúc</b>'
       +   '<div style="border-top:1px solid #000;width:52%;margin:2pt auto 0"></div>'
       +   '<p style="' + TR + 'font-size:12pt;font-style:italic;margin:8pt 0 0">'
       +   ngayThang() + '</p></td></tr></table>';
@@ -74,12 +79,15 @@
              + 'margin:0 0 10pt">' + chan(phu) + '</p>' : '');
   }
 
-  function kyTen(chucDanh) {
+  /* Chức vụ in hoa đậm — chừa bốn dòng cho chữ ký và con dấu — họ tên đậm.
+     Họ tên lấy ở cauhinh.js, khỏi phải viết tay lên tệp Word sau mỗi lần xuất. */
+  function kyTen(chucDanh, hoTen) {
+    const ht = hoTen === undefined ? (CAU_HINH.HIEU_TRUONG || '') : hoTen;
     return '<table style="width:100%;border-collapse:collapse;margin-top:18pt"><tr>'
       + '<td style="width:55%"></td>'
       + '<td style="' + TR + 'text-align:center;font-size:12pt">'
       + '<b>' + chan(chucDanh) + '</b><br><i>(Ký tên, đóng dấu)</i>'
-      + '<br><br><br><br></td></tr></table>';
+      + '<br><br><br><br>' + (ht ? '<b>' + chan(ht) + '</b>' : '') + '</td></tr></table>';
   }
 
   function ghiChuSua() {
@@ -96,12 +104,22 @@
   /* ---------------- Bảng số liệu dùng chung ---------------- */
   function bangSoLieu(d, loai, ky, coDoiSanh) {
     const KHOI = d.khoi;
-    let h = '<table style="width:100%;border-collapse:collapse"><tr>'
-      + '<td style="' + OC + 'font-weight:bold;width:6%">TT</td>'
-      + '<td style="' + OC + 'font-weight:bold">Số liệu</td>'
-      + KHOI.map(k => '<td style="' + OC + 'font-weight:bold;width:11%">Khối ' + k + '</td>').join('')
-      + (coDoiSanh ? '<td style="' + OC + 'font-weight:bold;width:13%">Đối sánh<br>toàn tỉnh</td>' : '')
-      + '</tr>';
+    /* Bề rộng đặt bằng colgroup: cột "Số liệu" ăn phần còn lại, các cột khối
+       chia đều. Đặt vào từng ô tiêu đề như trước thì lúc bảng sang trang mới,
+       Word vẽ lại tiêu đề mà bề rộng nhảy lung tung. */
+    const rongKhoi = coDoiSanh ? 10 : 12;
+    const rongTen = 100 - 6 - rongKhoi * KHOI.length - (coDoiSanh ? 13 : 0);
+    let h = '<table style="width:100%;border-collapse:collapse">'
+      + '<colgroup><col style="width:6%"><col style="width:' + rongTen + '%">'
+      + KHOI.map(() => '<col style="width:' + rongKhoi + '%">').join('')
+      + (coDoiSanh ? '<col style="width:13%">' : '')
+      + '</colgroup>'
+      + '<thead><tr>'
+      + '<td style="' + OT + '">TT</td>'
+      + '<td style="' + OT + '">Số liệu</td>'
+      + KHOI.map(k => '<td style="' + OT + '">Khối ' + k + '</td>').join('')
+      + (coDoiSanh ? '<td style="' + OT + '">Đối sánh<br>toàn tỉnh</td>' : '')
+      + '</tr></thead><tbody>';
 
     let stt = 0, nhom = '';
     const cot = KHOI.length + 2 + (coDoiSanh ? 1 : 0);
@@ -109,12 +127,14 @@
       if (ct.nhom !== nhom) {
         nhom = ct.nhom;
         h += '<tr><td colspan="' + cot + '" style="' + O
-           + 'background:#eef2f8;font-weight:bold;font-size:11pt">' + chan(nhom) + '</td></tr>';
+           + 'background:#f2f2f2;font-weight:bold;font-size:11pt">' + chan(nhom) + '</td></tr>';
       }
       stt++;
       h += '<tr><td style="' + OC + '">' + stt + '</td>'
          + '<td style="' + O + '">' + chan(ct.ten) + '</td>';
       KHOI.forEach(k => {
+        /* Ô gạch chéo cho chỉ tiêu chỉ có ở khối 9: tô xám để hội đồng hiểu đây
+           là ô không áp dụng, không phải nhà trường bỏ trống. */
         if (ct.chi_khoi_9 && k !== 9) { h += '<td style="' + OC + 'background:#f2f2f2"></td>'; return; }
         const r = d.lay(loai, ky, k, ct.ma);
         h += '<td style="' + OC + '">' + chan(r && r.gia_tri ? r.gia_tri : '') + '</td>';
@@ -125,35 +145,67 @@
       }
       h += '</tr>';
     });
-    return h + '</table>';
+    return h + '</tbody></table>';
   }
 
   /* ---------------- Khung bảng cho phần chưa nối dữ liệu ---------------- */
   function khungChoDien(tieu, cot, soDong) {
+    /* Cột TT chỉ chứa một con số nên bó hẹp 5%, phần còn lại chia đều — bản cũ
+       để Word tự chia, cột TT rộng bằng cột "Trình độ đào tạo". */
+    /* Chia phần dư cho các cột đầu chứ đừng bỏ rơi. Math.floor(95/7) = 13,
+       13 × 7 = 91, cộng cột TT là 96% — khung 8 cột của Phụ lục 16 hụt 4%
+       bề ngang, in ra thấy lệch so với các bảng khác trong cùng tệp. */
+    const soConLai = Math.max(cot.length - 1, 1);
+    const rongCoSo = Math.floor(95 / soConLai);
+    const du = 95 - rongCoSo * soConLai;
+    const rongCot = i => rongCoSo + (i < du ? 1 : 0);
     let h = '<p style="' + TR + 'font-size:12pt;font-weight:bold;margin:12pt 0 4pt">'
           + chan(tieu) + '</p>'
           + '<p style="' + TR + 'font-size:10.5pt;font-style:italic;color:#444;margin:0 0 5pt">'
           + 'Phần này thuộc Phụ lục 3 và Phụ lục 4, chưa nối cơ sở dữ liệu ở giai đoạn này. '
           + 'Nhà trường điền trực tiếp trên tệp Word.</p>'
-          + '<table style="width:100%;border-collapse:collapse"><tr>'
-          + cot.map(c => '<td style="' + OC + 'font-weight:bold">' + chan(c) + '</td>').join('')
-          + '</tr>';
+          + '<table style="width:100%;border-collapse:collapse">'
+          + '<colgroup><col style="width:5%">'
+          + cot.slice(1).map((c, i) => '<col style="width:' + rongCot(i) + '%">').join('')
+          + '</colgroup>'
+          + '<thead><tr>'
+          + cot.map(c => '<td style="' + OT + '">' + chan(c) + '</td>').join('')
+          + '</tr></thead><tbody>';
+    /* Đánh sẵn số thứ tự vào cột đầu: thầy cô điền tay trên Word thì khỏi phải
+       tự đếm dòng. Chỉ làm khi cột đầu đúng là cột TT, để sau này ai gọi hàm
+       với bộ cột khác thì không bị chèn số vào nhầm chỗ. */
+    const coTT = String(cot[0] || '').trim().toUpperCase() === 'TT';
     for (let i = 0; i < soDong; i++) {
-      h += '<tr>' + cot.map(() => '<td style="' + O + '">&nbsp;</td>').join('') + '</tr>';
+      h += '<tr>'
+        + (coTT ? '<td style="' + OC + '">' + (i + 1) + '</td>'
+                : '<td style="' + O + '">&nbsp;</td>')
+        + cot.slice(1).map(() => '<td style="' + O + '">&nbsp;</td>').join('') + '</tr>';
     }
-    return h + '</table>';
+    return h + '</tbody></table>';
   }
 
-  /* ---------------- Đóng gói và tải về ---------------- */
-  function taiVe(tieuDeTep, than, tenTep) {
+  /* ---------------- Đóng gói và tải về ----------------
+     Tham số thứ tư `ngang` = true thì xuất khổ A4 nằm ngang. Word KHÔNG hiểu
+     'size:A4' đứng một mình — nó lấy khổ mặc định của máy in, nên phải ghi
+     kích thước bằng centimet và kèm mso-page-orientation. Lề đặt theo Nghị
+     định 30/2020/NĐ-CP: trên/dưới 20-25mm, trái 30-35mm, phải 15-20mm. */
+  function taiVe(tieuDeTep, than, tenTep, ngang) {
+    const kho = ngang
+      ? '@page{size:29.7cm 21cm;mso-page-orientation:landscape;margin:1.5cm 2cm 1.5cm 2cm}'
+      : '@page{size:21cm 29.7cm;margin:2cm 1.5cm 2cm 3cm}';
     const html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" '
       + 'xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">'
       + '<head><meta charset="utf-8"><title>' + chan(tieuDeTep) + '</title>'
       + '<!--[if gte mso 9]><xml><w:WordDocument><w:View>Print</w:View><w:Zoom>100</w:Zoom>'
       + '</w:WordDocument></xml><![endif]-->'
-      + '<style>@page{size:A4;margin:1.8cm 1.5cm 1.8cm 2.5cm}'
-      + 'body{font-family:"Times New Roman",serif;font-size:12pt}'
-      + 'table{page-break-inside:auto}tr{page-break-inside:avoid}</style>'
+      + '<style>' + kho
+      + 'body{font-family:"Times New Roman",serif;font-size:13pt;line-height:1.5;color:#000}'
+      + 'p{margin:0 0 6pt}'
+      + 'table{page-break-inside:auto;border-collapse:collapse}'
+      /* Bảng chỉ tiêu dài hơn một trang. Không có dòng này thì từ trang 2 trở
+         đi thầy cô nhìn bốn cột số mà không biết cột nào là khối nào. */
+      + 'thead{display:table-header-group}'
+      + 'tr{page-break-inside:avoid}td,th{line-height:1.3}</style>'
       + '</head><body>' + than + '</body></html>';
 
     const blob = new Blob(['﻿' + html], { type: 'application/msword' });
@@ -212,8 +264,11 @@
           ['TT', 'Hạng mục', 'Số lượng', 'Đơn vị tính', 'Ghi chú'], 8)
       + ghiChuSua()
       + kyTen('HIỆU TRƯỞNG');
+    /* A4 NGANG: bảng số liệu có 7 cột (TT, Số liệu, bốn khối, đối sánh tỉnh),
+       thêm khung đội ngũ 7 cột và khung cơ sở vật chất 5 cột. Khổ dọc chỉ còn
+       16,5cm bề ngang, tên chỉ tiêu dài bị bẻ năm sáu dòng. */
     taiVe('Phụ lục 1 — Thực trạng nhà trường ' + d.namHoc, than,
-      'phu-luc-1-thuc-trang-' + d.namHoc + '.doc');
+      'phu-luc-1-thuc-trang-' + d.namHoc + '.doc', true);
     if (typeof notify === 'function')
       notify('Đã tải Phụ lục 1. Phần đội ngũ và cơ sở vật chất in sẵn khung để nhà trường điền.');
   }
@@ -230,8 +285,9 @@
       + bangSoLieu(d, 'chuan_dau_ra', 'ca_nam', true)
       + ghiChuSua()
       + kyTen('HIỆU TRƯỞNG');
+    /* A4 NGANG: cùng bảng 7 cột với Phụ lục 1 */
     taiVe('Phụ lục 2 — Chuẩn đầu ra ' + d.namHoc, than,
-      'phu-luc-2-chuan-dau-ra-' + d.namHoc + '.doc');
+      'phu-luc-2-chuan-dau-ra-' + d.namHoc + '.doc', true);
     if (typeof notify === 'function') notify('Đã tải Phụ lục 2 — Chuẩn đầu ra.');
   }
 
@@ -280,16 +336,19 @@
               + 'mới hết học kì I. Bảng dưới đây dùng để xác định chỗ cần tập trung trong học kì II, '
               + 'không phải kết luận nhà trường chưa đạt cam kết.</p>'
             : '')
-        + '<table style="width:100%;border-collapse:collapse"><tr>'
-        + '<td style="' + OC + 'font-weight:bold;width:8%">Khối</td>'
-        + '<td style="' + OC + 'font-weight:bold">Chỉ tiêu</td>'
-        + '<td style="' + OC + 'font-weight:bold;width:17%">Chuẩn đầu ra</td>'
-        + '<td style="' + OC + 'font-weight:bold;width:17%">Kết quả đạt</td></tr>'
+        + '<table style="width:100%;border-collapse:collapse">'
+        + '<colgroup><col style="width:8%"><col style="width:52%"><col style="width:20%">'
+        + '<col style="width:20%"></colgroup>'
+        + '<thead><tr>'
+        + '<td style="' + OT + '">Khối</td>'
+        + '<td style="' + OT + '">Chỉ tiêu</td>'
+        + '<td style="' + OT + '">Chuẩn đầu ra</td>'
+        + '<td style="' + OT + '">Kết quả đạt</td></tr></thead><tbody>'
         + hut.map(x => '<tr><td style="' + OC + '">' + x.k + '</td>'
             + '<td style="' + O + '">' + chan(x.ct.ten) + '</td>'
             + '<td style="' + OC + '">' + chan(x.c) + '</td>'
             + '<td style="' + OC + '">' + chan(x.r) + '</td></tr>').join('')
-        + '</table>'
+        + '</tbody></table>'
         + '<p style="' + TR + 'font-size:11pt;font-style:italic;margin:6pt 0 0">'
         + 'Đây là căn cứ trực tiếp để lập Kế hoạch cải tiến chất lượng theo Biểu 2.</p>';
     }
@@ -301,15 +360,20 @@
       + doiChieu
       + ghiChuSua()
       + kyTen('HIỆU TRƯỞNG');
+    /* A4 NGANG: bảng 7 cột, thêm bảng đối chiếu chuẩn đầu ra 4 cột */
     taiVe('Phụ lục 5 — Kết quả ' + tenKy + ' ' + d.namHoc, than,
-      'phu-luc-5-ket-qua-' + (d.ky === 'hoc_ki_1' ? 'hk1-' : 'ca-nam-') + d.namHoc + '.doc');
+      'phu-luc-5-ket-qua-' + (d.ky === 'hoc_ki_1' ? 'hk1-' : 'ca-nam-') + d.namHoc + '.doc', true);
     /* Câu này phải khớp với tiêu đề bảng vừa in ra. Trước đây luôn nói "chưa
        đạt cam kết" trong khi tệp Word đã ghi rõ đây mới là mốc giữa học kì I. */
+    /* hut đếm Ô, không đếm CHỈ TIÊU: mỗi chỉ tiêu có bốn khối nên một chỉ
+       tiêu hụt ở cả bốn khối là bốn dòng. Bản trước gọi thẳng hut.length là
+       "chỉ tiêu", 33 chỉ tiêu × 4 khối báo thành "119 chỉ tiêu" trong khi cả
+       bộ chỉ có 33 — thầy cô đọc xong tưởng hỏng nặng hơn thực tế. */
+    const soCt = Object.keys(hut.reduce((a, x) => { a[x.ct.ma] = 1; return a; }, {})).length;
     if (typeof notify === 'function')
       notify('Đã tải Phụ lục 5' + (hut.length
-        ? ' — có ' + hut.length + ' chỉ tiêu '
-          + (muonCaNam ? 'còn cách đích cả năm' : 'chưa đạt cam kết')
-          + ', đã liệt kê ở cuối tệp.'
+        ? ' — có ' + soCt + ' chỉ tiêu ' + (muonCaNam ? 'còn cách đích cả năm' : 'chưa đạt cam kết')
+          + ' (' + hut.length + ' ô tính theo từng khối), đã liệt kê ở cuối tệp.'
         : '.'));
   }
 
@@ -327,18 +391,24 @@
     if (!c) { if (typeof notify === 'function') notify('Không tìm thấy bản cam kết.'); return; }
     const dong = d.camKetDong[c.id] || {};
 
-    let bang = '<table style="width:100%;border-collapse:collapse"><tr>'
-      + '<td style="' + OC + 'font-weight:bold;width:6%">TT</td>'
-      + '<td style="' + OC + 'font-weight:bold">Số liệu cam kết</td>'
-      + d.khoi.map(k => '<td style="' + OC + 'font-weight:bold;width:12%">Lớp ' + k + '</td>').join('')
-      + '</tr>';
+    const rongLop = 12;
+    let bang = '<table style="width:100%;border-collapse:collapse">'
+      + '<colgroup><col style="width:6%">'
+      + '<col style="width:' + (94 - rongLop * d.khoi.length) + '%">'
+      + d.khoi.map(() => '<col style="width:' + rongLop + '%">').join('')
+      + '</colgroup>'
+      + '<thead><tr>'
+      + '<td style="' + OT + '">TT</td>'
+      + '<td style="' + OT + '">Số liệu cam kết</td>'
+      + d.khoi.map(k => '<td style="' + OT + '">Lớp ' + k + '</td>').join('')
+      + '</tr></thead><tbody>';
     let stt = 0, nhom = '';
     d.chiTieu.forEach(ct => {
       if (ct.don_vi === 'text' || ct.don_vi === 'dat') return;
       if (ct.nhom !== nhom) {
         nhom = ct.nhom;
         bang += '<tr><td colspan="' + (d.khoi.length + 2) + '" style="' + O
-              + 'background:#eef2f8;font-weight:bold;font-size:11pt">' + chan(nhom) + '</td></tr>';
+              + 'background:#f2f2f2;font-weight:bold;font-size:11pt">' + chan(nhom) + '</td></tr>';
       }
       stt++;
       bang += '<tr><td style="' + OC + '">' + stt + '</td>'
@@ -347,7 +417,7 @@
                 + chan(dong[k + '|' + ct.ma] || '') + '</td>').join('')
             + '</tr>';
     });
-    bang += '</table>';
+    bang += '</tbody></table>';
 
     const than = tieuDe()
       + tenPhuLuc('15', 'BẢN CAM KẾT', 'Về kết quả học tập và rèn luyện của học sinh')
@@ -371,11 +441,14 @@
       + (c.ngay_ky ? DIA_DANH + ', ngày ' + c.ngay_ky.slice(8, 10) + ' tháng '
                    + c.ngay_ky.slice(5, 7) + ' năm ' + c.ngay_ky.slice(0, 4)
                    : ngayThang())
-      + '</i><br><b>GIÁO VIÊN</b><br><i>(Ký và ghi rõ họ tên)</i><br><br><br>'
-      + chan(c.ho_ten) + '</td></tr></table>';
+      + '</i><br><b>GIÁO VIÊN</b><br><i>(Ký và ghi rõ họ tên)</i><br><br><br><br>'
+      + '<b>' + chan(c.ho_ten) + '</b></td></tr></table>';
 
+    /* A4 DỌC: đây là bản cam kết cá nhân — phần lớn là chữ (kính gửi, họ tên,
+       môn dạy, lời cam kết), bảng chỉ có bốn cột lớp chứa số ngắn. Xoay ngang
+       thì một tờ giấy khổ lớn mà chữ nằm hết nửa trên, nhìn trống trải. */
     taiVe('Phụ lục 15 — Cam kết ' + c.ho_ten, than,
-      'phu-luc-15-cam-ket-' + khongDau(c.ho_ten) + '-' + c.nam_hoc + '.doc');
+      'phu-luc-15-cam-ket-' + khongDau(c.ho_ten) + '-' + c.nam_hoc + '.doc', false);
     if (typeof notify === 'function') notify('Đã tải phiếu cam kết của ' + c.ho_ten + '.');
   }
 
@@ -426,10 +499,13 @@
       + '<td style="width:55%"></td>'
       + '<td style="' + TR + 'text-align:center;font-size:12pt"><i>' + ngayThang() + '</i>'
       + '<br><b>HIỆU TRƯỞNG</b><br><i>(Ký tên, đóng dấu)</i><br><br><br><br>'
-      + chan(ht) + '</td></tr></table>';
+      + '<b>' + chan(ht) + '</b></td></tr></table>';
 
+    /* A4 NGANG: khung nâng cao chất lượng đội ngũ có tới 8 cột (họ tên, chức
+       vụ, trình độ chuyên môn, chuẩn chức danh, cốt cán, GV giỏi cấp tỉnh,
+       trình độ LLCT), khổ dọc thì mỗi cột chưa nổi 2cm, không viết nổi chữ. */
     taiVe('Phụ lục 16 — Cam kết chất lượng nhà trường ' + d.namHoc, than,
-      'phu-luc-16-cam-ket-nha-truong-' + d.namHoc + '.doc');
+      'phu-luc-16-cam-ket-nha-truong-' + d.namHoc + '.doc', true);
     if (typeof notify === 'function')
       notify('Đã tải Phụ lục 16. Nơi nhận là UBND xã Yên Thành và Sở GD&ĐT Nghệ An.');
   }

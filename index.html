@@ -398,6 +398,21 @@ td.tdst{white-space:nowrap;text-align:right}
 .stu-hero h2{font-family:var(--serif);font-size:29px;margin-bottom:9px}
 .stu-hero p{font-size:14.4px;opacity:.88;max-width:56ch;margin:0 auto 16px}
 .stu-pill{display:inline-block;border:1.5px solid rgba(229,177,58,.6);color:var(--gold-2);border-radius:999px;padding:9px 22px;font-size:14.4px;font-weight:700}
+/* Ô chọn năm học nằm luôn trong khối tiêu đề, ngay dưới dòng sĩ số. Trước
+   đây nó nằm nhờ trong dải cảnh báo ở trên; bỏ dòng "Số liệu thật" đi thì
+   dải ấy chỉ còn mỗi ô xổ, teo lại thành một hộp lẻ loi không cân với khối
+   bên dưới. Để cạnh dòng sĩ số vừa gọn vừa đúng chỗ: đổi năm thì đổi luôn
+   con số ngay bên trên. */
+.stu-nam{display:flex;align-items:center;justify-content:center;gap:11px;flex-wrap:wrap;margin-top:15px}
+.stu-nam label{font-size:14.4px;font-weight:600;color:rgba(255,255,255,.88);margin:0}
+.stu-nam select{padding:9px 18px;border:1.5px solid rgba(229,177,58,.55);border-radius:999px;
+  background:rgba(255,255,255,.08);color:#fff;font-size:14.4px;font-weight:700;
+  font-family:inherit;cursor:pointer;transition:.15s}
+/* Danh sách xổ xuống do hệ điều hành vẽ trên nền trắng, không thừa hưởng nền
+   navy — không đặt lại màu thì chữ trắng trên nền trắng, thầy cô không đọc được */
+.stu-nam select option{background:#0e2454;color:#fff}
+.stu-nam select:hover{border-color:var(--gold-2);background:rgba(255,255,255,.15)}
+.stu-nam select:focus{outline:none;box-shadow:0 0 0 3px rgba(229,177,58,.32)}
 /* Dải cảnh báo "đây là dữ liệu mẫu" ở màn hình Quản lý học sinh */
 .hs-mau-canh{background:#fff8e8;border:1.5px solid #f0d089;border-left:5px solid #e0a72e;
   color:#7a5410;border-radius:12px;padding:15px 18px;margin:0 0 20px;
@@ -405,8 +420,9 @@ td.tdst{white-space:nowrap;text-align:right}
 .hs-mau-canh b{color:#6b4409}
 /* Khi đã nối được dữ liệu thật thì đổi sang tông xanh — cùng một dải, hai
    trạng thái, để thầy cô nhìn màu là biết đang xem số thật hay số minh hoạ */
-.hs-mau-canh.hs-that{background:#f2fdf6;border-color:#bfe8cd;border-left-color:#2f9e5f;color:#1a6437}
-.hs-mau-canh.hs-that b{color:#15803d}
+/* Lớp .hs-that (tông xanh "số liệu thật") đã bỏ cùng lúc với dòng thông báo
+   ấy — nay xem đúng năm hiện hành thì dải này ẩn hẳn, chỉ hiện khi cần CẢNH
+   BÁO đang xem năm cũ, mà cảnh báo thì phải giữ tông vàng. */
 @media(min-width:900px){.hs-mau-canh{font-size:17px}}
 /* Dòng nhắc "DỮ LIỆU MẪU" trong thead của bảng danh sách minh hoạ.
    Trên màn hình để nhạt cho đỡ chói; khi IN thì đậm lên và in đủ mực.
@@ -802,6 +818,10 @@ footer .legal{border-top:1px solid rgba(255,255,255,.15);padding-top:15px;font-s
       <h2>Quản lý Học sinh</h2>
       <p>Chọn từng khối để xem các lớp và danh sách học sinh.</p>
       <span class="stu-pill" id="stuPill">Số minh hoạ</span>
+      <!-- Ô chọn năm học do hocsinh-that.js đổ vào, chỉ khi đã nối được dữ
+           liệu thật và trường có từ hai năm học trở lên. Để trống ở đây chứ
+           không gõ sẵn: bản xem thử không có năm nào để chọn. -->
+      <div id="stuNamBoc"></div>
     </div>
     <div class="khoi-grid" id="khoiGrid"></div>
     <div id="lopArea" style="margin-top:26px"></div>
