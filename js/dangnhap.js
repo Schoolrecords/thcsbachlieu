@@ -763,7 +763,19 @@
   /* ========================================================================
      LUỒNG CHÍNH
      ======================================================================== */
+  /* Bọc ngoài để TẮT MÀN CHỜ ở mọi đường ra. Hàm bên trong có bốn năm chỗ
+     return sớm — chưa đăng nhập, chờ duyệt, tài khoản bị khoá, lỗi máy chủ —
+     rải lệnh tắt vào từng chỗ thì chắc chắn sót một cái, mà sót là thầy cô
+     ngồi nhìn logo không bao giờ hết. finally chạy kể cả khi ném lỗi. */
   async function khoiDong() {
+    try {
+      await khoiDongThat();
+    } finally {
+      if (typeof window.tatManCho === 'function') window.tatManCho();
+    }
+  }
+
+  async function khoiDongThat() {
     khoaTrang(true);
 
     const { data: { session } } = await sb.auth.getSession();
