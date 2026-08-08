@@ -42,7 +42,15 @@ const CAU_HINH = {
   CO_QUAN_QUAN_LY: 'Sở Giáo dục và Đào tạo Nghệ An',
   HIEU_TRUONG: 'Nguyễn Phúc Lộc',
 
-  /* Quy mô nhà trường — dùng cho phần Tổng quan của báo cáo tự đánh giá */
+  /* Biểu 1 Phụ lục V Thông tư 57 đòi mục "b) Địa chỉ, THÔNG TIN LIÊN HỆ".
+     Để trống thì báo cáo chỉ in địa chỉ, không in hai dòng này. */
+  DIEN_THOAI: '',
+  EMAIL_TRUONG: '',
+
+  /* Quy mô nhà trường — CHỈ dùng khi đếm từ cơ sở dữ liệu không ra số nào.
+     Báo cáo tự đánh giá đếm số lớp và số học sinh từ bảng hoc_sinh_lop của năm
+     học đang chọn, số CBGV-NV từ danh sách CBGV-NV, để bản Word không bao giờ
+     lệch số với các màn hình khác của chính hệ thống này. */
   SO_LOP: 16,
   SO_HOC_SINH: 466,
   SO_CBGV: 38

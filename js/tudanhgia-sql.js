@@ -30,6 +30,19 @@
   let MC_THEO_TC = {};   // mã tiêu chí -> danh sách minh chứng
   let DGTC = {};         // số tiêu chuẩn -> bản ghi danh_gia_tieu_chuan
   let DANG_TAI = false;
+
+  /* --- Ba thứ của tệp sql/30 ---
+     NOI_HAM  'mã tiêu chí|mức' -> các nội hàm, tức TỪNG YÊU CẦU của mức đó,
+              trích nguyên văn Phụ lục II.
+     HT_NH    noi_ham_id -> hiện trạng và mã minh chứng của riêng nội hàm ấy.
+     NH_CUA   noi_ham_id -> { code, muc }. Có để lúc lưu một nội hàm còn biết
+              phải cập nhật lại ô đếm "đã viết mấy/mấy" của mức nào.
+     BC       các mục văn xuôi của Biểu 1 (bối cảnh, quá trình TĐG, kiến nghị).
+
+     Chưa chạy sql/30 thì THIEU_NH bật, màn hình quay về đúng lối cũ: một mức
+     một ô văn xuôi. KHÔNG chặn màn hình — thầy cô vẫn chấm mức được như thường. */
+  let NOI_HAM = {}, HT_NH = {}, NH_CUA = {}, BC = {};
+  let THIEU_NH = false, THIEU_BC = false;
   /* Bật khi lần tải gần nhất hỏng — chặn renderKdcl vẽ lại số minh hoạ */
   let TAI_HONG = false;
 
@@ -50,6 +63,37 @@
      'Nội dung đã cải thiện, chưa cải thiện và biến động, so với hai năm học trước.'],
     ['van_de_uu_tien', '3b. Các vấn đề trọng tâm cần ưu tiên cải tiến',
      'Đây là căn cứ để lập Kế hoạch cải tiến chất lượng theo Biểu 2.']
+  ];
+
+  /* Các mục văn xuôi của Biểu 1 mà không suy ra được từ dữ liệu. Không có chỗ
+     nhập thì bản Word in ra dấu "…" ở đúng những chỗ này — chính là chỗ báo cáo
+     bị sơ lược. Cột trong bảng bao_cao_tdg của sql/30. */
+  const NHOM_BC = [
+    ['Phần I — Thông tin chung và bối cảnh', [
+      ['nam_thanh_lap', 'đ) Năm thành lập', 'Theo quyết định thành lập trường.', 1],
+      ['kt_xh', 'a) Điều kiện kinh tế - xã hội địa phương',
+       'Nêu đặc điểm địa phương có ảnh hưởng tới việc học của học sinh.'],
+      ['thuan_loi', 'b) Thuận lợi', ''],
+      ['kho_khan', 'c) Khó khăn', ''],
+      ['dac_diem_nguoi_hoc', 'd) Đặc điểm người học', '']
+    ]],
+    ['Phần I mục 4 — Quá trình thực hiện tự đánh giá', [
+      ['lap_ke_hoach', 'a) Lập kế hoạch tự đánh giá',
+       'Quyết định thành lập Hội đồng tự đánh giá và kế hoạch tự đánh giá.'],
+      ['to_chuc_thuc_hien', 'b) Tổ chức thực hiện',
+       'Phân công nhiệm vụ, thu thập minh chứng, rà soát hoạt động giáo dục.'],
+      ['kiem_tra_phan_tich', 'c) Kiểm tra, phân tích',
+       'Phân tích minh chứng, đối chiếu yêu cầu của tiêu chí, xác định mức đạt.'],
+      ['tong_hop_xac_nhan', 'd) Tổng hợp và xác nhận kết quả tự đánh giá', '']
+    ]],
+    ['Phần III — Kết luận', [
+      ['khai_quat', '1. Khái quát về mức độ đáp ứng tiêu chuẩn chất lượng giáo dục',
+       'Mức đáp ứng chung, mức độ ổn định và tính bền vững của hệ thống bảo đảm chất lượng nội bộ.'],
+      ['kn_so', '4a) Với Sở Giáo dục và Đào tạo Nghệ An', ''],
+      ['kn_ubnd', '4b) Với Uỷ ban nhân dân xã', ''],
+      ['kn_khac', '4c) Với tổ chức, cá nhân liên quan',
+       'Không có thì để trống — báo cáo sẽ không in mục này.']
+    ]]
   ];
 
   /* ========================================================================
@@ -73,6 +117,30 @@
   .ev-mc b{color:var(--navy-2)}
   .tdg-chuadu{background:#fdf3f2;border:1px solid #f3c9c5;color:#8a3428;border-radius:9px;
     padding:9px 12px;font-size:13px;margin-top:10px;line-height:1.55}
+
+  /* ---- Nhập hiện trạng theo TỪNG NỘI HÀM ---- */
+  .nh-dem{font-size:12.4px;color:#64748b;margin:12px 0 2px}
+  .nh-dem b{color:var(--navy)}
+  .nh-o{border:1px solid #e2e8f2;border-left:3px solid #c7d5ee;border-radius:10px;
+    padding:11px 13px;margin-top:9px;background:#fbfcfe}
+  .nh-o.xong{border-left-color:#5eb884;background:#fafefb}
+  .nh-so{display:inline-block;background:#eef4ff;color:#1d4ed8;font-size:11.2px;
+    font-weight:700;padding:2px 8px;border-radius:6px}
+  /* Nguyên văn yêu cầu của Thông tư — chữ nhỏ hơn ô nhập nhưng KHÔNG mờ:
+     đây là thứ thầy cô phải đọc để viết đúng, không phải chú thích cho đẹp. */
+  .nh-vb{font-size:13.2px;color:#3b4a63;line-height:1.62;margin:6px 0 8px}
+  .nh-o textarea{width:100%;min-height:56px;padding:9px 11px;border:1.5px solid #d7dde8;
+    border-radius:9px;font-size:13.8px;font-family:inherit;line-height:1.6;
+    color:#1f2937;background:#fff;resize:vertical}
+  .nh-o textarea:focus{outline:0;border-color:var(--navy-2)}
+  .nh-o textarea:disabled{background:#f6f8fb;color:#5b6b85}
+  .nh-mcs{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;align-items:center}
+  .nh-mcs .nhan{font-size:11.6px;color:#8a94a6;margin-right:2px}
+  .nh-mc{border:1px solid #cfd8e6;background:#fff;border-radius:999px;padding:4px 11px;
+    font-size:12px;font-weight:600;color:#42526b;cursor:pointer;user-select:none}
+  .nh-mc:hover{background:#eef4ff}
+  .nh-mc.on{background:#14306b;color:#fff;border-color:#14306b}
+  .nh-mc.khoa{cursor:default;opacity:.75}
   `;
   document.head.insertAdjacentHTML('beforeend', '<style>' + css + '</style>');
 
@@ -103,7 +171,9 @@
       const [tc, tdg, hs, dgtc] = await Promise.all([
         sb.from('tieu_chi').select('*').order('so_tt'),
         sb.from('tu_danh_gia').select('*').eq('nam_hoc', NAM_HOC),
-        sb.from('ho_so').select('ma, ten, tieu_chi, trang_thai, link_drive'),
+        /* ghi_chu để dành cho cột "Ghi chú" của danh mục minh chứng — Phụ lục IV
+           mục 4 có 05 cột, thiếu cột này là bảng không đúng mẫu. */
+        sb.from('ho_so').select('ma, ten, tieu_chi, trang_thai, link_drive, ghi_chu'),
         sb.from('danh_gia_tieu_chuan').select('*').eq('nam_hoc', NAM_HOC)
       ]);
       /* Soi lỗi CẢ BỐN câu hỏi. Trước đây chỉ soi câu đầu, nên khi máy chủ từ
@@ -120,6 +190,32 @@
       if (!tc.data || !tc.data.length) {
         throw new Error('Cơ sở dữ liệu chưa có bộ tiêu chí. Kiểm tra đã chạy tệp sql/12 chưa.');
       }
+
+      /* Ba bảng của tệp sql/30. Ba câu này KHÔNG được ném lỗi ra ngoài: chưa
+         chạy sql/30 thì bảng chưa tồn tại, mà đó không phải cớ để che cả màn
+         hình tự đánh giá đang dùng được. Lỗi ở đây chỉ có nghĩa "quay về lối
+         nhập cũ". */
+      const [nh, tnh, bc] = await Promise.all([
+        sb.from('noi_ham').select('*'),
+        sb.from('tdg_noi_ham').select('*').eq('nam_hoc', NAM_HOC),
+        sb.from('bao_cao_tdg').select('*').eq('nam_hoc', NAM_HOC)
+      ]);
+
+      NOI_HAM = {}; NH_CUA = {};
+      THIEU_NH = !!nh.error || !(nh.data && nh.data.length);
+      if (!THIEU_NH) {
+        nh.data.slice()
+          .sort((a, b) => (a.muc - b.muc) || (a.so_tt - b.so_tt))
+          .forEach(r => {
+            const k = r.tieu_chi_ma + '|' + r.muc;
+            (NOI_HAM[k] = NOI_HAM[k] || []).push(r);
+            NH_CUA[r.id] = { code: r.tieu_chi_ma, muc: r.muc };
+          });
+      }
+      HT_NH = {};
+      if (!tnh.error) (tnh.data || []).forEach(r => { HT_NH[r.noi_ham_id] = r; });
+      THIEU_BC = !!bc.error;
+      BC = (!bc.error && bc.data && bc.data[0]) ? bc.data[0] : {};
 
       TDG = {};
       (tdg.data || []).forEach(r => { TDG[r.tieu_chi_ma] = r; });
@@ -218,7 +314,10 @@
   /* ========================================================================
      VẼ LẠI MÀN HÌNH — ghi đè hàm cùng tên trong index.html
      ======================================================================== */
-  function oHienTrang(c, muc) {
+  /* Lối nhập CŨ: một mức một ô văn xuôi. Chỉ dùng khi chưa chạy sql/30, hoặc
+     tiêu chí đó vì lý do gì mà chưa có nội hàm nào trong danh mục. Giữ lại chứ
+     không xoá: những gì thầy cô đã viết vào ô này vẫn còn, báo cáo vẫn in ra. */
+  function oHienTrangVanXuoi(c, muc) {
     const chamDuoc = coQuyenCham();
     const gt = muc === 1 ? c.htM1 : c.htM2;
     const goi = muc === 1
@@ -233,6 +332,72 @@
           onblur="luuHienTrang('${c.code}',${muc},this.value)">${gt ? gt.replace(/</g, '&lt;') : ''}</textarea>
         <div class="goi">${goi}</div>
       </div>`;
+  }
+
+  /* Lối nhập theo NỘI HÀM — Biểu 1 Phụ lục V, Lưu ý 1:
+       "Nội dung mô tả hiện trạng phải bám sát, thể hiện rõ mức đáp ứng TỪNG YÊU
+        CẦU của từng mức đánh giá; sử dụng số liệu cụ thể và viện dẫn mã minh
+        chứng tương ứng."
+     Mỗi nội hàm một ô riêng, mã minh chứng chọn riêng cho từng ô. Nhờ vậy báo
+     cáo ghép ra được câu có mã đặt đúng chỗ theo Phụ lục IV mục I.3 — thay vì
+     dồn tất cả mã vào một dòng ở cuối tiêu chí, đọc không biết mã nào chứng
+     cho ý nào. */
+  function oHienTrang(c, muc) {
+    const ds = NOI_HAM[c.code + '|' + muc] || [];
+    if (!ds.length) return oHienTrangVanXuoi(c, muc);
+
+    const chamDuoc = coQuyenCham();
+    const mc = MC_THEO_TC[c.code] || [];
+    const daViet = ds.filter(n => String((HT_NH[n.id] || {}).hien_trang || '').trim()).length;
+
+    return `
+      <div class="nh-khoi">
+        <div class="nh-dem" id="nhdem-${c.code}-${muc}">Hiện trạng theo từng yêu cầu của Mức ${muc}
+          — đã viết <b>${daViet}/${ds.length}</b> nội hàm</div>
+        ${ds.map((n, i) => {
+          const r = HT_NH[n.id] || {};
+          const dang = r.ma_minh_chung || [];
+          const xong = String(r.hien_trang || '').trim() ? ' xong' : '';
+          return `
+          <div class="nh-o${xong}" id="nho-${n.id}">
+            <span class="nh-so">Nội hàm ${i + 1}/${ds.length}</span>
+            <span class="tdg-luu" id="luunh-${n.id}">✓ đã lưu</span>
+            <div class="nh-vb">${chan(n.noi_dung)}</div>
+            <textarea id="nh-${n.id}" ${chamDuoc ? '' : 'disabled'}
+              placeholder="${chamDuoc
+                ? 'Nhà trường đã làm gì cho đúng yêu cầu này? Ghi số liệu cụ thể.'
+                : 'Chỉ ban giám hiệu và tổ trưởng nhập được nội dung này'}"
+              onblur="luuNoiHam(${n.id},this.value)">${chan(r.hien_trang || '')}</textarea>
+            ${mc.length
+              ? `<div class="nh-mcs"><span class="nhan">Minh chứng cho ý này:</span>
+                  ${mc.map(h => `<span class="nh-mc${dang.indexOf(h.ma) >= 0 ? ' on' : ''}${chamDuoc ? '' : ' khoa'}"
+                        title="${chan(h.ten)}"
+                        ${chamDuoc ? `onclick="batMinhChung(${n.id},'${chan(h.ma)}',this)"` : ''}
+                        >${chan(h.ma)}</span>`).join('')}
+                </div>`
+              : ''}
+          </div>`;
+        }).join('')}
+      </div>`;
+  }
+
+  function nhayDaLuu(id) {
+    const nhan = document.getElementById(id);
+    if (!nhan) return;
+    nhan.classList.add('hien');
+    setTimeout(function () { nhan.classList.remove('hien'); }, 2200);
+  }
+
+  /* Cập nhật lại ô đếm "đã viết mấy/mấy" mà KHÔNG vẽ lại màn hình: vẽ lại là
+     huỷ mọi thẻ textarea, con trỏ nhảy đi và bộ gõ tiếng Việt đang ghép dở thì
+     mất phím — đúng lỗi đã phải vá ở tab danh mục hồ sơ. */
+  function demLaiNoiHam(code, muc) {
+    const ds = NOI_HAM[code + '|' + muc] || [];
+    const o = document.getElementById('nhdem-' + code + '-' + muc);
+    if (!o || !ds.length) return;
+    const daViet = ds.filter(n => String((HT_NH[n.id] || {}).hien_trang || '').trim()).length;
+    o.innerHTML = 'Hiện trạng theo từng yêu cầu của Mức ' + muc
+      + ' — đã viết <b>' + daViet + '/' + ds.length + '</b> nội hàm';
   }
 
   window.renderKdcl = function () {
@@ -311,6 +476,7 @@
       : `<b>Vì sao xếp mức này:</b> Toàn bộ ${soBB} tiêu chí bắt buộc đạt Mức 2, ${kq.clM2}/7 tiêu chí còn lại đạt Mức 2 và không có tiêu chí nào chưa đạt Mức 1.`;
 
     veDanhGiaChung(f);
+    veThongTinBaoCao();
   };
 
   /* ========================================================================
@@ -394,9 +560,16 @@
     }
   };
 
-  /* Cho tệp xuất báo cáo lấy dữ liệu đang có trên màn hình */
+  /* Cho tệp xuất báo cáo lấy dữ liệu đang có trên màn hình.
+
+     noiHam + htNh là thứ tệp xuất dùng để ghép mô tả hiện trạng: mỗi nội hàm
+     một đoạn, mã minh chứng đặt trong ngoặc tròn ở cuối đoạn đó. Trường nào
+     chưa nhập theo nội hàm thì tệp xuất tự quay về htM1/htM2 như cũ. */
   window.duLieuTuDanhGia = function () {
-    return { namHoc: NAM_HOC, tieuChi: TIEU_CHI, dgtc: DGTC, mcTheoTC: MC_THEO_TC, tdg: TDG };
+    return {
+      namHoc: NAM_HOC, tieuChi: TIEU_CHI, dgtc: DGTC, mcTheoTC: MC_THEO_TC, tdg: TDG,
+      noiHam: NOI_HAM, htNh: HT_NH, bc: BC, thieuNoiHam: THIEU_NH
+    };
   };
 
   function cat(s, n) {
@@ -461,6 +634,135 @@
     } catch (e) {
       console.error('[Tự đánh giá] Không lưu mô tả:', e);
       if (typeof notify === 'function') notify('Không lưu được mô tả hiện trạng: ' + (e.message || e));
+    }
+  };
+
+  /* ========================================================================
+     LƯU HIỆN TRẠNG VÀ MINH CHỨNG CỦA MỘT NỘI HÀM
+
+     Cả hai việc ghi vào cùng một dòng (nam_hoc, noi_ham_id), nên luôn gửi ĐỦ
+     hai cột: gửi thiếu một cột thì lệnh ghi đè xoá trắng cột kia — bấm chọn
+     minh chứng là mất câu vừa viết.
+     ======================================================================== */
+  async function luuNH(id, thayDoi) {
+    const cu = HT_NH[id] || {};
+    const ban = Object.assign({
+      nam_hoc: NAM_HOC,
+      noi_ham_id: id,
+      hien_trang: cu.hien_trang || null,
+      ma_minh_chung: cu.ma_minh_chung || []
+    }, thayDoi, {
+      cap_nhat_boi: window.NGUOI_DUNG ? window.NGUOI_DUNG.id : null
+    });
+    const { data, error } = await sb.from('tdg_noi_ham')
+      .upsert(ban, { onConflict: 'nam_hoc,noi_ham_id' }).select().single();
+    if (error) throw error;
+    HT_NH[id] = data;
+    return data;
+  }
+
+  window.luuNoiHam = async function (id, giaTri) {
+    if (!coQuyenCham()) return;
+    const cu = String((HT_NH[id] || {}).hien_trang || '');
+    const moi = String(giaTri || '').trim();
+    if (cu === moi) return;                     // không đổi thì khỏi ghi
+    try {
+      await luuNH(id, { hien_trang: moi || null });
+      nhayDaLuu('luunh-' + id);
+      const o = document.getElementById('nho-' + id);
+      if (o) o.classList.toggle('xong', !!moi);
+      const v = NH_CUA[id];
+      if (v) demLaiNoiHam(v.code, v.muc);
+    } catch (e) {
+      console.error('[Tự đánh giá] Không lưu nội hàm:', e);
+      if (typeof notify === 'function') notify('Không lưu được hiện trạng: ' + (e.message || e));
+    }
+  };
+
+  /* Bấm một mã là bật, bấm lại là tắt. Chỉ đổi lớp trên đúng cái chip vừa bấm,
+     không vẽ lại khối — thầy cô thường bấm chọn minh chứng NGAY SAU khi gõ dở
+     một câu ở ô bên cạnh. */
+  window.batMinhChung = async function (id, ma, chip) {
+    if (!coQuyenCham()) return;
+    const cu = (HT_NH[id] || {}).ma_minh_chung || [];
+    const ds = cu.slice();
+    const i = ds.indexOf(ma);
+    if (i >= 0) ds.splice(i, 1); else ds.push(ma);
+    ds.sort((a, b) => String(a).localeCompare(String(b), 'vi'));
+    try {
+      await luuNH(id, { ma_minh_chung: ds });
+      if (chip) chip.classList.toggle('on', i < 0);
+      nhayDaLuu('luunh-' + id);
+    } catch (e) {
+      console.error('[Tự đánh giá] Không lưu minh chứng:', e);
+      if (typeof notify === 'function') notify('Không lưu được minh chứng: ' + (e.message || e));
+    }
+  };
+
+  /* ========================================================================
+     CÁC MỤC VĂN XUÔI CỦA BÁO CÁO — Biểu 1 Phần I và Phần III
+     ======================================================================== */
+  function veThongTinBaoCao() {
+    let hop = document.getElementById('kdBaoCao');
+    if (!hop) {
+      hop = document.createElement('div');
+      hop.id = 'kdBaoCao';
+      const truoc = document.getElementById('kdDanhGiaChung') || document.getElementById('kdList');
+      if (!truoc) return;
+      truoc.parentNode.insertBefore(hop, truoc.nextSibling);
+    }
+    if (THIEU_BC) {
+      hop.innerHTML = '<div class="legal-note" style="margin-top:20px">'
+        + '<b>Chưa chạy tệp <code>sql/30</code>.</b> Các mục Bối cảnh, Quá trình tự đánh giá, '
+        + 'Khái quát và Đề xuất kiến nghị của Biểu 1 chưa có chỗ lưu, nên bản Word xuất ra '
+        + 'sẽ để trống những mục đó.</div>';
+      return;
+    }
+    const suaDuoc = laQuanTri();
+    hop.innerHTML = `
+      <div class="sub" style="margin-top:22px">
+        <div class="sub-head" onclick="this.parentNode.classList.toggle('open')">
+          <span class="fo">📄</span>
+          <b>Các mục viết bằng lời của báo cáo (Phần I và Phần III)</b>
+          <span class="sub-arrow">▶</span>
+        </div>
+        <div class="sub-body" style="padding:16px">
+          ${NHOM_BC.map(([ten, oS]) => `
+            <div style="margin-bottom:6px">
+              <div style="font-size:13px;font-weight:700;color:var(--navy);margin:12px 0 2px">${ten}</div>
+              ${oS.map(([cot, nhan, goi, motDong]) => `
+                <div class="tdg-ht" style="margin-bottom:13px">
+                  <label>${nhan}
+                    <span class="tdg-luu" id="luu-bc-${cot}">✓ đã lưu</span></label>
+                  <textarea id="bc-${cot}" ${suaDuoc ? '' : 'disabled'}
+                    ${motDong ? 'style="min-height:0;height:44px"' : ''}
+                    placeholder="${suaDuoc ? 'Nhập nội dung…' : 'Chỉ quản trị và ban giám hiệu nhập được'}"
+                    onblur="luuBaoCao('${cot}',this.value)">${chan(BC[cot] || '')}</textarea>
+                  ${goi ? `<div class="goi">${goi}</div>` : ''}
+                </div>`).join('')}
+            </div>`).join('')}
+        </div>
+      </div>`;
+  }
+
+  window.luuBaoCao = async function (cot, giaTri) {
+    if (!laQuanTri()) return;
+    const moi = String(giaTri || '').trim();
+    if (String(BC[cot] || '') === moi) return;
+    /* Gửi đủ mọi cột đang có, y như bảng đánh giá chung: gửi một cột thì lệnh
+       ghi đè đặt các cột khác về mặc định, mất phần đã nhập từ trước. */
+    const ban = { nam_hoc: NAM_HOC, cap_nhat_boi: window.NGUOI_DUNG ? window.NGUOI_DUNG.id : null };
+    NHOM_BC.forEach(([, oS]) => oS.forEach(([c]) => { ban[c] = BC[c] || null; }));
+    ban[cot] = moi || null;
+    try {
+      const { data, error } = await sb.from('bao_cao_tdg')
+        .upsert(ban, { onConflict: 'nam_hoc' }).select().single();
+      if (error) throw error;
+      BC = data;
+      nhayDaLuu('luu-bc-' + cot);
+    } catch (e) {
+      console.error('[Báo cáo TĐG] Không lưu được:', e);
+      if (typeof notify === 'function') notify('Không lưu được: ' + (e.message || e));
     }
   };
 

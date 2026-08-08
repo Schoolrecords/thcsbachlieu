@@ -69,6 +69,35 @@
   .ns-co.doi{background:#fef3c7;color:#92400e}
   .ns-co.y{background:#e0e7ff;color:#3730a3}
   .ns-nho{font-size:12px;color:#64748b}
+
+  /* ---- Sửa trực tiếp trên bảng ---- */
+  .ns-bang td.ns-viec{white-space:nowrap;text-align:center;padding:6px 6px}
+  .ns-nut{background:#fff;border:1px solid #cfd8e6;color:#14306b;border-radius:8px;
+    padding:5px 9px;font-size:14px;line-height:1;min-height:32px;cursor:pointer;font-family:inherit}
+  .ns-nut:hover{background:#eef4ff}
+  .ns-nut[disabled]{opacity:.55;cursor:default}
+  .ns-nut-xoa{color:#b91c1c;border-color:#f0cdc8}
+  .ns-nut-xoa:hover{background:#fdf3f2}
+  .ns-nut-luu{background:#14306b;color:#fff;border-color:#14306b}
+  .ns-nut-luu:hover{filter:brightness(1.2)}
+  /* Dòng đang sửa: nền vàng rất nhạt để mắt bám được giữa 39 dòng */
+  .ns-bang tr.ns-dang-sua td{background:#fffdf2;vertical-align:top}
+  .ns-o{width:100%;padding:5px 7px;border:1.5px solid #cbd5e1;border-radius:7px;
+    font-size:13.2px;font-family:inherit;background:#fff;color:inherit}
+  .ns-o:focus{outline:none;border-color:#2563eb;box-shadow:0 0 0 3px #dbeafe}
+  .ns-o[disabled]{background:#f1f5f9;color:#94a3b8}
+  .ns-o-tt{width:46px;text-align:center;padding:5px 2px}
+  textarea.ns-o{min-height:48px;resize:vertical;line-height:1.5}
+  .ns-quyen{margin-top:5px;font-size:11.6px;color:#64748b;display:flex;align-items:center;gap:5px}
+  .ns-o-nho{font-size:12px;padding:3px 5px;flex:1;min-width:0}
+  .ns-o-gc{margin-top:5px;font-size:12.4px}
+  .ns-xt{font-size:11.8px;line-height:1.5;margin-top:4px}
+  .ns-xt-ok{color:#15803d}
+  .ns-xt-loi{color:#b45309}
+  .ns-bang tr.ns-dong-loi td{background:#fdf3f2;color:#8a3428;font-size:12.8px;line-height:1.6}
+  /* Nháy xanh một nhịp ở dòng vừa lưu — không cần thêm câu thông báo nào */
+  .ns-bang tr.ns-vua td{animation:nsVua 1.7s ease-out}
+  @keyframes nsVua{0%{background:#d6f5e3}70%{background:#eafaf0}100%{background:transparent}}
   `;
   document.head.insertAdjacentHTML('beforeend', '<style>' + css + '</style>');
 
@@ -246,6 +275,17 @@
      ========================================================================== */
   let DS = [], HS_NS = {}, MON = [], NGUOI = [], PC = [];
 
+  /* Chưa chạy sql/24 thì bảng nhan_su_ho_so chưa có: ngày sinh, trình độ và
+     câu nhiệm vụ KHÔNG có chỗ lưu. Nhớ lại đây để ô nhập của ba mục đó khoá
+     luôn — cho nhập rồi báo lỗi lúc bấm Lưu là bắt thầy cô gõ không. */
+  let THIEU_BANG = false, LOI_BANG = '';
+
+  /* Gmail của dòng đang mở ô nhập, hoặc MOI khi đang thêm người mới.
+     Chỉ cho MỘT dòng mở một lúc: mở hai dòng thì thầy cô sửa dòng trên, quên,
+     rồi bấm Lưu ở dòng dưới — phần vừa gõ mất không dấu vết. */
+  const MOI = '__moi__';
+  let DANG_SUA = null;
+
   async function tai() {
     const s = sb();
     const [mtk, nshs, mh, nd, pc] = await Promise.all([
@@ -269,7 +309,22 @@
     PC = pc.data || [];
     HS_NS = {};
     if (!nshs.error) (nshs.data || []).forEach(r => { HS_NS[r.email] = r; });
-    return { thieuBang: !!nshs.error, loiBang: nshs.error ? nshs.error.message : '' };
+    THIEU_BANG = !!nshs.error;
+    LOI_BANG = nshs.error ? nshs.error.message : '';
+    return { thieuBang: THIEU_BANG, loiBang: LOI_BANG };
+  }
+
+  /* Thứ tự hiện bảng: theo số TT trong tệp Excel của nhà trường trước, ai chưa
+     có số thì xếp theo tên. Dùng chung cho cả bảng và tệp tải xuống để hai bên
+     không bao giờ lệch dòng nhau. */
+  function sapXep() {
+    return DS.slice().sort((a, b) => {
+      const sa = (HS_NS[a.email] || {}).so_tt, sbb = (HS_NS[b.email] || {}).so_tt;
+      if (sa != null && sbb != null) return sa - sbb;
+      if (sa != null) return -1;
+      if (sbb != null) return 1;
+      return String(a.ho_ten || '').localeCompare(String(b.ho_ten || ''), 'vi');
+    });
   }
 
   /* ==========================================================================
@@ -290,24 +345,48 @@
       return;
     }
     hop.innerHTML = '<div class="qt-trong">Đang tải danh sách…</div>';
-    let tt;
-    try { tt = await tai(); }
+    try { await tai(); }
     catch (e) {
       hop.innerHTML = '<div class="ns-canh"><b>Chưa đọc được danh sách.</b><br>'
         + 'Thầy cô đăng nhập lại. Nếu vẫn vậy thì báo quản trị.<br>'
         + '<span class="ns-nho">Chi tiết: ' + chan(e.message) + '</span></div>';
       return;
     }
+    DANG_SUA = null;
+    veBang(hop);
+  }
 
+  /* Cột la_ky_thuat có từ tệp sql/34. Chưa chạy tệp đó thì cột chưa tồn tại —
+     dò một lần rồi mới dùng, chứ gửi cột không có là máy chủ từ chối cả lệnh ghi. */
+  function coCotKyThuat() {
+    return DS.length > 0 && Object.prototype.hasOwnProperty.call(DS[0], 'la_ky_thuat');
+  }
+  function laKyThuat(d) { return !!(d && d.la_ky_thuat); }
+
+  function demChu() {
+    const chuaVao = DS.filter(d => !NGUOI.some(n => sanh(n.email) === sanh(d.email))).length;
+    const kt = DS.filter(laKyThuat).length;
+    /* Tách riêng số người trong biên chế: đó mới là con số in vào báo cáo gửi Sở
+       (bốn nhóm của biểu mẫu Thông tư 57 cộng lại phải bằng số này). */
+    return 'Đang có <b>' + DS.length + '</b> dòng trong danh sách'
+      + (kt ? ' — <b>' + (DS.length - kt) + '</b> người trong biên chế và <b>' + kt
+            + '</b> tài khoản kỹ thuật' : '')
+      + ' · <b>' + (DS.length - chuaVao) + '</b> đã đăng nhập ít nhất một lần'
+      + (chuaVao ? ' · <b>' + chuaVao + '</b> chưa vào lần nào' : '') + '.';
+  }
+
+  function veBang(hop) {
+    HOP = hop;
     let html = '';
-    if (tt.thieuBang) {
+    if (THIEU_BANG) {
       html += '<div class="ns-canh ns-vang"><b>Chưa chạy tệp <code>sql/24</code>.</b><br>'
-        + 'Danh sách vẫn xem và sửa được, nhưng <b>Ngày sinh</b> và <b>Trình độ chuyên môn</b> '
-        + 'chưa có chỗ lưu nên sẽ không ghi được.<br>'
-        + '<span class="ns-nho">' + chan(tt.loiBang) + '</span></div>';
+        + 'Danh sách vẫn xem và sửa được, nhưng <b>Ngày sinh</b>, <b>Trình độ</b> và '
+        + '<b>Nhiệm vụ phân công</b> chưa có chỗ lưu nên ba ô đó khoá lại.<br>'
+        + '<span class="ns-nho">' + chan(LOI_BANG) + '</span></div>';
     }
 
     html += '<div class="ns-thanh">'
+      + '<button class="btn btn-out" id="nsThem">➕ Thêm người</button>'
       + '<button class="btn btn-out" id="nsMau">⬇ Tải mẫu danh sách</button>'
       + '<button class="btn btn-pri" id="nsLen">⬆ Tải danh sách lên</button>'
       + '<button class="btn btn-out" id="nsDongBo">🔄 Đồng bộ vai trò sang tài khoản</button>'
@@ -321,62 +400,534 @@
       + '· <b>Gán phân công</b> tách câu "Nhiệm vụ" thành từng dòng lớp–môn, '
       + 'đó mới là thứ dùng để giáo viên thấy đúng lớp mình dạy.</div>';
 
-    const chuaVao = DS.filter(d => !NGUOI.some(n => sanh(n.email) === sanh(d.email))).length;
-    html += '<div class="ns-nho" style="margin:8px 0 12px">Đang có <b>' + DS.length
-      + '</b> người trong danh sách · <b>' + (DS.length - chuaVao) + '</b> đã đăng nhập ít nhất một lần'
-      + (chuaVao ? ' · <b>' + chuaVao + '</b> chưa vào lần nào' : '') + '.</div>';
+    html += '<div class="ns-nho" id="nsDem" style="margin:8px 0 12px">' + demChu() + '</div>';
 
     html += '<div class="tbl-wrap"><table class="ns-bang"><thead><tr>'
       + '<th style="width:42px">TT</th><th>Họ và tên</th><th style="width:96px">Ngày sinh</th>'
-      + '<th style="width:150px">Trình độ</th><th style="width:120px">Chức vụ</th>'
+      + '<th style="width:150px">Trình độ</th><th style="width:130px">Chức vụ</th>'
       + '<th>Nhiệm vụ phân công</th><th style="width:180px">Gmail</th>'
-      + '<th style="width:110px">Tài khoản</th></tr></thead><tbody>';
-
-    DS.slice().sort((a, b) => {
-      const sa = (HS_NS[a.email] || {}).so_tt, sbb = (HS_NS[b.email] || {}).so_tt;
-      if (sa != null && sbb != null) return sa - sbb;
-      if (sa != null) return -1;
-      if (sbb != null) return 1;
-      return String(a.ho_ten || '').localeCompare(String(b.ho_ten || ''), 'vi');
-    }).forEach((d, i) => {
-      const r = HS_NS[d.email] || {};
-      const tk = NGUOI.find(n => sanh(n.email) === sanh(d.email));
-      html += '<tr><td>' + (r.so_tt != null ? r.so_tt : i + 1) + '</td>'
-        + '<td><b>' + chan(d.ho_ten || '—') + '</b></td>'
-        + '<td>' + chan(ngayVN(r.ngay_sinh) || '—') + '</td>'
-        + '<td>' + chan(r.trinh_do || '—') + '</td>'
-        + '<td>' + chan(d.chuc_vu || '—') + '<br><span class="ns-nho">'
-          + chan(TEN_VAI[d.vai_tro] || d.vai_tro) + '</span></td>'
-        + '<td>' + chan(r.nhiem_vu || '—') + '</td>'
-        + '<td style="word-break:break-all">' + chan(d.email) + '</td>'
-        + '<td>' + (tk
-            ? (sanh(tk.vai_tro) === sanh(d.vai_tro)
-                ? '<span class="ns-co y">khớp</span>'
-                : '<span class="ns-co doi">lệch vai trò</span>')
-            : '<span class="ns-nho">chưa vào</span>') + '</td></tr>';
-    });
-    html += '</tbody></table></div>';
+      + '<th style="width:110px">Tài khoản</th><th style="width:84px"></th>'
+      + '</tr></thead><tbody id="nsThan"></tbody></table></div>';
     hop.innerHTML = html;
 
+    hop.querySelector('#nsThem').addEventListener('click', () => moSua(hop, MOI));
     hop.querySelector('#nsMau').addEventListener('click', taiMau);
     hop.querySelector('#nsLen').addEventListener('click', chonTep);
     hop.querySelector('#nsDongBo').addEventListener('click', () => dongBoVaiTro(hop));
     hop.querySelector('#nsGanPC').addEventListener('click', () => ganLaiPhanCong(hop));
+    veThan(hop);
+  }
+
+  /* Chỉ vẽ lại phần thân bảng, GIỮ NGUYÊN thanh nút và ô đếm phía trên: vẽ lại
+     cả khối thì trang nhảy về đầu, thầy cô vừa sửa dòng thứ 30 phải cuộn lại
+     từ đầu để xem kết quả. */
+  function veThan(hop, nhay) {
+    const tb = hop.querySelector('#nsThan');
+    if (!tb) { veBang(hop); return; }
+
+    let h = (DANG_SUA === MOI) ? dongSua(null) : '';
+    h += sapXep().map((d, i) =>
+      (DANG_SUA && DANG_SUA === d.email) ? dongSua(d) : dongXem(d, i)).join('');
+    tb.innerHTML = h;
+
+    const dem = hop.querySelector('#nsDem');
+    if (dem) dem.innerHTML = demChu();
+
+    ganDong(hop);
+    if (nhay) {
+      const tr = tb.querySelector('tr[data-dong="' + nhay + '"]');
+      if (tr) tr.classList.add('ns-vua');
+    }
+  }
+
+  /* Ô cột "Tài khoản": chữ "lệch vai trò" là dấu hiệu phải bấm Đồng bộ */
+  function oTaiKhoan(d) {
+    const tk = NGUOI.find(n => sanh(n.email) === sanh(d.email));
+    if (!tk) return '<span class="ns-nho">chưa vào</span>';
+    return sanh(tk.vai_tro) === sanh(d.vai_tro)
+      ? '<span class="ns-co y">khớp</span>'
+      : '<span class="ns-co doi">lệch vai trò</span>';
+  }
+
+  function dongXem(d, i) {
+    const r = HS_NS[d.email] || {};
+    return '<tr data-dong="' + chan(d.email) + '">'
+      + '<td>' + (r.so_tt != null ? r.so_tt : i + 1) + '</td>'
+      + '<td><b>' + chan(d.ho_ten || '—') + '</b>'
+        + (laKyThuat(d)
+            ? '<div><span class="ns-co doi">tài khoản kỹ thuật</span></div>' : '') + '</td>'
+      + '<td>' + chan(ngayVN(r.ngay_sinh) || '—') + '</td>'
+      + '<td>' + chan(r.trinh_do || '—') + '</td>'
+      + '<td>' + chan(d.chuc_vu || '—') + '<br><span class="ns-nho">'
+        + chan(TEN_VAI[d.vai_tro] || d.vai_tro) + '</span></td>'
+      + '<td>' + chan(r.nhiem_vu || '—')
+        + (d.ghi_chu ? '<div class="ns-nho">' + chan(d.ghi_chu) + '</div>' : '') + '</td>'
+      + '<td style="word-break:break-all">' + chan(d.email) + '</td>'
+      + '<td>' + oTaiKhoan(d) + '</td>'
+      + '<td class="ns-viec">'
+        + '<button class="ns-nut" data-sua="' + chan(d.email) + '" title="Sửa dòng này">✏</button> '
+        + '<button class="ns-nut ns-nut-xoa" data-xoa="' + chan(d.email)
+          + '" title="Xoá khỏi danh sách">🗑</button>'
+      + '</td></tr>';
   }
 
   function sanh(s) { return String(s || '').trim().toLowerCase(); }
 
   /* ==========================================================================
+     SỬA TRỰC TIẾP MỘT DÒNG TRONG BẢNG
+
+     Vì sao cần, dù đã có đường Excel: sửa một chữ trong tên, thêm một người
+     mới vào giữa năm, ghi ngày sinh còn thiếu — làm cả tệp Excel cho một ô là
+     vô lý, mà nạp tệp lại chạm vào cả 39 dòng nên rủi ro hơn hẳn.
+
+     HAI CHỖ KHÁC ĐƯỜNG EXCEL, PHẢI GIỮ ĐÚNG
+
+     · GMAIL LÀ KHOÁ, KHÔNG SỬA. Cột email là khoá ghép của hai bảng và là thứ
+       Google trả về lúc đăng nhập. Đổi email tại đây thì bản ghi ngày sinh đi
+       theo (khoá ngoại on update cascade) nhưng tài khoản đã đăng nhập thì
+       KHÔNG — người đó vào hệ thống hoá thành người lạ, mất hết quyền. Sai
+       Gmail thì xoá dòng rồi thêm lại, thấy rõ mình đang làm gì.
+
+     · QUYỀN HIỆN THÀNH Ô RIÊNG, KHÔNG SUY LẶNG LẼ. Đường Excel phải đoán quyền
+       từ chữ chức vụ vì tệp chỉ có một cột. Ở đây thì hiện hẳn ô "Quyền": chọn
+       chức vụ thì quyền tự nhảy theo cho nhanh, nhưng thầy cô sửa lại được và
+       nhìn thấy trước khi bấm Lưu. Nhờ vậy hai thầy tổ trưởng đang ghi chức vụ
+       "Giáo viên" không bao giờ bị hạ quyền vì một lần bấm Lưu.
+     ========================================================================== */
+
+  /* Danh sách chọn cho ô Chức vụ: 6 chức vụ chuẩn, cộng những chức vụ trường
+     đang thật sự dùng mà không nằm trong 6 giá trị đó — "Kế toán", "Nhân viên
+     thư viện", "Nhân viên thiết bị", "Nhân viên y tế", "Quản trị hệ thống".
+     Không gom vào thì mở dòng của cô thư viện ra là ô chức vụ nhảy về trống,
+     bấm Lưu một cái mất luôn chức vụ đang đúng. */
+  function dsChucVu(cvHienTai) {
+    const chuan = CHUC_VU.map(x => x.ten);
+    const khac = [];
+    const daCo = t => chuan.concat(khac).some(x => khongDau(x) === khongDau(t));
+    DS.forEach(x => {
+      const c = String(x.chuc_vu || '').trim();
+      if (c && !daCo(c)) khac.push(c);
+    });
+    const cv = String(cvHienTai || '').trim();
+    if (cv && !daCo(cv)) khac.push(cv);
+    khac.sort((a, b) => a.localeCompare(b, 'vi'));
+    return { chuan: chuan, khac: khac };
+  }
+
+  /* Quyền gợi ý khi đổi chức vụ — cùng quy tắc với đường Excel:
+     giữ nguyên quyền cũ nếu chức vụ không đổi hoặc để trống. */
+  function suyVai(cv, d) {
+    const c = String(cv || '').trim();
+    const cuVai = d ? (d.vai_tro || 'giao_vien') : 'giao_vien';
+    if (!c) return cuVai;
+    if (d && khongDau(c) === khongDau(d.chuc_vu || '')) return cuVai;
+    const khop = CHUC_VU.find(x => khongDau(x.ten) === khongDau(c));
+    return khop ? khop.vai : cuVai;
+  }
+
+  function dongSua(d) {
+    const moi = !d;
+    const key = moi ? MOI : d.email;
+    const r = moi ? {} : (HS_NS[d.email] || {});
+    const cv = moi ? '' : String(d.chuc_vu || '').trim();
+    const vai = moi ? 'giao_vien' : (d.vai_tro || 'giao_vien');
+    const ds = dsChucVu(cv);
+    const kho = THIEU_BANG ? ' disabled' : '';
+    const oChon = t => '<option value="' + chan(t) + '"'
+      + (cv && khongDau(t) === khongDau(cv) ? ' selected' : '') + '>' + chan(t) + '</option>';
+
+    return '<tr class="ns-dang-sua" data-dong="' + chan(key) + '">'
+      /* Số TT cũng nằm ở bảng nhan_su_ho_so nên khoá chung với ba ô kia — cho
+         gõ rồi lặng lẽ không lưu là tệ hơn khoá hẳn. */
+      + '<td><input class="ns-o ns-o-tt" data-f="so_tt" type="number" min="1" value="'
+        + (r.so_tt != null ? r.so_tt : '') + '"' + kho + '></td>'
+      + '<td><input class="ns-o" data-f="ho_ten" value="' + chan(moi ? '' : (d.ho_ten || ''))
+        + '" placeholder="Nguyễn Văn A"></td>'
+      + '<td><input class="ns-o" data-f="ngay_sinh" value="' + chan(ngayVN(r.ngay_sinh))
+        + '" placeholder="20/05/1980"' + kho + '></td>'
+      + '<td><input class="ns-o" data-f="trinh_do" value="' + chan(r.trinh_do || '')
+        + '" placeholder="Đại học Sư phạm Toán"' + kho + '></td>'
+      + '<td><select class="ns-o" data-f="chuc_vu">'
+        + '<option value="">— chưa ghi —</option>'
+        + '<optgroup label="Chức vụ chuẩn">' + ds.chuan.map(oChon).join('') + '</optgroup>'
+        + (ds.khac.length
+            ? '<optgroup label="Chức vụ khác đang dùng">' + ds.khac.map(oChon).join('') + '</optgroup>'
+            : '')
+        + '</select>'
+        + '<div class="ns-quyen">Quyền <select class="ns-o ns-o-nho" data-f="vai_tro" data-tay="0">'
+        + Object.keys(TEN_VAI).map(v => '<option value="' + v + '"'
+            + (v === vai ? ' selected' : '') + '>' + chan(TEN_VAI[v]) + '</option>').join('')
+        + '</select></div></td>'
+      + '<td><textarea class="ns-o" data-f="nhiem_vu" rows="2"'
+        + ' placeholder="Dạy Toán 9A, 9B; Chủ nhiệm 9A"' + kho + '>'
+        + chan(r.nhiem_vu || '') + '</textarea>'
+        + '<div class="ns-xt"></div>'
+        + '<input class="ns-o ns-o-gc" data-f="ghi_chu" value="'
+          + chan(moi ? '' : (d.ghi_chu || '')) + '" placeholder="Ghi chú (không bắt buộc)">'
+        /* Đánh dấu tài khoản kỹ thuật: dòng này vẫn vào được hệ thống nhưng
+           KHÔNG tính vào số lượng CBGV-NV của báo cáo gửi Sở. Chỉ hiện khi đã
+           chạy sql/34, vì trước đó cột chưa tồn tại. */
+        + (coCotKyThuat()
+            ? '<label class="ns-nho" style="display:block;margin-top:6px;cursor:pointer">'
+              + '<input type="checkbox" data-f="la_ky_thuat"'
+              + (laKyThuat(d) ? ' checked' : '') + '> '
+              + 'Tài khoản kỹ thuật — không tính vào số lượng CBGV-NV</label>'
+            : '')
+        + '</td>'
+      + '<td>' + (moi
+          ? '<input class="ns-o" data-f="email" placeholder="ten@gmail.com">'
+            + '<div class="ns-nho">Gmail thật của người đó — dùng để đăng nhập</div>'
+          : '<span style="word-break:break-all">' + chan(d.email) + '</span>'
+            + '<div class="ns-nho">khoá, không sửa</div>') + '</td>'
+      + '<td>' + (moi ? '<span class="ns-nho">thêm mới</span>' : oTaiKhoan(d)) + '</td>'
+      + '<td class="ns-viec">'
+        + '<button class="ns-nut ns-nut-luu" data-luu="' + chan(key) + '" title="Lưu dòng này">💾</button> '
+        + '<button class="ns-nut" data-huy="1" title="Bỏ, không lưu">✕</button>'
+      + '</td></tr>';
+  }
+
+  function ganDong(hop) {
+    const tb = hop.querySelector('#nsThan');
+    if (!tb) return;
+    tb.querySelectorAll('[data-sua]').forEach(b =>
+      b.addEventListener('click', () => moSua(hop, b.dataset.sua)));
+    tb.querySelectorAll('[data-xoa]').forEach(b =>
+      b.addEventListener('click', () => xoaNguoi(hop, b.dataset.xoa)));
+    tb.querySelectorAll('[data-luu]').forEach(b =>
+      b.addEventListener('click', () => luuDong(hop, b.dataset.luu)));
+    tb.querySelectorAll('[data-huy]').forEach(b =>
+      b.addEventListener('click', () => dongSuaLai(hop, true)));
+    const tr = tb.querySelector('tr.ns-dang-sua');
+    if (tr) ganODong(hop, tr);
+  }
+
+  /* Xem trước ngay dưới ô Nhiệm vụ: gõ tới đâu thấy máy tách ra lớp–môn tới
+     đó. Chính chỗ này giúp thầy cô không phải nạp lại tệp mới biết câu mình
+     viết máy có đọc được hay không. */
+  function veXemTach(xt, cau) {
+    if (!String(cau || '').trim()) {
+      xt.innerHTML = '<span class="ns-nho">Ví dụ: Dạy Toán 9A, 9B; Chủ nhiệm 9A</span>';
+      return;
+    }
+    const t = tachNhiemVu(cau, MON);
+    let h = '';
+    if (t.ra.length) {
+      h += '<span class="ns-xt-ok">→ ' + t.ra.map(x => chan(x.lop)
+        + (x.cn ? ' chủ nhiệm' : ' · ' + chan(x.tenMon))).join(' | ') + '</span>';
+    }
+    if (t.loi.length) {
+      h += (h ? '<br>' : '') + '<span class="ns-xt-loi">⚠ ' + t.loi.map(chan).join('<br>⚠ ') + '</span>';
+    }
+    xt.innerHTML = h;
+  }
+
+  function ganODong(hop, tr) {
+    const key = tr.dataset.dong;
+    const d = key === MOI ? null : DS.find(x => x.email === key);
+
+    const scv = tr.querySelector('[data-f="chuc_vu"]');
+    const svai = tr.querySelector('[data-f="vai_tro"]');
+    if (scv && svai) {
+      scv.addEventListener('change', function () {
+        /* Thầy cô đã tự chọn quyền thì thôi, không giành lại quyền quyết định */
+        if (svai.dataset.tay === '1') return;
+        svai.value = suyVai(this.value, d);
+      });
+      svai.addEventListener('change', function () { this.dataset.tay = '1'; });
+    }
+
+    const ta = tr.querySelector('[data-f="nhiem_vu"]');
+    const xt = tr.querySelector('.ns-xt');
+    if (ta && xt) {
+      let hen = null;
+      const lam = () => veXemTach(xt, ta.value);
+      lam();
+      ta.addEventListener('input', () => { clearTimeout(hen); hen = setTimeout(lam, 250); });
+    }
+
+    /* Enter ở ô một dòng = Lưu. Không gắn cho ô Nhiệm vụ vì ở đó Enter phải là
+       xuống dòng — thầy cô hay viết mỗi nhiệm vụ một dòng. */
+    tr.querySelectorAll('input.ns-o').forEach(o => {
+      o.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') { e.preventDefault(); luuDong(hop, key); }
+      });
+    });
+    /* Esc = bỏ. Chặn lan ra ngoài kẻo trúng phím tắt nào khác của trang. */
+    tr.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); dongSuaLai(hop, true); }
+    });
+
+    /* Con trỏ vào ô đầu cần gõ: dòng thêm mới thì là Gmail (khoá, thiếu là
+       không lưu được), dòng sửa sẵn thì là họ và tên. */
+    const o1 = tr.querySelector(key === MOI ? '[data-f="email"]' : '[data-f="ho_ten"]');
+    if (o1) o1.focus();
+    tr.scrollIntoView({ block: 'nearest' });
+  }
+
+  /* Đọc những gì đang nhập trong dòng, và bản gốc để so xem có đổi gì không */
+  function docO(tr) {
+    const g = f => {
+      const o = tr.querySelector('[data-f="' + f + '"]');
+      return o ? String(o.value == null ? '' : o.value).trim() : '';
+    };
+    const kt = tr.querySelector('[data-f="la_ky_thuat"]');
+    return {
+      so_tt: g('so_tt'), ho_ten: g('ho_ten'), ngay_sinh: g('ngay_sinh'),
+      trinh_do: g('trinh_do'), chuc_vu: g('chuc_vu'), vai_tro: g('vai_tro'),
+      nhiem_vu: g('nhiem_vu'), ghi_chu: g('ghi_chu'), email: g('email'),
+      /* Ô đánh dấu là checkbox nên đọc .checked, không đọc .value */
+      la_ky_thuat: kt ? (kt.checked ? '1' : '0') : ''
+    };
+  }
+  function gocO(d) {
+    if (!d) {
+      return { so_tt: '', ho_ten: '', ngay_sinh: '', trinh_do: '', chuc_vu: '',
+               vai_tro: 'giao_vien', nhiem_vu: '', ghi_chu: '', email: '',
+               la_ky_thuat: coCotKyThuat() ? '0' : '' };
+    }
+    const r = HS_NS[d.email] || {};
+    return {
+      so_tt: r.so_tt != null ? String(r.so_tt) : '',
+      ho_ten: d.ho_ten || '', ngay_sinh: ngayVN(r.ngay_sinh), trinh_do: r.trinh_do || '',
+      chuc_vu: String(d.chuc_vu || '').trim(), vai_tro: d.vai_tro || 'giao_vien',
+      nhiem_vu: r.nhiem_vu || '', ghi_chu: d.ghi_chu || '', email: '',
+      la_ky_thuat: coCotKyThuat() ? (laKyThuat(d) ? '1' : '0') : ''
+    };
+  }
+  function coDoi(tr, d) {
+    const a = docO(tr), b = gocO(d);
+    return Object.keys(b).some(k => String(a[k] || '') !== String(b[k] || ''));
+  }
+
+  async function moSua(hop, key) {
+    if (DANG_SUA === key) return;
+    if (DANG_SUA && !await dongSuaLai(hop, true)) return;
+    DANG_SUA = key;
+    veThan(hop);
+  }
+
+  /* Đóng dòng đang sửa. Có gì chưa lưu thì HỎI — bấm ✏ dòng khác mà mất im
+     lặng phần vừa gõ là kiểu mất dữ liệu khó chịu nhất, không ai biết vì sao. */
+  async function dongSuaLai(hop, hoi) {
+    if (!DANG_SUA) return true;
+    const tr = hop.querySelector('tr.ns-dang-sua');
+    const d = DANG_SUA === MOI ? null : DS.find(x => x.email === DANG_SUA);
+    if (hoi && tr && coDoi(tr, d)) {
+      const ten = d ? (d.ho_ten || d.email) : 'người mới đang thêm';
+      if (!await xacNhan('Dòng "' + ten + '" đang sửa mà chưa lưu.\n\nBỏ những gì vừa nhập chứ?',
+          { tieuDe: 'Chưa lưu', nutOk: 'Bỏ thay đổi', nutHuy: 'Quay lại sửa tiếp' })) return false;
+    }
+    DANG_SUA = null;
+    veThan(hop);
+    return true;
+  }
+
+  function xoaLoiDong(hop) {
+    hop.querySelectorAll('tr.ns-dong-loi').forEach(x => x.parentNode.removeChild(x));
+  }
+  /* Lỗi hiện ngay dưới dòng đang sửa, không đẩy ra hộp thông báo: thầy cô cần
+     thấy lỗi CẠNH ô sai để sửa, chứ không phải đọc rồi tự đi tìm. */
+  function baoLoiDong(hop, html) {
+    xoaLoiDong(hop);
+    const tr = hop.querySelector('tr.ns-dang-sua');
+    if (!tr) { bao(String(html).replace(/<[^>]+>/g, ' ')); return; }
+    tr.insertAdjacentHTML('afterend',
+      '<tr class="ns-dong-loi"><td colspan="9">' + html + '</td></tr>');
+    const nut = tr.querySelector('[data-luu]');
+    if (nut) { nut.disabled = false; nut.textContent = '💾'; }
+  }
+
+  /* ==========================================================================
+     LƯU MỘT DÒNG
+
+     Thứ tự ghi bắt buộc: moi_tai_khoan TRƯỚC, nhan_su_ho_so SAU — bảng sau có
+     khoá ngoại trỏ vào email của bảng trước, ghi ngược là máy chủ từ chối.
+
+     Mỗi lệnh ghi đều .select() để ĐẾM số dòng thật sự đổi. Không đếm thì RLS
+     lọc âm thầm: câu lệnh trả về "không lỗi" nhưng 0 dòng đổi, màn hình reo
+     "Đã lưu" trong khi cơ sở dữ liệu không nhận gì cả.
+     ========================================================================== */
+  async function luuDong(hop, key) {
+    const tr = hop.querySelector('tr.ns-dang-sua');
+    if (!tr) return;
+    const moi = key === MOI;
+    const d = moi ? null : DS.find(x => x.email === key);
+    if (!moi && !d) {
+      baoLoiDong(hop, 'Không còn thấy dòng này trong danh sách. Thầy cô mở lại tab rồi thử lại.');
+      return;
+    }
+    const v = docO(tr);
+    const nvCu = moi ? '' : String((HS_NS[key] || {}).nhiem_vu || '').trim();
+
+    /* ---- Kiểm hết rồi mới ghi. Ghi nửa vời là dòng có tên mà mất ngày sinh ---- */
+    const loi = [];
+    if (!v.ho_ten) loi.push('Chưa có họ và tên.');
+    const mail = moi ? sanh(v.email) : d.email;
+    if (moi) {
+      if (!mail) loi.push('Chưa có địa chỉ Gmail — đây là khoá của mỗi người, không được để trống.');
+      else if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(mail)) {
+        loi.push('"' + chan(v.email) + '" không phải địa chỉ thư điện tử.');
+      } else if (DS.some(x => sanh(x.email) === mail)) {
+        const t = DS.find(x => sanh(x.email) === mail);
+        loi.push('Địa chỉ ' + chan(mail) + ' đã có trong danh sách ('
+          + chan(t.ho_ten || '') + ') — sửa ở dòng đó, đừng thêm dòng thứ hai.');
+      }
+    }
+    const ns = chuanNgay(v.ngay_sinh);
+    if (!ns.ok) loi.push('Ngày sinh "' + chan(v.ngay_sinh) + '" không đọc được — ghi dạng 20/05/1980.');
+    const soTt = v.so_tt === '' ? null : parseInt(v.so_tt, 10);
+    if (soTt != null && (isNaN(soTt) || soTt < 0)) loi.push('Số TT phải là số.');
+    if (loi.length) { baoLoiDong(hop, loi.join('<br>')); return; }
+
+    xoaLoiDong(hop);
+    const nut = tr.querySelector('[data-luu]');
+    if (nut) { nut.disabled = true; nut.textContent = '…'; }
+    const s = sb();
+    const tin = [];
+
+    /* 1. Danh sách mời — ai được vào hệ thống, ở quyền gì */
+    const cot = {
+      ho_ten: v.ho_ten,
+      chuc_vu: v.chuc_vu || null,
+      vai_tro: v.vai_tro || 'giao_vien',
+      ghi_chu: v.ghi_chu || null
+    };
+    /* Chỉ gửi cột này khi nó thật sự tồn tại. Chưa chạy sql/34 mà gửi thì máy
+       chủ từ chối CẢ lệnh ghi — mất luôn phần tên, chức vụ vừa sửa. */
+    if (coCotKyThuat()) cot.la_ky_thuat = (v.la_ky_thuat === '1');
+    const a = moi
+      ? await s.from('moi_tai_khoan').insert(Object.assign({ email: mail }, cot)).select('*')
+      : await s.from('moi_tai_khoan').update(cot).eq('id', d.id).select('*');
+    if (a.error) {
+      baoLoiDong(hop, '<b>Chưa lưu được.</b><br>' + chan(a.error.message)
+        + (String(a.error.code) === '23505'
+            ? '<br>Địa chỉ Gmail này đã có người dùng trong danh sách.' : ''));
+      return;
+    }
+    if (!a.data || !a.data.length) {
+      baoLoiDong(hop, '<b>Máy chủ nhận lệnh nhưng không dòng nào đổi.</b><br>'
+        + 'Thường là tài khoản đang dùng không còn quyền quản trị, hoặc dòng đã bị '
+        + 'người khác xoá. Thầy cô mở lại tab rồi thử lại.');
+      return;
+    }
+    const dong = a.data[0];
+
+    /* 2. Ngày sinh, trình độ, câu nhiệm vụ, số TT — bảng khoá riêng */
+    if (!THIEU_BANG) {
+      const b = await s.from('nhan_su_ho_so').upsert({
+        email: dong.email, so_tt: soTt, ngay_sinh: ns.gt,
+        trinh_do: v.trinh_do || null, nhiem_vu: v.nhiem_vu || null,
+        cap_nhat_luc: new Date().toISOString(),
+        cap_nhat_boi: window.NGUOI_DUNG ? window.NGUOI_DUNG.id : null
+      }, { onConflict: 'email' }).select('email');
+      if (b.error) {
+        tin.push('⚠ Ngày sinh, trình độ và câu nhiệm vụ CHƯA lưu được: ' + b.error.message);
+      } else if (!b.data || !b.data.length) {
+        tin.push('⚠ Ngày sinh, trình độ và câu nhiệm vụ CHƯA lưu được — máy chủ không cho ghi.');
+      } else {
+        HS_NS[dong.email] = {
+          email: dong.email, so_tt: soTt, ngay_sinh: ns.gt,
+          trinh_do: v.trinh_do || null, nhiem_vu: v.nhiem_vu || null
+        };
+      }
+    }
+
+    /* 3. Phân công lớp–môn — CHỈ chạm tới khi câu nhiệm vụ thật sự đổi.
+       Chạy mỗi lần Lưu thì sửa một chữ trong tên cũng xoá rồi ghi lại phân
+       công của người đó, vô cớ đụng vào thứ đang đúng. */
+    if (!THIEU_BANG && v.nhiem_vu !== nvCu) {
+      if (v.nhiem_vu) {
+        const t = tachNhiemVu(v.nhiem_vu, MON);
+        if (t.ra.length) {
+          tin.push(await ganPhanCong(t.ra.map(x =>
+            Object.assign({ email: sanh(dong.email), ho_ten: v.ho_ten }, x))));
+        } else {
+          tin.push('Câu nhiệm vụ chưa tách được dòng lớp–môn nào nên phân công giữ nguyên.');
+        }
+      } else {
+        /* Câu nhiệm vụ bị xoá trắng = người này không còn dạy lớp nào. Phải dọn
+           phân công, không dọn thì họ vẫn xem được lớp cũ — rò rỉ quyền thật. */
+        const tk = NGUOI.find(n => sanh(n.email) === sanh(dong.email));
+        if (tk) {
+          const x = await s.from('phan_cong_day').delete()
+            .eq('nam_hoc', CAU_HINH.NAM_HOC).eq('nguoi_dung_id', tk.id).select('id');
+          if (x.error) tin.push('⚠ Chưa dọn được phân công cũ: ' + x.error.message);
+          else if (x.data && x.data.length) {
+            tin.push('Đã dọn ' + x.data.length + ' dòng phân công cũ vì câu nhiệm vụ để trống.');
+          }
+        }
+      }
+      const pc = await s.from('phan_cong_day').select('*').eq('nam_hoc', CAU_HINH.NAM_HOC);
+      if (!pc.error) PC = pc.data || [];
+    }
+
+    /* 4. Cập nhật bản trong máy rồi vẽ lại — không tải lại cả tab cho khỏi nháy */
+    if (moi) DS.push(dong); else Object.assign(d, dong);
+
+    const tk2 = NGUOI.find(n => sanh(n.email) === sanh(dong.email));
+    if (tk2 && sanh(tk2.vai_tro) !== sanh(dong.vai_tro)) {
+      tin.push('Quyền trong danh sách nay là ' + (TEN_VAI[dong.vai_tro] || dong.vai_tro)
+        + ' nhưng tài khoản thật vẫn là ' + (TEN_VAI[tk2.vai_tro] || tk2.vai_tro)
+        + ' — bấm "Đồng bộ vai trò sang tài khoản" mới đổi được quyền thật.');
+    }
+
+    DANG_SUA = null;
+    veThan(hop, dong.email);
+
+    const dau = (moi ? 'Đã thêm ' : 'Đã lưu ') + v.ho_ten + '.';
+    if (tin.some(x => String(x).indexOf('⚠') === 0) && typeof baoTin === 'function') {
+      baoTin(dau + '\n\n' + tin.join('\n'),
+        { tieuDe: 'Lưu xong nhưng có việc cần biết', nguyHiem: true });
+    } else {
+      bao(dau + (tin.length ? ' ' + tin.join(' ') : ''));
+    }
+  }
+
+  /* ==========================================================================
+     XOÁ MỘT NGƯỜI KHỎI DANH SÁCH
+
+     Xoá ở đây là xoá khỏi DANH SÁCH MỜI. Bản ghi ngày sinh, trình độ, nhiệm vụ
+     đi theo (khoá ngoại on delete cascade của sql/24).
+
+     KHÔNG đi theo: tài khoản đã đăng nhập và các dòng phân công lớp–môn. Nói
+     thẳng chỗ đó ra trong câu hỏi, vì tưởng xoá là cắt hết quyền mới là nguy —
+     người đã nghỉ vẫn đăng nhập vào xem được hồ sơ.
+     ========================================================================== */
+  async function xoaNguoi(hop, key) {
+    const d = DS.find(x => x.email === key);
+    if (!d) return;
+    if (DANG_SUA && !await dongSuaLai(hop, true)) return;
+
+    const tk = NGUOI.find(n => sanh(n.email) === sanh(d.email));
+    const r = HS_NS[d.email] || {};
+    let hoi = 'Xoá ' + (d.ho_ten || d.email) + ' khỏi danh sách CBGV-NV?\n\n'
+      + 'Gmail: ' + d.email + '\n'
+      + 'Mất theo: ngày sinh, trình độ, câu nhiệm vụ đã lưu'
+      + (r.nhiem_vu ? ' ("' + r.nhiem_vu + '")' : '') + '. Không lấy lại được.\n';
+    hoi += tk
+      ? '\n⚠ Người này ĐÃ đăng nhập. Xoá khỏi danh sách KHÔNG khoá tài khoản của họ và '
+        + 'KHÔNG cắt phân công lớp–môn. Muốn cắt hẳn thì khoá tài khoản ở tab "Người dùng".'
+      : '\nNgười này chưa đăng nhập lần nào nên xoá là xong.';
+
+    if (!await xacNhan(hoi, { tieuDe: 'Xoá một người', nutOk: 'Xoá', nguyHiem: true })) return;
+
+    const x = await sb().from('moi_tai_khoan').delete().eq('id', d.id).select('id');
+    if (x.error) { bao('Chưa xoá được: ' + x.error.message); return; }
+    if (!x.data || !x.data.length) {
+      bao('Máy chủ không cho xoá dòng này — kiểm tra lại quyền quản trị của tài khoản đang dùng.');
+      return;
+    }
+    DS = DS.filter(y => y.id !== d.id);
+    delete HS_NS[d.email];
+    veThan(hop);
+    bao('Đã xoá ' + (d.ho_ten || d.email) + ' khỏi danh sách.');
+  }
+
+  /* ==========================================================================
      TẢI MẪU — đi qua bộ tạo mẫu dùng chung ở mau-excel.js
      ========================================================================== */
   async function taiMau() {
-    const sap = DS.slice().sort((a, b) => {
-      const sa = (HS_NS[a.email] || {}).so_tt, sbb = (HS_NS[b.email] || {}).so_tt;
-      if (sa != null && sbb != null) return sa - sbb;
-      if (sa != null) return -1;
-      if (sbb != null) return 1;
-      return String(a.ho_ten || '').localeCompare(String(b.ho_ten || ''), 'vi');
-    });
+    const sap = sapXep();
 
     const dong = sap.map((d, i) => {
       const r = HS_NS[d.email] || {};
