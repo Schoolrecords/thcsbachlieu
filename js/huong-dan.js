@@ -76,7 +76,7 @@
         ['Hồ sơ số', 'Danh mục minh chứng theo Thông tư 57, mở thư mục Google Drive của từng minh chứng'],
         ['Hồ sơ CBGV–NV', 'Hồ sơ cá nhân của từng cán bộ, giáo viên, nhân viên'],
         ['Quản lý học sinh', 'Xem danh sách học sinh theo khối, theo lớp; in danh sách'],
-        ['Tự đánh giá chất lượng', 'Tự đánh giá theo tiêu chí, kết xuất báo cáo tự đánh giá'],
+        ['Trường chuẩn Quốc gia', 'Tự đánh giá theo tiêu chí, kết xuất báo cáo tự đánh giá'],
         ['Đảm bảo chất lượng', 'Số liệu, chuẩn đầu ra, cam kết và năm phụ lục gửi Sở']
       ]] },
       { t: 'Trên điện thoại thì sáu mục này nằm trong nút ba gạch ở góc trên bên trái.' }
@@ -263,7 +263,7 @@
 
     { td: 'Kết xuất báo cáo tự đánh giá', ai: BGH, tim: 'bao cao tu danh gia kiem dinh chat luong tieu chi', nd: [
       { b: [
-        'Vào <b>Tự đánh giá chất lượng</b>.',
+        'Vào <b>Trường chuẩn Quốc gia</b>.',
         'Điền mức đạt và minh chứng cho từng tiêu chí.',
         'Bấm nút xuất báo cáo tự đánh giá.'
       ] },
