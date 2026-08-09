@@ -92,10 +92,34 @@
      ngoặc tròn, TRƯỚC dấu chấm câu. Câu nguyên trạng đã có dấu chấm nên phải
      bóc dấu chấm ra, chèn mã, rồi đặt dấu chấm lại — dán thẳng vào sau dấu chấm
      thì thành "…theo quy định. (MC.1.1.01)", lệch ví dụ của Thông tư. */
+  /* Bảng tra "mã minh chứng -> đường dẫn Drive", dựng một lần cho cả bản in.
+     Phụ lục IV mục I.4 khuyến khích đặt mã minh chứng dưới dạng liên kết điện
+     tử tới thư mục lưu trữ. Trước đây chỉ bảng danh mục ở Phần IV có liên kết,
+     còn mã nằm trong câu văn thì trơ — người thẩm định đọc tới "(MC.1.1.01)"
+     phải lật ngược về cuối báo cáo dò bảng rồi mới bấm được. */
+  let LINK_MC = {};
+  function dungBangLink(d) {
+    LINK_MC = {};
+    Object.keys(d.mcTheoTC || {}).forEach(function (k) {
+      (d.mcTheoTC[k] || []).forEach(function (h) {
+        if (h && h.ma && h.link_drive) LINK_MC[h.ma] = h.link_drive;
+      });
+    });
+  }
+
+  /* Mã có link thì bọc thành liên kết bấm được; chưa gắn link Drive thì in mã
+     trơn như cũ — KHÔNG bịa ra đường dẫn. */
+  function maCoLink(ma) {
+    const s = chan(ma);
+    return LINK_MC[ma]
+      ? '<a href="' + chan(LINK_MC[ma]) + '" style="color:#000;text-decoration:underline">' + s + '</a>'
+      : s;
+  }
+
   function nhetMa(cau, mcs) {
     const t = String(cau || '').trim();
     if (!mcs || !mcs.length) return chan(t);
-    const ma = ' (' + mcs.map(chan).join(', ') + ')';
+    const ma = ' (' + mcs.map(maCoLink).join(', ') + ')';
     const m = t.match(/([.;:!?])\s*$/);
     return m ? chan(t.slice(0, m.index)) + ma + m[1] : chan(t) + ma;
   }
@@ -593,7 +617,7 @@
     return h + '</tbody></table>'
       + '<p style="' + TR + 'font-size:11pt;font-style:italic;margin:5pt 0 0">'
       + 'Số trang do nhà trường điền sau khi chốt bản in.</p>'
-      + '<p style="page-break-after:always"></p>';
+      + '<p style="page-break-after:always">&nbsp;</p>';
   }
 
   /* ---------------- Ghép và tải ---------------- */
@@ -609,6 +633,9 @@
       }
       return;
     }
+    /* Dựng bảng tra link TRƯỚC khi ghép bất kỳ câu nào — nhetMa() đọc bảng này
+       để bọc mã minh chứng thành liên kết bấm được. */
+    dungBangLink(d);
     const qm = await demQuyMo(d.namHoc);
 
     /* Bảng số liệu 03 năm học — biểu mẫu "Cơ sở dữ liệu" đính kèm Phần IV. Do
@@ -642,7 +669,7 @@
       + '<p style="' + TR + 'text-align:center;font-size:11.5pt;font-style:italic;margin:6pt 0 40pt">'
       + 'Lập theo Biểu 1 Phụ lục V Thông tư số 57/2026/TT-BGDĐT ngày 07/7/2026<br>'
       + 'của Bộ trưởng Bộ Giáo dục và Đào tạo</p>'
-      + '<p style="page-break-after:always"></p>';
+      + '<p style="page-break-after:always">&nbsp;</p>';
 
     /* Bìa trong — Biểu 1 có riêng một trang này sau bìa ngoài: tên cơ quan quản
        lý và tên trường, rồi tên báo cáo, không có Quốc hiệu. */
@@ -656,7 +683,7 @@
       + chan(d.namHoc) + '</p>'
       + '<p style="' + TR + 'text-align:center;font-size:13pt;font-style:italic;margin:60pt 0 0">'
       + chan(CAU_HINH.DIA_DANH || '') + ', năm ' + new Date().getFullYear() + '</p>'
-      + '<p style="page-break-after:always"></p>';
+      + '<p style="page-break-after:always">&nbsp;</p>';
 
     /* Khối chữ ký: chức vụ in hoa đậm — chừa chỗ ký và đóng dấu — họ tên đậm.
        Họ tên lấy ở cauhinh.js để khỏi mỗi tệp ghi một tên khác nhau. */

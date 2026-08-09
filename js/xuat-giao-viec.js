@@ -137,7 +137,7 @@
       + '<td style="border:none;padding:0;width:38%;text-align:center;font-size:12pt">'
       + chan(chuQuan.toUpperCase()) + '<br>'
       + '<b>' + chan(cauHinh('TEN_TRUONG', '').toUpperCase()) + '</b>'
-      + '<div style="border-bottom:1px solid #000;width:62%;margin:3pt auto 0"></div></td>'
+      + '<div style="width:62%;margin:3pt auto 0;border-bottom:1px solid #000;font-size:1pt;line-height:1pt">&nbsp;</div></td>'
       + '<td style="border:none;padding:0;width:62%;text-align:center;font-size:12pt">'
       /* Hai lớp chống ngắt dòng: white-space:nowrap cho trình duyệt, và dấu
          cách không ngắt (&nbsp;) giữa các từ cho Word — không phải bản Word
@@ -145,7 +145,7 @@
       + '<b style="white-space:nowrap">CỘNG&nbsp;HÒA&nbsp;XÃ&nbsp;HỘI&nbsp;'
       + 'CHỦ&nbsp;NGHĨA&nbsp;VIỆT&nbsp;NAM</b><br>'
       + '<b>Độc lập - Tự do - Hạnh phúc</b>'
-      + '<div style="border-bottom:1px solid #000;width:48%;margin:3pt auto 0"></div></td>'
+      + '<div style="width:48%;margin:3pt auto 0;border-bottom:1px solid #000;font-size:1pt;line-height:1pt">&nbsp;</div></td>'
       + '</tr></table>'
       + '<p class="phai nghieng" style="margin:10pt 0 14pt;font-size:12pt">'
       + chan(diaDanh()) + ', ' + ngayVN() + '</p>';

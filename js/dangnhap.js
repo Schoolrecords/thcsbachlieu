@@ -113,22 +113,31 @@
   @media(prefers-reduced-motion:reduce){
     .qt-lop.hien,.qt-lop.hien .qt-hop{animation:none}
   }
-  @media(min-width:820px){.qt-lop{align-items:center;padding:24px}}
-  .qt-hop{background:#fff;width:100%;max-width:1320px;height:94vh;border-radius:18px 18px 0 0;
+  /* Lề mỏng 12px thay cho 24px: cửa sổ này chứa 11 tab và những bảng rộng như
+     139 dòng minh chứng hay 607 học sinh. Càng nhiều chỗ càng đỡ phải cuộn. */
+  @media(min-width:820px){.qt-lop{align-items:center;padding:12px}}
+  .qt-hop{background:#fff;width:100%;max-width:1800px;height:96vh;border-radius:18px 18px 0 0;
     display:flex;flex-direction:column;overflow:hidden;box-shadow:0 24px 60px rgba(6,16,40,.4)}
-  @media(min-width:820px){.qt-hop{border-radius:18px;height:88vh}}
-  .qt-dau{padding:16px 20px;background:#14306b;color:#fff;display:flex;align-items:center;
+  @media(min-width:820px){.qt-hop{border-radius:18px;height:96vh}}
+  .qt-dau{padding:14px 20px;background:#14306b;color:#fff;display:flex;align-items:center;
     gap:12px;flex:none}
   .qt-dau h3{margin:0;font-size:17px;flex:1}
-  .qt-dau button{background:rgba(255,255,255,.15);border:0;color:#fff;width:34px;height:34px;
-    border-radius:9px;cursor:pointer;font-size:16px;font-family:inherit}
+  /* Nút đóng ghi rõ chữ thay cho một dấu ✕ trơ: thầy cô lớn tuổi nhìn dấu ✕
+     nhỏ ở góc không chắc là đóng cửa sổ hay xoá dữ liệu đang xem. */
+  .qt-dau button{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.28);
+    color:#fff;padding:8px 16px;border-radius:9px;cursor:pointer;font-size:14px;
+    font-weight:600;font-family:inherit;white-space:nowrap}
+  .qt-dau button:hover{background:rgba(255,255,255,.28)}
   /* Hàng tab đứng yên: flex:none nên không cuộn theo nội dung. Thêm đường kẻ
      và bóng nhẹ cho thấy rõ đây là thanh cố định, nội dung trượt bên dưới. */
   /* Mỗi tab là một KHỐI NỔI riêng, cùng lối với thanh điều hướng trên trang.
      Bản cũ là chữ trơn gạch chân — cả hàng đọc như một dòng liền, phải dò mới
      ra ranh giới giữa các mục. */
-  .qt-tab{display:flex;gap:7px;padding:12px 16px;background:#f4f7fc;flex:none;
-    overflow-x:auto;border-bottom:1px solid #e2e8f2;box-shadow:0 2px 8px rgba(15,32,70,.06)}
+  /* flex-wrap: 11 tab xuống hai hàng thay vì cuộn ngang. Bản cũ phải kéo thanh
+     cuộn mới thấy tab "Sao lưu" — tab nào nằm ngoài tầm nhìn thì coi như không
+     tồn tại với người dùng. */
+  .qt-tab{display:flex;flex-wrap:wrap;gap:7px;padding:11px 16px;background:#f4f7fc;flex:none;
+    border-bottom:1px solid #e2e8f2;box-shadow:0 2px 8px rgba(15,32,70,.06)}
   .qt-tab button{border:1px solid #dbe3ef;background:#fff;padding:9px 15px;cursor:pointer;
     font-size:13.6px;font-weight:600;color:#54637c;border-radius:11px;font-family:inherit;
     white-space:nowrap;box-shadow:0 1px 3px rgba(15,32,70,.08);
@@ -338,7 +347,7 @@
         <div class="qt-hop">
           <div class="qt-dau">
             <h3>⚙️ Quản trị hệ thống</h3>
-            <button id="qtDong">✕</button>
+            <button id="qtDong" title="Đóng cửa sổ Quản trị hệ thống">✕ Đóng lại</button>
           </div>
           <div class="qt-tab">
             ${dsTab().map((t, i) =>
@@ -720,8 +729,18 @@
           <li>Nên lưu vào Drive của nhà trường, đặt quyền chỉ Ban giám hiệu xem được.</li>
         </ul>
       </div>
+      <div class="qt-viec" style="background:#f4f7fc;border-color:#cfdcf0;color:#22406b">
+        <b>Đây KHÔNG phải báo cáo — đừng mở ra để đọc</b>
+        <ul>
+          <li>Tệp là bản chụp thô của toàn bộ cơ sở dữ liệu: hàng chục nghìn dòng,
+              ${BANG_SAO_LUU.length} trang tính. Không ai đọc được, và không cần đọc.</li>
+          <li>Nó chỉ có giá trị đúng một lúc: khi dữ liệu trên Supabase mất hẳn.</li>
+          <li>Muốn số liệu để làm việc thì dùng các nút xuất Word, Excel ở từng
+              mục — những bản ấy mới đọc được.</li>
+        </ul>
+      </div>
       <div class="qt-them">
-        <button id="slChay">💾 Kết xuất toàn bộ dữ liệu ra Excel</button>
+        <button id="slChay">💾 Tạo bản sao lưu khẩn cấp (Excel)</button>
       </div>
       <div id="slKq"></div>
       <p class="qt-ghi">Tệp gồm ${BANG_SAO_LUU.length} trang tính, mỗi bảng dữ liệu một trang.

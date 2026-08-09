@@ -199,7 +199,7 @@
            nguoi_phu_trach: bảng ho_so vẫn có sẵn cột này từ sql/01 nhưng màn hình
            tự đánh giá trước nay không lấy về, nên nhìn vào một tiêu chí thiếu
            minh chứng cũng không biết phải nhắc ai đi bổ sung. */
-        sb.from('ho_so').select('ma, ten, tieu_chi, trang_thai, link_drive, ghi_chu, nguoi_phu_trach'),
+        sb.from('ho_so').select('ma, ten, tieu_chi, trang_thai, link_drive, ghi_chu, nguoi_phu_trach, dinh_dang'),
         sb.from('danh_gia_tieu_chuan').select('*').eq('nam_hoc', NAM_HOC)
       ]);
       /* Soi lỗi CẢ BỐN câu hỏi. Trước đây chỉ soi câu đầu, nên khi máy chủ từ
@@ -707,7 +707,13 @@
 
     let than = '';
     if (TAB_CT === 'mc') {
-      than = oMinhChung(mc);
+      /* Nút tải riêng minh chứng của ĐÚNG tiêu chí đang mở — để đưa cho người
+         được phân công phụ trách tiêu chí ấy phần việc của họ, khỏi phải tải
+         cả 139 đầu minh chứng rồi tự dò. */
+      than = (mc.length
+        ? `<div class="ct-thanh"><button class="ct-quaylai"
+             onclick="xuatMinhChungTieuChi('${chan(c.code)}')">📄 Tải danh mục minh chứng của tiêu chí này (Word)</button></div>`
+        : '') + oMinhChung(mc);
     } else if (TAB_CT === 'kl') {
       /* Tab Kết luận CHỈ nhắc lại mức đã chấm và ghi nhận ai chấm, lúc nào.
          KHÔNG có ô "Điểm mạnh / Hạn chế / Định hướng cải tiến" ở đây: Thông tư

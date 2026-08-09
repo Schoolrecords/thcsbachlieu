@@ -485,7 +485,7 @@
         + '<td style="' + TR + 'text-align:center;font-size:12pt"><b>GIÁO VIÊN CHỦ NHIỆM</b><br>'
         + '<i>(Ký, ghi rõ họ tên)</i><br><br><br><br></td></tr></table>';
 
-      if (idx < loc.length - 1) than += '<p style="page-break-after:always"></p>';
+      if (idx < loc.length - 1) than += '<p style="page-break-after:always">&nbsp;</p>';
     });
 
     goiWord(than, 'phieu-cam-ket-lop-' + LOP + '-' + NAM + '.doc', 'Phiếu cam kết lớp ' + LOP);
