@@ -323,6 +323,8 @@ input,select{font-family:inherit;font-size:inherit}
 .cat-top .ic{width:50px;height:50px;border-radius:13px;background:rgba(255,255,255,.08);
   border:1.5px solid rgba(229,177,58,.55);color:var(--gold-2);display:grid;place-items:center;
   font-family:var(--serif);font-size:21px;font-weight:700;flex:none;letter-spacing:.5px}
+.cat-top .ic svg{width:27px;height:27px;stroke:currentColor;stroke-width:1.9;fill:none;
+  stroke-linecap:round;stroke-linejoin:round}
 .cat-top .tt{flex:1;min-width:0}
 .cat-top .no{font-size:11.5px;font-weight:700;opacity:.85;letter-spacing:1.4px}
 .cat-top h3{font-family:var(--serif);font-size:17.5px;margin-top:2px;text-shadow:0 1px 3px rgba(0,0,0,.18)}
@@ -1129,8 +1131,7 @@ table.data td:last-child, table.data th:last-child,
     <div class="nav-spacer"></div>
     <nav class="nav-links">
       <button class="on" data-go="home">Trang chủ</button>
-      <button data-go="hoso">Hồ sơ số</button>
-      <button data-go="cbgv">Hồ sơ CBGV–NV</button>
+      <button data-go="hoso">Quản lý Hồ sơ</button>
       <button data-go="hocsinh">Quản lý học sinh</button>
       <button data-go="kdcl">Trường chuẩn Quốc gia</button>
       <button data-go="dbcl">Đảm bảo chất lượng</button>
@@ -1140,8 +1141,7 @@ table.data td:last-child, table.data th:last-child,
   </div>
   <div class="nav-drawer" id="drawer">
     <button data-go="home">🏠 Trang chủ</button>
-    <button data-go="hoso">🗂 Hồ sơ số</button>
-    <button data-go="cbgv">👥 Hồ sơ CBGV–NV</button>
+    <button data-go="hoso">🗂 Quản lý Hồ sơ</button>
     <button data-go="hocsinh">🎒 Quản lý học sinh</button>
     <button data-go="kdcl">✅ Trường chuẩn Quốc gia</button>
     <button data-go="dbcl">📈 Đảm bảo chất lượng</button>
@@ -1276,8 +1276,8 @@ table.data td:last-child, table.data th:last-child,
   <div class="wrap">
     <div class="sec-head">
       <span class="eyebrow">Danh mục hồ sơ</span>
-      <h2>Hồ sơ số</h2>
-      <p>Toàn bộ hệ thống hồ sơ quản lý hoạt động giáo dục của nhà trường, được mã hoá đến từng đầu mục. Chọn một bộ phận để mở bảng danh mục chi tiết.</p>
+      <h2>Quản lý Hồ sơ</h2>
+      <p>Toàn bộ hệ thống hồ sơ quản lý hoạt động giáo dục của nhà trường và hồ sơ đội ngũ, được mã hoá đến từng đầu mục. Chọn một thẻ để mở bảng danh mục chi tiết.</p>
     </div>
 
     <div class="stats" id="hsStats"></div>
@@ -2160,7 +2160,10 @@ function goView(id){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('on'));
   const el = document.getElementById('view-'+id);
   if(el) el.classList.add('on');
-  document.querySelectorAll('.nav-links button').forEach(b=>b.classList.toggle('on', b.dataset.go===id));
+  /* Hồ sơ CBGV–NV nay nằm trong "Quản lý Hồ sơ", không còn nút riêng trên
+     thanh điều hướng, nên vào màn hình đó thì nút cha vẫn sáng. */
+  const nutSang = (id==='cbgv') ? 'hoso' : id;
+  document.querySelectorAll('.nav-links button').forEach(b=>b.classList.toggle('on', b.dataset.go===nutSang));
   document.getElementById('drawer').classList.remove('open');
   window.scrollTo({top:0,behavior:'smooth'});
 }
@@ -2297,8 +2300,38 @@ function renderCats(){
         </div>
       </div>
     </button>`;
-  }).join('');
+  }).join('') + catCbgvHtml();
 }
+
+/* Thẻ thứ sáu trong lưới danh mục: lối vào hồ sơ đội ngũ. Cùng hình thức với
+   năm thẻ bộ phận, chỉ khác ô số đầu thẻ thay bằng biểu tượng và không có
+   thanh tiến độ — chỗ đó để trống ẩn cho các thẻ thẳng hàng nhau. */
+function catCbgvHtml(){
+  const soCb = (typeof CAU_HINH!=='undefined' && CAU_HINH.SO_CBGV) || '';
+  return `
+    <button class="cat" data-go="cbgv">
+      <div class="cat-top">
+        <div class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+        <div class="tt"><div class="no">ĐỘI NGŨ</div><h3>Hồ sơ CBGV – NV</h3></div>
+      </div>
+      <div class="cat-body">
+        <p>Hồ sơ cá nhân của ban giám hiệu, giáo viên và nhân viên: thông tin cơ bản, trình độ đào tạo và đường dẫn tới hồ sơ trên Drive.</p>
+        <div class="prog" style="visibility:hidden"><i style="width:0"></i></div>
+        <div class="cat-foot" style="margin-top:10px">
+          <span class="cat-cnt"><span id="hsCbgvCat">${soCb}</span> cán bộ, giáo viên, nhân viên</span>
+          <span class="cat-open">Xem đội ngũ →</span>
+        </div>
+      </div>
+    </button>`;
+}
+
+/* Lưới vẽ trước khi cauhinh.js kịp nạp nên lần đầu chưa có số người. Điền nốt
+   khi trang tải xong; đăng nhập rồi thì quy-mo.js đếm lại từ dữ liệu thật. */
+document.addEventListener('DOMContentLoaded', ()=>{
+  const o = document.getElementById('hsCbgvCat');
+  if(o && !o.textContent && typeof CAU_HINH!=='undefined' && CAU_HINH.SO_CBGV)
+    o.textContent = CAU_HINH.SO_CBGV;
+});
 
 function rowHtml(it){
   const [ma,ten,ng,st,crit,maCu] = it;
@@ -2884,14 +2917,14 @@ renderDbcl();
      Ba tệp dưới đây chỉ hoạt động khi js/cauhinh.js đã được điền địa chỉ
      cơ sở dữ liệu. Chưa điền thì trang chạy y như trước, không đòi đăng nhập. -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/cauhinh.js?v=202608091918"></script>
-<script src="js/dangnhap.js?v=202608091918"></script>
-<script src="js/hoso-sql.js?v=202608091918"></script>
-<script src="js/tudanhgia-sql.js?v=202608091918"></script>
-<script src="js/nhansu-sql.js?v=202608091918"></script>
-<script src="js/kiemtra-drive.js?v=202608091918"></script>
-<script src="js/xuat-bieu-mau.js?v=202608091918"></script>
-<script src="js/xuat-bao-cao-tdg.js?v=202608091918"></script>
+<script src="js/cauhinh.js?v=202608100007"></script>
+<script src="js/dangnhap.js?v=202608100007"></script>
+<script src="js/hoso-sql.js?v=202608100007"></script>
+<script src="js/tudanhgia-sql.js?v=202608100007"></script>
+<script src="js/nhansu-sql.js?v=202608100007"></script>
+<script src="js/kiemtra-drive.js?v=202608100007"></script>
+<script src="js/xuat-bieu-mau.js?v=202608100007"></script>
+<script src="js/xuat-bao-cao-tdg.js?v=202608100007"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <!-- ExcelJS chỉ dùng để TẠO mẫu có trang trí: bản miễn phí của xlsx ở trên
      không viết được màu nền, khung viền hay khổ giấy A4 ngang. Phần ĐỌC tệp
@@ -2899,31 +2932,31 @@ renderDbcl();
 <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 <!-- Bộ tạo mẫu dùng chung: mọi mẫu Excel của hệ thống đi qua đây nên trông
      giống nhau và in ra dùng được ngay. Phải nạp TRƯỚC các màn hình gọi nó. -->
-<script src="js/mau-excel.js?v=202608091918"></script>
-<script src="js/dbcl-sql.js?v=202608091918"></script>
-<script src="js/xuat-phu-luc-dbcl.js?v=202608091918"></script>
-<script src="js/dbcl-excel.js?v=202608091918"></script>
-<script src="js/dbcl-vanhanh.js?v=202608091918"></script>
-<script src="js/dbcl-hocsinh.js?v=202608091918"></script>
+<script src="js/mau-excel.js?v=202608100007"></script>
+<script src="js/dbcl-sql.js?v=202608100007"></script>
+<script src="js/xuat-phu-luc-dbcl.js?v=202608100007"></script>
+<script src="js/dbcl-excel.js?v=202608100007"></script>
+<script src="js/dbcl-vanhanh.js?v=202608100007"></script>
+<script src="js/dbcl-hocsinh.js?v=202608100007"></script>
 <!-- Nạp SAU dbcl-hocsinh.js: dùng lại window.hsChuanNgay và window.hsVeLai -->
-<script src="js/vnedu-nhap.js?v=202608091918"></script>
+<script src="js/vnedu-nhap.js?v=202608100007"></script>
 <!-- Nối màn hình "Quản lý học sinh" với dữ liệu thật, thay bản xem thử -->
-<script src="js/hocsinh-that.js?v=202608091918"></script>
-<script src="js/tinhtien-lop.js?v=202608091918"></script>
-  <script src="js/quy-mo.js?v=202608091918"></script>
-<script src="js/dbcl-phancong.js?v=202608091918"></script>
-<script src="js/dbcl-camket-hs.js?v=202608091918"></script>
+<script src="js/hocsinh-that.js?v=202608100007"></script>
+<script src="js/tinhtien-lop.js?v=202608100007"></script>
+  <script src="js/quy-mo.js?v=202608100007"></script>
+<script src="js/dbcl-phancong.js?v=202608100007"></script>
+<script src="js/dbcl-camket-hs.js?v=202608100007"></script>
 <!-- Các tab thêm vào bảng Quản trị hệ thống. Phải nạp SAU dbcl-hocsinh.js vì
      tab "Danh sách học sinh" dùng lại đúng màn hình của tệp đó, và nạp sau
      dangnhap.js vì chúng tự đăng ký vào window.qtTabPhu. -->
-<script src="js/quantri-nhansu.js?v=202608091918"></script>
-<script src="js/quantri-hocsinh.js?v=202608091918"></script>
-<script src="js/quantri-hoso.js?v=202608091918"></script>
+<script src="js/quantri-nhansu.js?v=202608100007"></script>
+<script src="js/quantri-hocsinh.js?v=202608100007"></script>
+<script src="js/quantri-hoso.js?v=202608100007"></script>
 <!-- Bảng số liệu 03 năm học kèm theo báo cáo tự đánh giá (Biểu 1 Phụ lục V TT57).
      Vừa là tab nhập trong Quản trị, vừa sinh bảng cho bản Word — nên nạp TRƯỚC
      lúc thầy cô bấm xuất báo cáo, còn thứ tự với xuat-bao-cao-tdg.js không quan
      trọng vì hai bên gọi nhau lúc bấm nút, không phải lúc nạp trang. -->
-<script src="js/so-lieu-tt57.js?v=202608091918"></script>
+<script src="js/so-lieu-tt57.js?v=202608100007"></script>
 <!-- Ba việc còn lại của Thông tư 57: Hội đồng tự đánh giá (Điều 9), Kế hoạch
      cải tiến theo Biểu 2 (Điều 10) và Điều kiện chuẩn quốc gia (Điều 16). -->
 <script src="js/tt57-hoidong-caitien-cnqg.js?v=202608092030"></script>
@@ -2931,14 +2964,14 @@ renderDbcl();
 <script src="js/huong-dan.js?v=202608092300"></script>
 <!-- Xuất Word để giao việc: phiếu theo hộp hồ sơ và danh sách từng lớp.
      Cần CATS (khai trong index.html) và window.layHoSo (hoso-sql.js). -->
-<script src="js/xuat-giao-viec.js?v=202608091918"></script>
+<script src="js/xuat-giao-viec.js?v=202608100007"></script>
 <!-- Xuất Word của Hội đồng tự đánh giá: danh sách kèm quyết định thành lập và
      bảng phân công nhiệm vụ. Đọc dữ liệu qua window.duLieuHoiDong do
      tt57-hoidong-caitien-cnqg.js xuất ra, nên phải nạp SAU tệp ấy. -->
-<script src="js/xuat-hoi-dong.js?v=202608091918"></script>
+<script src="js/xuat-hoi-dong.js?v=202608100007"></script>
 <!-- Danh mục minh chứng của mô đun Trường chuẩn Quốc gia: lọc theo tiêu chuẩn
      hoặc theo từng tiêu chí. Đọc qua window.duLieuTuDanhGia nên phải nạp SAU
      tudanhgia-sql.js. -->
-<script src="js/xuat-minh-chung-tdg.js?v=202608091918"></script>
+<script src="js/xuat-minh-chung-tdg.js?v=202608100007"></script>
 </body>
 </html>

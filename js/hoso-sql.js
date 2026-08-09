@@ -105,7 +105,10 @@
         + 'Hệ thống chỉ hiện những hồ sơ mà thầy cô được phân công phụ trách. '
         + 'Nếu thầy cô đang phụ trách hồ sơ mà chưa thấy ở đây, đề nghị báo '
         + 'Ban giám hiệu gán người phụ trách trong danh mục hồ sơ.'
-        + '</div>';
+        + '</div>'
+        /* Giữ lối vào hồ sơ đội ngũ, vì trên thanh điều hướng nó đã gộp vào
+           "Quản lý Hồ sơ" — dọn hết lưới thì màn hình này thành ngõ cụt. */
+        + (typeof catCbgvHtml === 'function' ? catCbgvHtml() : '');
     }
     /* KHÔNG bật thông báo nổi. Việc tải dữ liệu chạy ngay lúc đăng nhập, khi
        thầy cô còn đang ở trang chủ — bật thông báo lúc đó là làm phiền vô cớ.

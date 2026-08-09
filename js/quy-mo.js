@@ -63,6 +63,10 @@
     if (oLop) oLop.textContent = CAU_HINH.SO_LOP || '—';
     if (oHs)  oHs.textContent  = CAU_HINH.SO_HOC_SINH || '—';
     if (oCb && CAU_HINH.SO_CBGV) oCb.textContent = CAU_HINH.SO_CBGV;
+
+    /* Thẻ Hồ sơ CBGV–NV trong lưới danh mục hồ sơ */
+    const oCbCat = document.getElementById('hsCbgvCat');
+    if (oCbCat && CAU_HINH.SO_CBGV) oCbCat.textContent = CAU_HINH.SO_CBGV;
   }
 
   document.addEventListener('dangnhap-xong', () => {

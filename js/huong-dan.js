@@ -91,13 +91,13 @@
       { t: 'Cả hệ thống chỉ có sáu màn hình. Nhớ được sáu dòng dưới đây là thầy cô đi đâu cũng không lạc.' },
       { k: [['Màn hình', 'Dùng để làm gì'], [
         ['🏠 Trang chủ', 'Nhìn nhanh quy mô trường và lối vào các phần'],
-        ['📁 Hồ sơ số', 'Danh mục minh chứng theo Thông tư 57, mở thư mục Google Drive của từng minh chứng'],
-        ['👥 Hồ sơ CBGV–NV', 'Hồ sơ cá nhân của từng cán bộ, giáo viên, nhân viên'],
+        ['📁 Quản lý Hồ sơ', 'Danh mục minh chứng theo Thông tư 57, mở thư mục Google Drive của từng minh chứng'],
+        ['👥 Hồ sơ CBGV–NV', 'Hồ sơ cá nhân của từng cán bộ, giáo viên, nhân viên. Vào từ thẻ cuối trong Quản lý Hồ sơ, hoặc thẻ ngoài trang chủ'],
         ['🎒 Quản lý học sinh', 'Xem danh sách học sinh theo khối, theo lớp; in danh sách'],
         ['🎖 Trường chuẩn Quốc gia', 'Hội đồng tự đánh giá, tự đánh giá theo tiêu chí, kết xuất báo cáo'],
         ['📊 Đảm bảo chất lượng', 'Số liệu, chuẩn đầu ra, cam kết và năm phụ lục gửi Sở']
       ]] },
-      { a: 'menu-6-man-hinh.png', ct: 'Thanh menu ở đầu trang. Trên điện thoại thì sáu mục này nằm trong nút ba gạch ☰ ở góc trên bên trái.' }
+      { a: 'menu-6-man-hinh.png', ct: 'Thanh menu ở đầu trang. Trên điện thoại thì các mục này nằm trong nút ba gạch ☰ ở góc trên bên trái.' }
     ] },
 
     { td: 'Ba thói quen giúp không bao giờ nhầm số', ai: GV, tim: 'thoi quen kiem nam hoc ky vai tro truoc khi bam', nd: [
@@ -117,7 +117,7 @@
 
     { td: 'Tìm một minh chứng và mở thư mục Drive của nó', ai: GV, tim: 'tim minh chung ma ho so drive thu muc', nd: [
       { b: [
-        'Vào màn hình <b>Hồ sơ số</b>.',
+        'Vào màn hình <b>Quản lý Hồ sơ</b>.',
         'Gõ vào ô tìm kiếm: mã minh chứng (<b>MC.1.1.01</b>), mã cũ (<b>H15-1.8-02</b>) hoặc vài chữ trong tên minh chứng.',
         'Bấm vào dòng hiện ra trong danh sách gợi ý.',
         'Bấm biểu tượng <b>📂</b> ở cuối dòng để mở thư mục Google Drive.'
