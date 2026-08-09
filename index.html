@@ -533,9 +533,13 @@ tr.in-nhac th{background:#fff4e5!important;color:#8a5410!important;
 .crit-code{min-width:46px;height:34px;padding:0 9px;border-radius:9px;background:var(--navy);color:#fff;display:grid;place-items:center;font-weight:700;font-size:13.5px;flex:none}
 .crit-ttl{flex:1;min-width:0;font-size:14.4px;font-weight:600}
 .badge{font-size:11.5px;font-weight:700;padding:4px 12px;border-radius:999px;white-space:nowrap;flex:none}
-.badge-m2{background:#e7f0ff;color:#1a3f8f;border:1px solid #c9dbff}
-.badge-m1{background:var(--ok-bg);color:var(--ok)}
-.badge-no{background:var(--miss-bg);color:var(--miss)}
+/* Ba màu huy hiệu đi theo mức ĐÍCH, không đi theo thứ tự bảng màu:
+   Mức 2 là đích cần tới nên xanh lá, Mức 1 là mức cơ bản còn phải phấn đấu nên
+   hổ phách, chưa đạt thì đỏ. Bản cũ để Mức 2 xanh dương và Mức 1 xanh lá —
+   liếc qua tưởng Mức 1 mới là chỗ tốt. */
+.badge-m2{background:var(--ok-bg);color:var(--ok);border:1px solid #bfe8cd}
+.badge-m1{background:var(--warn-bg);color:var(--warn);border:1px solid #f0d089}
+.badge-no{background:var(--miss-bg);color:var(--miss);border:1px solid #f3c9c5}
 .crit-body{display:none;padding:0 14px 15px;border-top:1px solid var(--line)}
 .crit.open .crit-body{display:block}
 .lv{border:1px solid var(--line);border-radius:11px;padding:14px;margin-top:13px;background:#fbfcfe}
@@ -552,6 +556,211 @@ tr.in-nhac th{background:#fff4e5!important;color:#8a5410!important;
 .lv-hoi{font-size:13px;color:var(--muted);font-weight:600;margin-right:4px}
 /* Dòng giải thích vì sao nhà trường được xếp mức đó */
 .kd-vi{background:#eef4fd;border:1px solid #cbdcf5;border-left:4px solid var(--navy-2);border-radius:10px;padding:11px 15px;font-size:13.4px;color:#22406b;margin-bottom:20px;line-height:1.6}
+
+/* ---------------- Trường chuẩn Quốc gia: đầu trang gọn ----------------
+   Bốn khối chữ căn cứ pháp lý trước đây nằm thẳng trên trang, cao 445px và đẩy
+   danh sách 15 tiêu chí xuống dưới màn hình đầu tiên. Nay gom vào cửa sổ
+   "Căn cứ & hướng dẫn" — giữ nguyên từng chữ, chỉ đổi chỗ đứng. */
+.kd-dau{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;
+  flex-wrap:wrap;margin-bottom:16px}
+.kd-dau .sec-head{text-align:left;margin-bottom:0;flex:1;min-width:270px}
+.kd-dau .sec-head p{margin:0;max-width:64ch}
+.kd-dau-phai{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.kd-muctieu{display:inline-flex;align-items:center;gap:7px;background:var(--gold-soft);
+  border:1px solid #f0dfb4;border-radius:999px;padding:9px 17px;font-size:14px;color:#6b4e0d}
+.kd-muctieu b{color:#7a5410;white-space:nowrap}
+
+/* ---- Hàng tổng quan: 4 thẻ + 2 nút, đúng bố cục thầy cô duyệt ----
+   Chỉ thẻ "Mức hiện tại" để nền navy đậm vì đó là kết luận của cả trang; ba
+   thẻ còn lại nền sáng để hàng thẻ không thành một dải tối đặc. */
+.kd-tong{display:flex;gap:11px;flex-wrap:wrap;align-items:stretch;margin-bottom:12px}
+#kdStats{display:grid;grid-template-columns:repeat(2,1fr);gap:11px;margin:0;flex:1;min-width:280px}
+@media (min-width:900px){ #kdStats{grid-template-columns:1.35fr 1fr 1fr 1.15fr} }
+/* Hai nút kéo cao bằng hàng thẻ — align-items:stretch cho khối nút, và bỏ
+   chiều cao cố định của .btn để nút giãn theo. Để center thì nút lửng lơ giữa
+   hàng, mép trên mép dưới hụt so với thẻ. */
+.kd-tong .kd-nut{margin-left:0;align-items:stretch;flex-wrap:wrap}
+.kd-tong .kd-nut .btn{height:auto;min-height:0;align-self:stretch}
+@media (max-width:899px){
+  .kd-tong .kd-nut{width:100%}
+  .kd-tong .kd-nut .btn{flex:1;min-width:150px;min-height:46px}
+}
+
+/* Thẻ tổng quan kiểu sáng */
+/* Chiều cao hàng thẻ hạ khoảng 20% so với bản trước: đệm 14→11, ô biểu tượng
+   44→37, số 26→22. Hàng thẻ chỉ để liếc qua, không đáng chiếm nhiều màn hình
+   bằng chỗ làm việc bên dưới. */
+.the{display:flex;align-items:center;gap:10px;border-radius:14px;padding:9px 13px;
+  border:1px solid var(--line);background:#fff;box-shadow:var(--shadow)}
+.the .ic{width:35px;height:35px;border-radius:10px;display:grid;place-items:center;
+  font-size:17px;flex:none}
+.the .noi{min-width:0}
+.the .so{font-family:var(--serif);font-size:21px;color:var(--navy);line-height:1.05;display:block}
+.the .nhan{font-size:12.2px;color:var(--muted);display:block;margin-top:0;line-height:1.3}
+.the .them{font-size:11.4px;color:var(--muted);display:block;margin-top:1px;line-height:1.3}
+.the.xanh{background:#f2f7ff;border-color:#d8e6fb} .the.xanh .ic{background:#e2edfd;color:#1e4593}
+.the.vang{background:var(--gold-soft);border-color:#f0dfb4} .the.vang .ic{background:#faedcd;color:#a2740f}
+.the.la{background:#f1faf5;border-color:#c9e9d7} .the.la .ic{background:#dcf2e6;color:#0f7b52}
+/* Thẻ kết luận: nền navy, chữ trắng */
+.the.navy{background:var(--navy-fill);border-color:rgba(255,255,255,.1);color:#fff;position:relative;overflow:hidden}
+.the.navy::before{content:"";position:absolute;inset:0;background-image:var(--navy-dot);
+  background-size:15px 15px;pointer-events:none}
+.the.navy>*{position:relative;z-index:1}
+.the.navy .ic{background:rgba(255,255,255,.14)}
+.the.navy .so{color:#fff;font-size:23px} .the.navy .nhan,.the.navy .them{color:rgba(255,255,255,.8)}
+
+/* Vòng tròn tiến độ — vẽ bằng conic-gradient, khỏi cần thư viện đồ hoạ */
+.vong{width:46px;height:46px;border-radius:50%;flex:none;display:grid;place-items:center;
+  font-size:12.4px;font-weight:700;color:var(--ok)}
+.vong span{width:34px;height:34px;border-radius:50%;background:#f1faf5;display:grid;place-items:center}
+
+/* Bức tranh CÔNG VIỆC — khác bức tranh KẾT QUẢ ở hàng thẻ trên. Người vào làm
+   việc cần biết mình đang ở đâu trong 71 nội hàm, không chỉ biết đang Mức mấy. */
+.kd-tiendo{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:#fff;
+  border:1px solid var(--line);border-radius:11px;padding:11px 15px;margin-bottom:12px;
+  font-size:13.4px;color:var(--ink);box-shadow:var(--shadow)}
+.kd-tiendo .thanh{flex:1;min-width:150px}
+.kd-tiendo b{color:var(--navy)}
+
+/* Dải chân màn hình — một dòng thay cho khối cảnh báo 5 dòng cũ */
+.kd-chan{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:16px;
+  background:#f2f7ff;border:1px solid #d8e6fb;border-radius:11px;padding:11px 15px;
+  font-size:12.9px;color:#33506e;line-height:1.6}
+.kd-chan .ic{font-size:15px;color:#1e4593;flex:none}
+.kd-chan span:nth-child(2){flex:1;min-width:220px}
+.kd-chan button{background:none;border:0;padding:0;color:#1e4593;font-weight:700;
+  text-decoration:underline;cursor:pointer;font-size:12.9px;font-family:inherit;flex:none}
+
+/* Thanh công cụ dính dưới thanh điều hướng (cao 62px): cuộn tới tiêu chí 4.3
+   vẫn đổi được năm học và bấm xuất báo cáo, khỏi cuộn ngược lên đầu.
+   Điện thoại thì thôi — màn hình đã hẹp, dính thêm là mất nửa chỗ đọc. */
+#kdThanh{position:sticky;top:62px;z-index:40}
+@media (max-width:640px){ #kdThanh{position:static} }
+/* Ô lọc tiêu chuẩn có dòng chữ rất dài ("Tiêu chuẩn 3 — Thực hiện chương
+   trình…"), thả tự do là nó chiếm hết bề ngang và đẩy cụm nút xuống dòng. */
+/* Trỏ đích danh #kdStd. Viết "#kdThanh select" thì trúng cả ô Năm học mà
+   themChonNamHoc() chèn vào — ô ấy chỉ cần ~130px, bị ép rộng 200-430px là
+   đẩy cụm nút xuống dòng thứ hai, thanh dính cao gấp đôi. */
+#kdStd{max-width:430px;flex:0 1 430px;min-width:200px}
+.kd-nut{display:flex;gap:9px;flex-wrap:wrap;margin-left:auto}
+@media (max-width:640px){ .kd-nut{margin-left:0;width:100%} .kd-nut .btn{flex:1;min-width:150px} }
+
+/* ---------------- Hai cột: danh sách tiêu chí | tiêu chí đang chọn ----------------
+   Dưới 1000px thì xếp chồng — hai cột trên màn hẹp thì cột nào cũng chật. */
+/* align-items mặc định là stretch — HAI CỘT LUÔN CAO BẰNG NHAU. Trước để
+   align-items:start nên mỗi cột cao theo nội dung của mình, hai khối trắng so
+   le nhau nhìn rất lệch. */
+.kd-lam{display:grid;grid-template-columns:1fr;gap:14px}
+@media (min-width:1000px){ .kd-lam{grid-template-columns:45fr 55fr} }
+.kd-trai,.kd-phai{background:#fff;border:1px solid var(--line);border-radius:14px;
+  box-shadow:var(--shadow);padding:16px}
+/* Cột trái cao bằng cột phải, phần danh sách tự cuộn bên trong. Nhờ vậy dù cột
+   phải dài bao nhiêu thì hai khối vẫn khép đúng một đường ở đáy, và tiêu đề
+   cùng bộ lọc luôn nằm trong tầm mắt. */
+@media (min-width:1000px){
+  .kd-trai{display:flex;flex-direction:column;min-height:0}
+  .kd-trai #kdList{flex:1;min-height:0;overflow-y:auto;padding-right:5px}
+}
+.kd-tieu{font-family:var(--serif);font-size:20px;color:var(--navy);margin-bottom:11px}
+.kd-tieu span{font-family:var(--sans);font-size:13.5px;color:var(--muted);font-weight:400}
+
+/* Bộ lọc nhanh — con số trong ngoặc đếm từ dữ liệu thật, không gõ sẵn */
+.kd-loc{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px}
+.kd-loc button{border:1px solid #cfd8e6;background:#fff;border-radius:999px;
+  padding:7px 13px;font-size:13px;font-weight:600;color:#42526b;cursor:pointer;font-family:inherit}
+.kd-loc button:hover{background:#f1f5fb}
+.kd-loc button.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+
+/* Một dòng tiêu chí bên cột trái */
+.tc-hang{display:flex;align-items:center;gap:9px;width:100%;text-align:left;
+  padding:10px 11px;border:1px solid var(--line);border-radius:11px;background:#fff;
+  margin-bottom:7px;cursor:pointer;font-family:inherit;font-size:14px}
+.tc-hang:hover{background:#f7faff}
+.tc-hang.chon{border-color:var(--navy-2);background:#f5f9ff;
+  box-shadow:inset 3px 0 0 var(--navy-2)}
+.tc-hang .ma{min-width:40px;height:30px;padding:0 8px;border-radius:8px;background:var(--navy);
+  color:#fff;display:grid;place-items:center;font-weight:700;font-size:13px;flex:none}
+.tc-hang .ten{flex:1;min-width:0;font-weight:600;line-height:1.4}
+.tc-hang .badge{flex:none}
+.kd-trong{color:var(--muted);font-size:13.6px;padding:16px 4px;line-height:1.6}
+
+/* Cột phải */
+.ct-dau{display:flex;align-items:center;gap:11px;flex-wrap:wrap;margin-bottom:12px}
+.ct-ma{background:var(--navy);color:#fff;border-radius:9px;padding:7px 13px;
+  font-weight:700;font-size:14px;flex:none}
+.ct-ten{flex:1;min-width:180px;font-size:17px;font-weight:700;color:var(--navy);line-height:1.35}
+.ct-tab{display:flex;gap:2px;border-bottom:1px solid var(--line);margin-bottom:14px;flex-wrap:wrap}
+.ct-tab button{border:0;background:none;padding:10px 15px;font-size:14.5px;font-weight:600;
+  color:var(--muted);cursor:pointer;border-bottom:2.5px solid transparent;margin-bottom:-1px;font-family:inherit}
+.ct-tab button.on{color:var(--navy);border-bottom-color:var(--navy-2)}
+.ct-tab button:hover{color:var(--navy)}
+
+/* Chế độ nhập: ẩn cột trái, ô nhập giãn hết bề ngang */
+.kd-lam.rong{grid-template-columns:1fr}
+.kd-lam.rong .kd-trai{display:none}
+.ct-quaylai{border:1px solid #cfd8e6;background:#fff;border-radius:9px;padding:8px 14px;
+  font-size:13.5px;font-weight:600;color:#42526b;cursor:pointer;font-family:inherit}
+.ct-quaylai:hover{background:#f1f5fb}
+.ct-tab-phai{margin-left:auto;padding:6px 0}
+/* Nút mở rộng / thu gọn danh sách cột trái */
+.tc-them{width:100%;border:1px dashed #cfd8e6;background:#fff;border-radius:10px;padding:9px;
+  font-size:13.2px;font-weight:600;color:#5b6b85;cursor:pointer;font-family:inherit;margin-top:2px}
+.tc-them:hover{background:#f5f8fd;color:var(--navy)}
+
+/* Ô nguyên văn yêu cầu của Thông tư */
+.yc{background:var(--gold-soft);border:1px solid #f0dfb4;border-left:4px solid var(--gold);
+  border-radius:11px;padding:13px 16px;margin-bottom:12px}
+.yc h5{font-size:13.6px;color:#7a5410;margin-bottom:7px}
+.yc p{font-size:14.4px;line-height:1.68;color:#4a3a12;margin-bottom:10px}
+
+/* Ô thực trạng nhà trường */
+.tt-box{border:1px solid var(--line);border-radius:11px;padding:13px 16px;margin-bottom:14px;background:#fff}
+.tt-dau{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:9px}
+.tt-dau b{font-size:14.4px;color:var(--navy)}
+.tt-dau .goi{font-size:12.2px;color:#8a94a6}
+.tt-dau .ct-quaylai{margin-left:auto;padding:6px 12px;font-size:12.8px}
+
+/* Dòng minh chứng gọn ở cuối tab Nội dung */
+.mc-dong{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#f2f7ff;
+  border:1px solid #d8e6fb;border-radius:11px;padding:11px 15px;font-size:13.8px;color:#33506e}
+.mc-dong .ic{font-size:16px;flex:none}
+.mc-dong>span:nth-child(2){flex:1;min-width:170px}
+.mc-dong .ct-quaylai{padding:7px 13px;font-size:12.8px}
+
+/* Hàng nút cuối cột phải */
+.ct-day{display:flex;gap:9px;flex-wrap:wrap;margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+.ct-nut{flex:1;min-width:140px;border-radius:10px;padding:11px 14px;font-size:13.8px;
+  font-weight:600;cursor:pointer;font-family:inherit;border:1px solid #cfd8e6;background:#fff;color:#42526b}
+.ct-nut:hover{background:#f5f8fd}
+.ct-nut.xong{background:var(--ok-bg);border-color:#bfe8cd;color:var(--ok)}
+.ct-nut.cho{background:var(--warn-bg);border-color:#f0d089;color:var(--warn)}
+.ct-nut.chinh{background:var(--navy);border-color:var(--navy);color:#fff}
+.ct-nut.chinh:hover{background:var(--navy-2)}
+.ct-nut[disabled]{opacity:.5;cursor:default}
+.ct-nut[disabled]:hover{background:#fff}
+
+.ct-thanh{display:flex;align-items:center;gap:11px;flex-wrap:wrap;margin-bottom:13px}
+.ct-thanh .goi{font-size:12.4px;color:#8a94a6}
+/* Chế độ đọc: nhắc lại những ý đã viết, cắt ngắn cho vừa cột */
+.ct-tomtat{font-size:13.6px;color:#33415c;line-height:1.65}
+.ct-tomtat div{padding:4px 0 4px 2px}
+/* Tab Kết luận */
+.ct-kl-muc{border-radius:10px;padding:12px 15px;font-size:15px;border:1px solid}
+.ct-kl-muc.m2{background:#e7f0ff;border-color:#c9dbff;color:#1a3f8f}
+.ct-kl-muc.m1{background:var(--ok-bg);border-color:#bfe8cd;color:var(--ok)}
+.ct-kl-muc.no{background:var(--miss-bg);border-color:#f3c9c5;color:var(--miss)}
+.ct-kl-nhac{margin-top:13px;background:var(--gold-soft);border:1px solid #f0dfb4;
+  border-left:4px solid var(--gold);border-radius:10px;padding:11px 15px;
+  font-size:13.4px;color:#6b4e0d;line-height:1.65}
+
+/* Cửa sổ Căn cứ & hướng dẫn — dùng lại .overlay/.sheet có sẵn của trang */
+.cc-muc{background:#fff;border:1px solid var(--line);border-radius:12px;padding:15px 18px;
+  margin-bottom:13px;box-shadow:var(--shadow)}
+.cc-muc h4{font-size:15.4px;color:var(--navy);margin-bottom:8px}
+.cc-muc p{font-size:14.2px;line-height:1.7;color:#33415c;margin-bottom:8px}
+.cc-muc p:last-child{margin-bottom:0}
+.cc-muc.canh{background:#fdf6f4;border-color:#f0cfc9}
+.cc-muc.canh h4{color:#8a3428}
 .warn-note{background:#fdf3f2;border-color:#f3c9c5;border-left-color:#c0483b;color:#8a3428}
 .ev-box{margin-top:13px;background:#f7f9fd;border:1px dashed #c8d4e6;border-radius:11px;padding:13px}
 .ev-box b{font-size:12.5px;color:var(--navy);display:block;margin-bottom:8px}
@@ -1139,27 +1348,36 @@ table.data td:last-child, table.data th:last-child,
 <!-- ============ KIỂM ĐỊNH CHẤT LƯỢNG ============ -->
 <section class="view" id="view-kdcl">
   <div class="wrap">
-    <div class="sec-head">
-      <span class="eyebrow">Năm học 2026 – 2027</span>
-      <h2>Trường chuẩn Quốc gia</h2>
-      <p>Bộ tiêu chuẩn hiện hành: 4 tiêu chuẩn, 15 tiêu chí, đánh giá theo Mức 1 và Mức 2.</p>
-    </div>
-    <div class="legal-note">
-      <b>Căn cứ:</b> Thông tư số 57/2026/TT-BGDĐT ngày 07/7/2026 của Bộ trưởng Bộ Giáo dục và Đào tạo quy định về bảo đảm chất lượng giáo dục đối với cơ sở giáo dục mầm non, giáo dục phổ thông, giáo dục thường xuyên và công nhận đạt chuẩn quốc gia đối với trường mầm non, trường phổ thông (hiệu lực 07/7/2026). Nội dung Mức 1, Mức 2 dưới đây là <b>nguyên văn Phụ lục II</b> — phụ lục áp dụng cho cơ sở giáo dục phổ thông.
+    <div class="kd-dau">
+      <div class="sec-head">
+        <span class="eyebrow">Tự đánh giá và cải tiến chất lượng</span>
+        <h2>Trường chuẩn Quốc gia</h2>
+        <p>Theo Thông tư 57/2026/TT-BGDĐT — 4 tiêu chuẩn, 15 tiêu chí, đánh giá theo Mức&nbsp;1 và Mức&nbsp;2.</p>
+      </div>
+      <div class="kd-dau-phai">
+        <span class="kd-muctieu">🎖 Mục tiêu: <b>Đạt chuẩn Quốc gia Mức 2</b></span>
+        <button class="btn btn-out" onclick="moCanCu()">📘 Căn cứ &amp; hướng dẫn</button>
+      </div>
     </div>
 
-    <div class="stats" id="kdStats"></div>
+    <!-- Hàng tổng quan: bốn thẻ bên trái, hai nút chức năng bên phải -->
+    <div class="kd-tong">
+      <div id="kdStats"></div>
+      <div class="kd-nut">
+        <!-- Hai nút này mở thẳng tab đã có sẵn trong Quản trị hệ thống, không
+             dựng màn hình thứ hai cho cùng một bảng dữ liệu. tudanhgia-sql.js
+             mở chúng ra cho quản trị và ban giám hiệu. -->
+        <button class="btn btn-out" id="kdNutHD" style="display:none" onclick="moQuanTri('hd')">👥 Hội đồng TĐG</button>
+        <button class="btn btn-out" id="kdNutKH" style="display:none" onclick="moQuanTri('kh')">📈 Kế hoạch cải tiến</button>
+      </div>
+    </div>
     <div class="kd-vi" id="kdGiaiThich"></div>
 
-    <div class="legal-note">
-      <b>Cách xếp mức (khoản 3 Điều 5):</b> Nhà trường <b>đạt Mức 1</b> khi tất cả 08 tiêu chí bắt buộc đạt Mức 1 <i>và</i> ít nhất 05 trong 07 tiêu chí còn lại đạt Mức 1 trở lên. <b>Đạt Mức 2</b> khi tất cả tiêu chí bắt buộc đạt Mức 2 <i>và</i> ít nhất 05 trong 07 tiêu chí còn lại đạt Mức 2, các tiêu chí còn lại đạt tối thiểu Mức 1. Tám tiêu chí bắt buộc: <b>1.3, 1.4, 2.1, 2.2, 3.1, 3.2, 4.1, 4.2</b>.
-    </div>
-
-    <div class="legal-note warn-note">
-      ⚠️ <b>Lưu ý khi dùng số liệu (khoản 4 Điều 27):</b> Từ ngày 07/7/2026 đến hết ngày 31/12/2028, dữ liệu định lượng chính chỉ dùng để theo dõi, phân tích, cảnh báo và hỗ trợ cải tiến; <b>không được sử dụng làm căn cứ duy nhất hoặc ngưỡng loại trừ</b> để kết luận nhà trường không đạt. Việc đánh giá phải căn cứ vào yêu cầu của tiêu chí, thông tin minh chứng và kết quả thực hiện. Phần mềm chỉ tổng hợp và gợi ý — quyền kết luận thuộc về Hội đồng tự đánh giá.
-    </div>
-
-    <div class="toolbar">
+    <!-- Thanh này giữ class "toolbar" vì hai tệp khác bám vào nó:
+         tudanhgia-sql.js chèn ô Năm học vào đây, và xuat-bao-cao-tdg.js tìm
+         nút Xuất báo cáo bằng '#view-kdcl .toolbar button'. Đổi class là vỡ cả
+         hai chỗ. -->
+    <div class="toolbar" id="kdThanh">
       <select id="kdStd" onchange="renderKdcl()">
         <option value="">Tất cả 4 tiêu chuẩn</option>
         <option value="1">Tiêu chuẩn 1 — Quản trị nhà trường và bảo đảm chất lượng</option>
@@ -1167,16 +1385,94 @@ table.data td:last-child, table.data th:last-child,
         <option value="3">Tiêu chuẩn 3 — Thực hiện chương trình, đổi mới phương pháp giáo dục và phát triển người học</option>
         <option value="4">Tiêu chuẩn 4 — Điều kiện giáo dục, môi trường an toàn và phối hợp xã hội</option>
       </select>
-      <button class="btn btn-out" onclick="notify('Đang mở phiếu tự đánh giá của các thành viên hội đồng…')">👥 Phiếu hội đồng</button>
-      <button class="btn btn-gold" onclick="notify('Đang kết xuất Báo cáo tự đánh giá theo Biểu 1, Phụ lục V…')">📄 Xuất báo cáo tự đánh giá</button>
+      <div class="kd-nut">
+        <button class="btn btn-gold" onclick="notify('Đang kết xuất Báo cáo tự đánh giá theo Biểu 1, Phụ lục V…')">📄 Xuất báo cáo tự đánh giá</button>
+      </div>
     </div>
-    <div id="kdList"></div>
 
-    <div class="legal-note" style="margin-top:20px">
-      <b>Ghi chú của Phụ lục II:</b> Kết quả đánh giá Mức 1 phản ánh các yêu cầu cơ bản để cơ sở giáo dục tổ chức hoạt động ổn định theo quy định; cơ sở giáo dục có hoạt động, hồ sơ, dữ liệu và phân công thực hiện phù hợp, không có rủi ro nghiêm trọng chưa được xử lý. Kết quả đánh giá Mức 2 phản ánh việc cơ sở giáo dục đã đạt Mức 1, đồng thời sử dụng dữ liệu, phản hồi và kết quả tự đánh giá để cải tiến hoạt động; có minh chứng về kết quả cải tiến chất lượng hoặc tác động thực chất của hoạt động cải tiến.
+    <!-- Hai cột: trái là danh sách 15 tiêu chí, phải là tiêu chí đang chọn.
+         Khi bấm "Chỉnh sửa" thì tudanhgia-sql.js gắn class .rong vào khối này,
+         cột trái ẩn đi và ô nhập giãn hết bề ngang — mỗi tiêu chí có tới 11 nội
+         hàm, viết trong cột 55% thì chật. -->
+    <div class="kd-lam" id="kdLam">
+      <div class="kd-trai">
+        <div class="kd-tieu">Danh sách tiêu chí <span id="kdSoTC"></span></div>
+        <div class="kd-loc" id="kdLoc"></div>
+        <div id="kdList"></div>
+      </div>
+      <div class="kd-phai" id="kdChiTiet"></div>
+    </div>
+
+    <!-- Dải chân trang: gộp câu nhắc pháp lý về cách dùng số liệu (khoản 4
+         Điều 27) vào đây thay vì để một khối riêng phía trên. Vẫn đứng trong
+         tầm mắt của người vừa đọc số, mà không chen vào chỗ làm việc. -->
+    <div class="kd-chan">
+      <span class="ic">ⓘ</span>
+      <span>Dữ liệu được quản lý thống nhất trong Hệ thống Hồ sơ số nhà trường. Số liệu chỉ dùng để theo dõi, phân tích và hỗ trợ cải tiến — <b>quyền kết luận thuộc về Hội đồng tự đánh giá</b> (khoản 4 Điều 27).</span>
+      <button onclick="moCanCu()">Xem nguyên văn</button>
     </div>
   </div>
 </section>
+
+<!-- ============ CĂN CỨ & HƯỚNG DẪN (cửa sổ của Trường chuẩn Quốc gia) ============
+     Bốn khối chữ vốn nằm thẳng trên trang chuyển vào đây, GIỮ NGUYÊN TỪNG CHỮ.
+     Đây là nguyên văn Thông tư, không phải lời phần mềm — không rút gọn. -->
+<div class="overlay" id="ccLop">
+  <div class="sheet">
+    <div class="sheet-head">
+      <span class="ic">📘</span>
+      <div class="tt">
+        <h3>Căn cứ và cách xếp mức</h3>
+        <p>Thông tư 57/2026/TT-BGDĐT — trích nguyên văn</p>
+      </div>
+      <button class="sheet-x" onclick="dongCanCu()">✕</button>
+    </div>
+    <div style="padding:18px 20px 30px">
+      <div class="cc-muc">
+        <h4>Căn cứ pháp lý</h4>
+        <p>Thông tư số 57/2026/TT-BGDĐT ngày 07/7/2026 của Bộ trưởng Bộ Giáo dục và Đào tạo quy định về bảo đảm chất lượng giáo dục đối với cơ sở giáo dục mầm non, giáo dục phổ thông, giáo dục thường xuyên và công nhận đạt chuẩn quốc gia đối với trường mầm non, trường phổ thông (hiệu lực 07/7/2026). Nội dung Mức 1, Mức 2 trên màn hình là <b>nguyên văn Phụ lục II</b> — phụ lục áp dụng cho cơ sở giáo dục phổ thông.</p>
+      </div>
+
+      <div class="cc-muc">
+        <h4>Cách xếp mức của nhà trường (khoản 3 Điều 5)</h4>
+        <p>Nhà trường <b>đạt Mức 1</b> khi tất cả 08 tiêu chí bắt buộc đạt Mức 1 <i>và</i> ít nhất 05 trong 07 tiêu chí còn lại đạt Mức 1 trở lên.</p>
+        <p>Nhà trường <b>đạt Mức 2</b> khi tất cả tiêu chí bắt buộc đạt Mức 2 <i>và</i> ít nhất 05 trong 07 tiêu chí còn lại đạt Mức 2, các tiêu chí còn lại đạt tối thiểu Mức 1.</p>
+        <p>Tám tiêu chí bắt buộc: <b>1.3, 1.4, 2.1, 2.2, 3.1, 3.2, 4.1, 4.2</b>.</p>
+      </div>
+
+      <div class="cc-muc">
+        <h4>Ghi chú của Phụ lục II về hai mức</h4>
+        <p>Kết quả đánh giá <b>Mức 1</b> phản ánh các yêu cầu cơ bản để cơ sở giáo dục tổ chức hoạt động ổn định theo quy định; cơ sở giáo dục có hoạt động, hồ sơ, dữ liệu và phân công thực hiện phù hợp, không có rủi ro nghiêm trọng chưa được xử lý.</p>
+        <p>Kết quả đánh giá <b>Mức 2</b> phản ánh việc cơ sở giáo dục đã đạt Mức 1, đồng thời sử dụng dữ liệu, phản hồi và kết quả tự đánh giá để cải tiến hoạt động; có minh chứng về kết quả cải tiến chất lượng hoặc tác động thực chất của hoạt động cải tiến.</p>
+      </div>
+
+      <div class="cc-muc canh">
+        <h4>⚠️ Lưu ý khi dùng số liệu (khoản 4 Điều 27)</h4>
+        <p>Từ ngày 07/7/2026 đến hết ngày 31/12/2028, dữ liệu định lượng chính chỉ dùng để theo dõi, phân tích, cảnh báo và hỗ trợ cải tiến; <b>không được sử dụng làm căn cứ duy nhất hoặc ngưỡng loại trừ</b> để kết luận nhà trường không đạt. Việc đánh giá phải căn cứ vào yêu cầu của tiêu chí, thông tin minh chứng và kết quả thực hiện.</p>
+        <p>Phần mềm chỉ tổng hợp và gợi ý — <b>quyền kết luận thuộc về Hội đồng tự đánh giá</b>.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* Cửa sổ Căn cứ & hướng dẫn. Giấu thanh cuộn của trang nền như các cửa sổ khác,
+   và trả lại khi đóng — quên bước trả lại thì cả trang kẹt không cuộn được. */
+function moCanCu(){
+  document.getElementById('ccLop').classList.add('on');
+  document.body.style.overflow = 'hidden';
+}
+function dongCanCu(){
+  document.getElementById('ccLop').classList.remove('on');
+  document.body.style.overflow = '';
+}
+document.getElementById('ccLop').addEventListener('click', function(e){
+  if (e.target === this) dongCanCu();
+});
+document.addEventListener('keydown', function(e){
+  if (e.key === 'Escape' && document.getElementById('ccLop').classList.contains('on')) dongCanCu();
+});
+</script>
 
 <!-- ============ BẢO ĐẢM CHẤT LƯỢNG ============ -->
 <section class="view" id="view-dbcl">
@@ -2465,52 +2761,32 @@ function renderKdcl(){
   let m2=0,m1=0,no=0;
   TIEU_CHI.forEach(c=>{ if(c.self===2) m2++; else if(c.self===1) m1++; else no++; });
 
+  /* Bản vẽ MINH HOẠ, chỉ chạy trong khoảnh khắc trước khi đăng nhập xong —
+     js/tudanhgia-sql.js ghi đè hàm này bằng bản đọc dữ liệu thật. Giữ đúng
+     hình dạng hai cột của bản thật để bố cục không nhảy, nhưng KHÔNG dựng lại
+     phần nhập liệu: cột phải chỉ nói thẳng là đang chờ dữ liệu. */
   document.getElementById('kdList').innerHTML = list.map(c=>{
     const datM1 = c.self >= 1, datM2 = c.self >= 2;
-    return `
-    <div class="crit">
-      <button class="crit-head" onclick="this.parentNode.classList.toggle('open')">
-        <span class="crit-code">${c.code}</span>
-        <span class="crit-ttl">${c.name}${c.bb?' <span class="tc-bb">Bắt buộc</span>':''}</span>
-        <span class="badge ${datM2?'badge-m2':(datM1?'badge-m1':'badge-no')}">${datM2?'Đạt Mức 2':(datM1?'Đạt Mức 1':'Không đạt Mức 1')}</span>
-        <span class="sub-arrow">▶</span>
-      </button>
-      <div class="crit-body">
-        <div class="lv">
-          <span class="lv-tag">MỨC 1</span><p>${c.m1}</p>
-          <div class="lv-pick">
-            <span class="lv-hoi">Nhà trường tự đánh giá Mức 1:</span>
-            <button class="pick${datM1?' on':''}" onclick="setMuc('${c.code}',1,true)">Đạt</button>
-            <button class="pick${!datM1?' on':''}" onclick="setMuc('${c.code}',1,false)">Không đạt</button>
-          </div>
-        </div>
-        <div class="lv${datM1?'':' lv-khoa'}">
-          <span class="lv-tag m2">MỨC 2</span><p>${c.m2}</p>
-          <div class="lv-pick">
-            ${datM1
-              ? `<span class="lv-hoi">Nhà trường tự đánh giá Mức 2:</span>
-                 <button class="pick${datM2?' on':''}" onclick="setMuc('${c.code}',2,true)">Đạt</button>
-                 <button class="pick${!datM2?' on':''}" onclick="setMuc('${c.code}',2,false)">Không đạt</button>`
-              : `<span class="lv-hoi">Chỉ xem xét Mức 2 khi Mức 1 đã được xác định đạt (Biểu 1, Phụ lục V).</span>`}
-          </div>
-        </div>
-        <div class="ev-box">
-          <b>📎 Minh chứng lấy từ kho Hồ sơ số (${c.ev.length})</b>
-          <div class="ev-list">
-            ${c.ev.map(e=>`<span class="ev">📄 ${e}</span>`).join('')}
-            <button class="ev" style="cursor:pointer;border-style:dashed;color:var(--navy-2);font-weight:600" onclick="notify('Đang mở danh mục Hồ sơ số để chọn minh chứng…')">➕ Gắn thêm minh chứng</button>
-          </div>
-        </div>
-      </div>
-    </div>`;}).join('');
+    return `<button class="tc-hang" onclick="notify('Đang tải dữ liệu tự đánh giá của nhà trường…')">
+      <span class="ma">${c.code}</span>
+      <span class="ten">${c.name}${c.bb?' <span class="tc-bb">Bắt buộc</span>':''}</span>
+      <span class="badge ${datM2?'badge-m2':(datM1?'badge-m1':'badge-no')}">${datM2?'Đạt Mức 2':(datM1?'Đạt Mức 1':'Không đạt Mức 1')}</span>
+    </button>`;}).join('');
+
+  const oLoc = document.getElementById('kdLoc');
+  if(oLoc) oLoc.innerHTML = '';
+  const oSo = document.getElementById('kdSoTC');
+  if(oSo) oSo.textContent = '(4 tiêu chuẩn)';
+  const oCt = document.getElementById('kdChiTiet');
+  if(oCt) oCt.innerHTML = '<div class="kd-trong">Đang đọc dữ liệu tự đánh giá của nhà trường…</div>';
 
   const kq = xepMucNhaTruong();
   const bbDat2 = TIEU_CHI.filter(c=>c.bb && c.self>=2).length;
   document.getElementById('kdStats').innerHTML = `
     <div class="stat"><b style="font-size:22px">${kq.ketLuan}</b><span>Mức thực hiện hoạt động đảm bảo chất lượng</span></div>
     <div class="stat ok"><b>${bbDat2}/8</b><span>tiêu chí bắt buộc đạt Mức 2</span><div class="prog"><i style="width:${Math.round(bbDat2/8*100)}%"></i></div></div>
-    <div class="stat warn"><b>${kq.clM2}/7</b><span>tiêu chí còn lại đạt Mức 2 <i>(cần ≥ 5)</i></span></div>
-    <div class="stat miss"><b>${no}</b><span>tiêu chí chưa đạt Mức 1</span></div>`;
+    <div class="stat warn"><b>${kq.clM2}/7</b><span>tiêu chí còn lại đạt Mức 2 <i>(cần ≥ 5)</i></span><div class="prog"><i style="width:${Math.round(kq.clM2/7*100)}%"></i></div></div>
+    <div class="stat ${no?'miss':'ok'}"><b>${no}</b><span>tiêu chí chưa đạt Mức 1</span></div>`;
   document.getElementById('kdGiaiThich').innerHTML = kq.vi
     ? `<b>Vì sao xếp mức này:</b> ${kq.vi}`
     : `<b>Vì sao xếp mức này:</b> Toàn bộ 08 tiêu chí bắt buộc đạt Mức 2, ${kq.clM2}/7 tiêu chí còn lại đạt Mức 2 và không có tiêu chí nào chưa đạt Mức 1.`;
@@ -2594,14 +2870,14 @@ renderDbcl();
      Ba tệp dưới đây chỉ hoạt động khi js/cauhinh.js đã được điền địa chỉ
      cơ sở dữ liệu. Chưa điền thì trang chạy y như trước, không đòi đăng nhập. -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/cauhinh.js?v=202608081536"></script>
-<script src="js/dangnhap.js?v=202608081536"></script>
-<script src="js/hoso-sql.js?v=202608081536"></script>
-<script src="js/tudanhgia-sql.js?v=202608081536"></script>
-<script src="js/nhansu-sql.js?v=202608081536"></script>
-<script src="js/kiemtra-drive.js?v=202608081536"></script>
-<script src="js/xuat-bieu-mau.js?v=202608081536"></script>
-<script src="js/xuat-bao-cao-tdg.js?v=202608081536"></script>
+<script src="js/cauhinh.js?v=202608091838"></script>
+<script src="js/dangnhap.js?v=202608091838"></script>
+<script src="js/hoso-sql.js?v=202608091838"></script>
+<script src="js/tudanhgia-sql.js?v=202608091838"></script>
+<script src="js/nhansu-sql.js?v=202608091838"></script>
+<script src="js/kiemtra-drive.js?v=202608091838"></script>
+<script src="js/xuat-bieu-mau.js?v=202608091838"></script>
+<script src="js/xuat-bao-cao-tdg.js?v=202608091838"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <!-- ExcelJS chỉ dùng để TẠO mẫu có trang trí: bản miễn phí của xlsx ở trên
      không viết được màu nền, khung viền hay khổ giấy A4 ngang. Phần ĐỌC tệp
@@ -2609,38 +2885,38 @@ renderDbcl();
 <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 <!-- Bộ tạo mẫu dùng chung: mọi mẫu Excel của hệ thống đi qua đây nên trông
      giống nhau và in ra dùng được ngay. Phải nạp TRƯỚC các màn hình gọi nó. -->
-<script src="js/mau-excel.js?v=202608081536"></script>
-<script src="js/dbcl-sql.js?v=202608081536"></script>
-<script src="js/xuat-phu-luc-dbcl.js?v=202608081536"></script>
-<script src="js/dbcl-excel.js?v=202608081536"></script>
-<script src="js/dbcl-vanhanh.js?v=202608081536"></script>
-<script src="js/dbcl-hocsinh.js?v=202608081536"></script>
+<script src="js/mau-excel.js?v=202608091838"></script>
+<script src="js/dbcl-sql.js?v=202608091838"></script>
+<script src="js/xuat-phu-luc-dbcl.js?v=202608091838"></script>
+<script src="js/dbcl-excel.js?v=202608091838"></script>
+<script src="js/dbcl-vanhanh.js?v=202608091838"></script>
+<script src="js/dbcl-hocsinh.js?v=202608091838"></script>
 <!-- Nạp SAU dbcl-hocsinh.js: dùng lại window.hsChuanNgay và window.hsVeLai -->
-<script src="js/vnedu-nhap.js?v=202608081536"></script>
+<script src="js/vnedu-nhap.js?v=202608091838"></script>
 <!-- Nối màn hình "Quản lý học sinh" với dữ liệu thật, thay bản xem thử -->
-<script src="js/hocsinh-that.js?v=202608081536"></script>
-<script src="js/tinhtien-lop.js?v=202608081536"></script>
-  <script src="js/quy-mo.js?v=202608081536"></script>
-<script src="js/dbcl-phancong.js?v=202608081536"></script>
-<script src="js/dbcl-camket-hs.js?v=202608081536"></script>
+<script src="js/hocsinh-that.js?v=202608091838"></script>
+<script src="js/tinhtien-lop.js?v=202608091838"></script>
+  <script src="js/quy-mo.js?v=202608091838"></script>
+<script src="js/dbcl-phancong.js?v=202608091838"></script>
+<script src="js/dbcl-camket-hs.js?v=202608091838"></script>
 <!-- Các tab thêm vào bảng Quản trị hệ thống. Phải nạp SAU dbcl-hocsinh.js vì
      tab "Danh sách học sinh" dùng lại đúng màn hình của tệp đó, và nạp sau
      dangnhap.js vì chúng tự đăng ký vào window.qtTabPhu. -->
-<script src="js/quantri-nhansu.js?v=202608081536"></script>
-<script src="js/quantri-hocsinh.js?v=202608081536"></script>
-<script src="js/quantri-hoso.js?v=202608081536"></script>
+<script src="js/quantri-nhansu.js?v=202608091838"></script>
+<script src="js/quantri-hocsinh.js?v=202608091838"></script>
+<script src="js/quantri-hoso.js?v=202608091838"></script>
 <!-- Bảng số liệu 03 năm học kèm theo báo cáo tự đánh giá (Biểu 1 Phụ lục V TT57).
      Vừa là tab nhập trong Quản trị, vừa sinh bảng cho bản Word — nên nạp TRƯỚC
      lúc thầy cô bấm xuất báo cáo, còn thứ tự với xuat-bao-cao-tdg.js không quan
      trọng vì hai bên gọi nhau lúc bấm nút, không phải lúc nạp trang. -->
-<script src="js/so-lieu-tt57.js?v=202608081536"></script>
+<script src="js/so-lieu-tt57.js?v=202608091838"></script>
 <!-- Ba việc còn lại của Thông tư 57: Hội đồng tự đánh giá (Điều 9), Kế hoạch
      cải tiến theo Biểu 2 (Điều 10) và Điều kiện chuẩn quốc gia (Điều 16). -->
-<script src="js/tt57-hoidong-caitien-cnqg.js?v=202608081536"></script>
+<script src="js/tt57-hoidong-caitien-cnqg.js?v=202608091838"></script>
 <!-- Nạp SAU cùng: hướng dẫn lọc nội dung theo vai trò nên cần window.NGUOI_DUNG -->
-<script src="js/huong-dan.js?v=202608081536"></script>
+<script src="js/huong-dan.js?v=202608091838"></script>
 <!-- Xuất Word để giao việc: phiếu theo hộp hồ sơ và danh sách từng lớp.
      Cần CATS (khai trong index.html) và window.layHoSo (hoso-sql.js). -->
-<script src="js/xuat-giao-viec.js?v=202608081536"></script>
+<script src="js/xuat-giao-viec.js?v=202608091838"></script>
 </body>
 </html>

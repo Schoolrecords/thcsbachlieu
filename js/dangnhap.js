@@ -319,15 +319,18 @@
     }
   }
 
-  /* Cho phần khác của trang gọi tới, ví dụ thẻ Quản trị hệ thống ở trang chủ */
-  window.moQuanTri = function () { moBangQuanTri(); };
+  /* Cho phần khác của trang gọi tới, ví dụ thẻ Quản trị hệ thống ở trang chủ.
+     Truyền mã tab thì mở thẳng vào tab đó — màn hình Trường chuẩn Quốc gia
+     dùng lối này để đi tới Hội đồng TĐG và Kế hoạch cải tiến, thay vì bắt
+     thầy cô tự dò trong tám tab. Không truyền gì thì vẫn vào Tổng quan. */
+  window.moQuanTri = function (tab) { moBangQuanTri(tab); };
 
   /* ========================================================================
      BẢNG QUẢN TRỊ — người dùng, danh sách mời, nhật ký
      ======================================================================== */
   let bangQT = null;
 
-  function moBangQuanTri() {
+  function moBangQuanTri(tabMuon) {
     if (!bangQT) {
       bangQT = document.createElement('div');
       bangQT.className = 'qt-lop';
@@ -356,12 +359,17 @@
     }
     bangQT.classList.add('hien');
     document.body.style.overflow = 'hidden';
-    /* Trả nút sáng về Tổng quan cho khớp với thân bảng. Thiếu dòng này thì
-       xem tab khác rồi đóng, mở lại sẽ thấy thân là Tổng quan mà nút sáng vẫn
-       là tab cũ. */
-    bangQT.querySelectorAll('.qt-tab button')
-      .forEach((x, i) => x.classList.toggle('on', i === 0));
-    veTab('tq');
+
+    /* Tab muốn mở phải CÓ THẬT trong danh sách. Tệp đăng ký tab chưa nạp được
+       — mạng chậm, hoặc chưa chạy tệp sql tương ứng — thì nút sáng một đằng
+       thân bảng một nẻo; thà quay về Tổng quan còn hơn để trống. */
+    const ds = [...bangQT.querySelectorAll('.qt-tab button')];
+    let i = tabMuon ? ds.findIndex(x => x.dataset.tab === tabMuon) : 0;
+    if (i < 0) i = 0;
+    /* Trả nút sáng cho khớp với thân bảng. Thiếu dòng này thì xem tab khác rồi
+       đóng, mở lại sẽ thấy thân là Tổng quan mà nút sáng vẫn là tab cũ. */
+    ds.forEach((x, k) => x.classList.toggle('on', k === i));
+    veTab(ds[i] ? ds[i].dataset.tab : 'tq');
   }
 
   function dongBangQuanTri() {

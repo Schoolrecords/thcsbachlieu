@@ -5,3 +5,7 @@ Thumbs.db
 
 # Bản sao lưu trước khi sửa — chỉ giữ trong máy, không đưa lên kho công khai
 *.bak
+
+# Bản xem thử giao diện: chép từ index.html, có đoạn mã bỏ qua đăng nhập nên
+# TUYỆT ĐỐI không được lên GitHub Pages. Sinh lại được bất cứ lúc nào.
+xem-thu-*.html

@@ -94,16 +94,22 @@
      ========================================================================== */
   const VAI_HD = ['Chủ tịch', 'Phó Chủ tịch', 'Thư ký', 'Ủy viên'];
   let HD = null, TV = [], KT = null, DS_CBGV = [];
+  /* Của tệp sql/35: danh mục tiêu chí để kiểm tra mã nhập vào có thật, và tiến
+     độ từng thành viên do máy chủ đếm. Chưa chạy sql/35 thì THIEU_PC bật, phần
+     phân công tự ẩn — cả bảng vẫn dùng được như cũ. */
+  let DS_TIEU_CHI = [], TIEN_DO = {}, THIEU_PC = false;
 
   async function taiHD() {
     const s = sb();
-    const [hd, cb] = await Promise.all([
+    const [hd, cb, tc] = await Promise.all([
       s.from('hoi_dong_tdg').select('*').eq('nam_hoc', NAM()),
-      s.from('moi_tai_khoan').select('email, ho_ten, chuc_vu').order('ho_ten')
+      s.from('moi_tai_khoan').select('email, ho_ten, chuc_vu').order('ho_ten'),
+      s.from('tieu_chi').select('ma, ten').order('so_tt')
     ]);
     if (hd.error) throw hd.error;
     HD = (hd.data && hd.data[0]) || null;
     DS_CBGV = cb.error ? [] : (cb.data || []);
+    DS_TIEU_CHI = tc.error ? [] : (tc.data || []);
 
     TV = [];
     if (HD) {
@@ -112,8 +118,58 @@
       if (tv.error) throw tv.error;
       TV = tv.data || [];
     }
+    /* Dò cột phân công từ chính dòng vừa đọc về. Chưa có thành viên nào thì
+       chưa kết luận được — cứ coi như có, lệnh ghi đầu tiên sẽ báo rõ. */
+    THIEU_PC = !!TV.length && !('tieu_chi_phu_trach' in TV[0]);
+
+    /* Tiến độ đếm ở máy chủ. Hàm chưa có (chưa chạy sql/35) thì bỏ qua, KHÔNG
+       ném lỗi ra ngoài — thiếu bảng tiến độ không phải cớ để che cả màn hình
+       hội đồng đang dùng được. */
+    TIEN_DO = {};
+    const td = await s.rpc('tien_do_thanh_vien', { p_nam_hoc: NAM() });
+    if (td.error) {
+      /* CHỈ coi là "chưa chạy sql/35" khi máy chủ báo đúng là KHÔNG TÌM THẤY
+         HÀM (42883 của PostgreSQL, PGRST202 của PostgREST). Bắt mọi lỗi rồi bật
+         cờ là sai nặng: mạng chớp nhoáng hay hết hạn phiên cũng làm ba cột phân
+         công biến mất khỏi màn hình kèm câu "hãy chạy sql/35" — trong khi tệp
+         ấy đã chạy và dữ liệu vẫn nằm nguyên trong cơ sở dữ liệu. Thầy cô vừa
+         gõ xong ô Tiêu chí phụ trách mà thấy cả cột mất thì kết luận đương
+         nhiên là "phần mềm làm mất dữ liệu". */
+      const ma = String(td.error.code || '');
+      const s2 = String(td.error.message || '');
+      if (ma === '42883' || ma === 'PGRST202' || /tien_do_thanh_vien/.test(s2)) {
+        THIEU_PC = true;
+      } else {
+        console.error('[Hội đồng] Không đọc được tiến độ:', td.error);
+      }
+    } else {
+      (td.data || []).forEach(function (r) { TIEN_DO[r.thanh_vien_id] = r; });
+    }
+
     const kt = await s.rpc('kiem_tra_hoi_dong', { p_nam_hoc: NAM() });
     KT = (!kt.error && kt.data && kt.data[0]) ? kt.data[0] : null;
+  }
+
+  /* Ô nhập tiêu chí phụ trách nhận chuỗi "1.1, 1.2". Trả về mảng mã ĐÃ KIỂM
+     TRA có thật trong danh mục, cùng danh sách mã sai để báo lại. Không tự bỏ
+     mã sai đi im lặng: gõ nhầm "1.10" mà máy lặng lẽ xoá thì người nhập tưởng
+     đã giao xong. */
+  function tachMaTieuChi(s) {
+    const co = DS_TIEU_CHI.map(x => x.ma);
+    /* Chưa đọc được danh mục thì KHÔNG kết luận mã nào sai. Thiếu chốt này,
+       câu đọc bảng tieu_chi hỏng là mọi mã nhập vào đều bị coi là sai, màn hình
+       báo "Không có tiêu chí mang mã 1.1. Mã hợp lệ là ." — câu vô nghĩa, và
+       thầy cô không cách nào giao được việc mà cũng không biết vì sao. */
+    if (!co.length) return { dung: null, sai: [], thieuDanhMuc: true };
+    const dung = [], sai = [];
+    String(s || '').split(/[,;\s]+/).forEach(function (m) {
+      const t = m.trim();
+      if (!t) return;
+      if (co.indexOf(t) >= 0) { if (dung.indexOf(t) < 0) dung.push(t); }
+      else sai.push(t);
+    });
+    dung.sort(function (a, b) { return a.localeCompare(b, 'vi', { numeric: true }); });
+    return { dung: dung, sai: sai };
   }
 
   /* Dải kiểm tra: chỉ ra ĐÚNG điều kiện nào chưa đạt, không nói chung "chưa hợp
@@ -188,21 +244,55 @@
         + 'trở lên</b>, gồm Chủ tịch, Phó Chủ tịch, Thư ký và các ủy viên.</div>';
     } else {
       h += '<div class="tbl-wrap"><table class="tt-bang"><thead><tr>'
-        + '<th style="width:40px">TT</th><th>Họ và tên</th><th style="width:170px">Chức vụ trong trường</th>'
-        + '<th style="width:130px">Vai trò trong hội đồng</th>'
-        + '<th style="width:96px">Đã tập huấn</th><th style="width:56px"></th>'
+        + '<th style="width:36px">TT</th><th>Họ và tên</th><th style="width:150px">Chức vụ trong trường</th>'
+        + '<th style="width:126px">Vai trò trong hội đồng</th>'
+        + (THIEU_PC ? '' :
+            '<th style="width:150px">Nhóm công tác</th>'
+          + '<th style="width:150px">Tiêu chí phụ trách</th>'
+          + '<th style="width:120px">Tiến độ</th>')
+        + '<th style="width:88px">Đã tập huấn</th><th style="width:50px"></th>'
         + '</tr></thead><tbody>';
       TV.forEach(function (t, i) {
+        const td = TIEN_DO[t.id];
+        const ds = t.tieu_chi_phu_trach || [];
         h += '<tr><td>' + (i + 1) + '</td>'
           + '<td><b>' + chan(t.ho_ten) + '</b>'
-            + (t.email ? '<div class="tt-nho">' + chan(t.email) + '</div>' : '') + '</td>'
+            + (t.email ? '<div class="tt-nho">' + chan(t.email) + '</div>' : '')
+            + (THIEU_PC ? '' :
+                '<div style="margin-top:5px">' + (sua
+                  ? '<input class="tt-o" data-tv="' + t.id + '" data-f="nhiem_vu" value="'
+                    + chan(t.nhiem_vu || '') + '" placeholder="Nhiệm vụ được giao…">'
+                  : (t.nhiem_vu ? '<span class="tt-nho">' + chan(t.nhiem_vu) + '</span>' : ''))
+                + '</div>') + '</td>'
           + '<td>' + chan(t.chuc_vu || '—') + '</td>'
           + '<td>' + (sua
               ? '<select class="tt-o" data-tv="' + t.id + '" data-f="vai_tro">'
                 + VAI_HD.map(v => '<option' + (v === t.vai_tro ? ' selected' : '') + '>'
                     + chan(v) + '</option>').join('') + '</select>'
-              : chan(t.vai_tro)) + '</td>'
-          + '<td style="text-align:center">' + (sua
+              : chan(t.vai_tro)) + '</td>';
+
+        if (!THIEU_PC) {
+          h += '<td>' + (sua
+              ? '<input class="tt-o" data-tv="' + t.id + '" data-f="nhom" value="'
+                + chan(t.nhom || '') + '" placeholder="Dữ liệu và minh chứng…">'
+              : chan(t.nhom || '—')) + '</td>'
+            /* Ô text "1.1, 1.2" thay cho danh sách bấm chọn 15 dòng: gõ nhanh
+               hơn nhiều khi giao cả một tiêu chuẩn, và mã sai thì báo lại chứ
+               không lặng lẽ bỏ đi. */
+            + '<td>' + (sua
+              ? '<input class="tt-o" data-tv="' + t.id + '" data-f="tieu_chi_phu_trach" value="'
+                + chan(ds.join(', ')) + '" placeholder="1.1, 1.2">'
+                + '<div class="tt-nho">Cách nhau dấu phẩy</div>'
+              : (ds.length ? chan(ds.join(', ')) : '—')) + '</td>'
+            + '<td>' + (td && td.so_tieu_chi
+              ? '<b>' + td.da_du_noi_ham + '/' + td.so_tieu_chi + '</b> tiêu chí viết đủ'
+                + '<div class="tt-nho">' + td.da_cham_muc + '/' + td.so_tieu_chi + ' đã chấm mức</div>'
+              /* Chưa giao tiêu chí nào KHÁC với làm chưa xong — để trống chứ
+                 không ghi 0/0 rồi tô màu như người này chậm tiến độ. */
+              : '<span class="tt-nho">chưa được giao</span>') + '</td>';
+        }
+
+        h += '<td style="text-align:center">' + (sua
               ? '<input type="checkbox" data-tv="' + t.id + '" data-f="da_tap_huan"'
                 + (t.da_tap_huan ? ' checked' : '') + '>'
               : (t.da_tap_huan ? '✓' : '')) + '</td>'
@@ -210,6 +300,16 @@
           + '</td></tr>';
       });
       h += '</tbody></table></div>';
+
+      if (THIEU_PC) {
+        h += '<div class="tt-canh vang">Chưa có chỗ lưu phần <b>phân công nhiệm vụ</b> '
+          + '(nhóm công tác, tiêu chí phụ trách, tiến độ). Chạy tệp '
+          + '<code>sql/35</code> trên Supabase là hiện ra.</div>';
+      } else {
+        h += '<div class="tt-nho" style="margin-top:8px">Điểm b khoản 3 Điều 9: hội đồng '
+          + '<b>phân công nhiệm vụ cụ thể cho từng thành viên</b>. Cột “Tiến độ” do máy chủ đếm '
+          + 'từ số nội hàm đã viết, không phải người tự đánh dấu.</div>';
+      }
     }
     hop.innerHTML = h;
     if (!sua) return;
@@ -222,10 +322,38 @@
     if (th) th.addEventListener('click', () => themTV(hop));
     hop.querySelectorAll('[data-tv]').forEach(function (o) {
       o.addEventListener('change', async function () {
-        const gt = this.dataset.f === 'da_tap_huan' ? this.checked : this.value;
+        const f = this.dataset.f;
+        let gt;
+        if (f === 'da_tap_huan') {
+          gt = this.checked;
+        } else if (f === 'tieu_chi_phu_trach') {
+          /* Kiểm tra mã trước khi ghi. Mã sai thì DỪNG hẳn và trả ô về giá trị
+             cũ — ghi một nửa rồi báo lỗi thì người nhập không biết phần nào đã
+             vào, phần nào chưa. */
+          const kq = tachMaTieuChi(this.value);
+          if (kq.thieuDanhMuc) {
+            const cu0 = TV.find(x => String(x.id) === this.dataset.tv);
+            this.value = ((cu0 && cu0.tieu_chi_phu_trach) || []).join(', ');
+            bao('Chưa đọc được danh mục tiêu chí nên không kiểm tra được mã. '
+              + 'Thầy cô tải lại trang rồi thử lại.');
+            return;
+          }
+          if (kq.sai.length) {
+            const cu = TV.find(x => String(x.id) === this.dataset.tv);
+            this.value = ((cu && cu.tieu_chi_phu_trach) || []).join(', ');
+            bao('Không có tiêu chí mang mã: ' + kq.sai.join(', ')
+              + '. Mã hợp lệ là ' + DS_TIEU_CHI.map(x => x.ma).join(', ') + '.');
+            return;
+          }
+          gt = kq.dung;
+        } else {
+          /* Ô chữ để trống thì ghi null chứ không ghi chuỗi rỗng — hai thứ này
+             đọc ra khác nhau ở mọi câu truy vấn sau đó. */
+          gt = String(this.value || '').trim() || null;
+        }
         try {
           const r = await sb().from('thanh_vien_hoi_dong')
-            .update({ [this.dataset.f]: gt }).eq('id', this.dataset.tv).select('id');
+            .update({ [f]: gt }).eq('id', this.dataset.tv).select('id');
           if (r.error) throw r.error;
           if (!r.data || !r.data.length) throw new Error('Máy chủ không cho sửa dòng này.');
           await taiHD(); veHD(hop);

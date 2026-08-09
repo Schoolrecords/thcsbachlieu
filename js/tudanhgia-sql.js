@@ -43,6 +43,10 @@
      một ô văn xuôi. KHÔNG chặn màn hình — thầy cô vẫn chấm mức được như thường. */
   let NOI_HAM = {}, HT_NH = {}, NH_CUA = {}, BC = {};
   let THIEU_NH = false, THIEU_BC = false;
+  /* Bật khi cơ sở dữ liệu chưa có cột tu_danh_gia.ghi_chu (chưa chạy sql/35).
+     Khi ấy ô Ghi chú của tab "Kết luận & Ghi chú" tự ẩn đi thay vì hiện ra rồi
+     báo lỗi lúc thầy cô đã gõ xong cả đoạn. */
+  let THIEU_GC = false;
   /* Bật khi lần tải gần nhất hỏng — chặn renderKdcl vẽ lại số minh hoạ */
   let TAI_HONG = false;
 
@@ -141,6 +145,25 @@
   .nh-mc:hover{background:#eef4ff}
   .nh-mc.on{background:#14306b;color:#fff;border-color:#14306b}
   .nh-mc.khoa{cursor:default;opacity:.75}
+
+  /* ---- Trạng thái của từng minh chứng ----
+     Trước đây ô này chỉ ghi "Minh chứng (7)" — con số ấy đếm gộp cả minh chứng
+     CHƯA CÓ trong kho, nên một tiêu chí trắng tay vẫn khoe bảy đầu minh chứng.
+     Nay tách rõ ba trạng thái đúng cột trang_thai của bảng ho_so. */
+  .ev-dem{display:flex;flex-wrap:wrap;gap:5px 14px;align-items:center;margin:7px 0 3px;
+    font-size:12.6px;color:#5b6b85}
+  .ev-dem i{font-style:normal;font-weight:700}
+  .ev-dem .co{color:#15803d} .ev-dem .dang{color:#a16207} .ev-dem .chua{color:#b91c1c}
+  .ev-tt{font-weight:700;margin-right:4px}
+  .ev-tt.co{color:#15803d} .ev-tt.dang{color:#a16207} .ev-tt.chua{color:#b91c1c}
+  .ev-pt{font-size:11.4px;color:#8a94a6;margin-left:5px}
+  /* Chưa có tệp thật thì viền đứt — nhìn một cái là biết chỗ nào còn nợ */
+  .ev.thieu{border-style:dashed;background:#fffdfd}
+
+  /* Đếm nội hàm đã viết, hiện ngay trên dòng tiêu chí lúc còn đóng */
+  .crit-nh{font-size:11.8px;font-weight:700;color:#5b6b85;background:#eef2f8;
+    border-radius:999px;padding:3px 9px;white-space:nowrap;flex:none}
+  .crit-nh.xong{background:#e8f7ee;color:#15803d}
   `;
   document.head.insertAdjacentHTML('beforeend', '<style>' + css + '</style>');
 
@@ -172,8 +195,11 @@
         sb.from('tieu_chi').select('*').order('so_tt'),
         sb.from('tu_danh_gia').select('*').eq('nam_hoc', NAM_HOC),
         /* ghi_chu để dành cho cột "Ghi chú" của danh mục minh chứng — Phụ lục IV
-           mục 4 có 05 cột, thiếu cột này là bảng không đúng mẫu. */
-        sb.from('ho_so').select('ma, ten, tieu_chi, trang_thai, link_drive, ghi_chu'),
+           mục 4 có 05 cột, thiếu cột này là bảng không đúng mẫu.
+           nguoi_phu_trach: bảng ho_so vẫn có sẵn cột này từ sql/01 nhưng màn hình
+           tự đánh giá trước nay không lấy về, nên nhìn vào một tiêu chí thiếu
+           minh chứng cũng không biết phải nhắc ai đi bổ sung. */
+        sb.from('ho_so').select('ma, ten, tieu_chi, trang_thai, link_drive, ghi_chu, nguoi_phu_trach'),
         sb.from('danh_gia_tieu_chuan').select('*').eq('nam_hoc', NAM_HOC)
       ]);
       /* Soi lỗi CẢ BỐN câu hỏi. Trước đây chỉ soi câu đầu, nên khi máy chủ từ
@@ -219,6 +245,10 @@
 
       TDG = {};
       (tdg.data || []).forEach(r => { TDG[r.tieu_chi_ma] = r; });
+      /* Dò cột ghi_chu từ chính dòng vừa đọc về (câu select lấy '*'). Bảng rỗng
+         thì chưa kết luận được, cứ coi như có — lệnh ghi đầu tiên sẽ báo lỗi và
+         luuGhiChuTC bắt lấy, nói rõ là thiếu sql/35. */
+      THIEU_GC = !!(tdg.data && tdg.data.length) && !('ghi_chu' in tdg.data[0]);
 
       MC_THEO_TC = {};
       (hs.data || []).forEach(h => {
@@ -260,14 +290,26 @@
          mở trang. Tải hỏng mà để nguyên thì thầy cô ngồi nhìn kết quả tự
          đánh giá GIẢ hiện y như thật, kể cả dòng kết luận "Đạt Mức 2", còn
          câu báo lỗi thì đã tắt sau ba giây. */
-      /* Phải xoá CẢ BA ô, không chỉ danh sách tiêu chí. Ô kdStats in đậm 22px
-         chính là dòng kết luận "Đạt Mức 2" của số minh hoạ, và nó nằm PHÍA
-         TRÊN dải cảnh báo — con số nguy hiểm nhất lại là con số còn sót. */
+      /* Phải xoá MỌI ô có số, không chỉ danh sách tiêu chí. Ô kdStats in đậm
+         22px chính là dòng kết luận "Đạt Mức 2" của số minh hoạ, và nó nằm
+         PHÍA TRÊN dải cảnh báo — con số nguy hiểm nhất lại là con số còn sót.
+
+         Ba ô phải xoá thêm, mỗi ô một kiểu nguy hiểm riêng:
+         · kdChiTiet  — cột phải còn nguyên nguyên văn, mức đã chấm và các ô
+                        nhập của tiêu chí thuộc năm cũ.
+         · kdBaoCao   — nguy hiểm nhất: đây là các ô textarea của Phần I và
+                        Phần III còn giữ chữ của năm cũ, mà onblur của chúng
+                        ghi upsert với nam_hoc = NĂM MỚI. Bấm vào một ô rồi bấm
+                        ra ngoài là chép nguyên báo cáo năm cũ sang năm mới.
+                        (Lỗi này có sẵn từ trước, không do lần sửa giao diện.) */
       TAI_HONG = true;
-      ['kdStats', 'kdGiaiThich', 'kdDanhGiaChung'].forEach(id => {
+      ['kdStats', 'kdGiaiThich', 'kdDanhGiaChung', 'kdChiTiet', 'kdBaoCao'].forEach(id => {
         const x = document.getElementById(id);
         if (x) x.innerHTML = '';
       });
+      /* Thẻ tiến độ nằm TRONG #kdStats nên đã bị xoá cùng ở trên — không cần
+         xoá riêng. (Trước đây có một khối #kdTienDo đứng riêng, nay bỏ vì hàng
+         thẻ đã ôm cả tiến độ.) */
       const o = document.getElementById('kdList');
       if (o) {
         o.innerHTML = '<div style="background:#fdf3f2;border:1.5px solid #f3c9c5;'
@@ -289,26 +331,69 @@
   /* ========================================================================
      GHI XUỐNG CƠ SỞ DỮ LIỆU
      ======================================================================== */
+  /* ------------------------------------------------------------------------
+     XẾP HÀNG MỌI LỆNH GHI — chống hai lệnh chồng lên nhau
+
+     Mọi lệnh ghi ở màn hình này đều lấy giá trị nền từ bộ nhớ đệm (TDG, HT_NH),
+     mà bộ nhớ đệm chỉ được cập nhật SAU khi máy chủ trả lời. Hai lệnh phát ra
+     trong cùng khoảng chờ sẽ cùng đọc một bản cũ và ghi đè lẫn nhau.
+
+     Thao tác gây ra chuyện đó là thao tác THƯỜNG NGÀY, không phải hiếm: gõ dở
+     một ô rồi bấm thẳng sang nút bên cạnh. Trình duyệt chạy onblur TRƯỚC onclick,
+     nên lệnh của ô vừa gõ và lệnh của nút vừa bấm đi song song — lệnh nào về
+     sau thì thắng, và thứ người dùng vừa làm lại là thứ bị mất.
+
+     Xếp hàng thì lệnh sau chỉ bắt đầu khi lệnh trước đã cập nhật xong bộ nhớ
+     đệm. Chậm hơn vài phần trăm giây, đổi lấy việc không bao giờ mất chữ.
+     ------------------------------------------------------------------------ */
+  let HANG_GHI = Promise.resolve();
+  function xepHang(viec) {
+    /* .then(viec, viec): lệnh trước hỏng thì lệnh sau VẪN chạy, không kéo cả
+       hàng đợi chết theo. Lỗi của từng lệnh do nơi gọi tự bắt. */
+    const p = HANG_GHI.then(viec, viec);
+    HANG_GHI = p.catch(function () {});
+    return p;
+  }
+
   async function luu(maTC, thayDoi) {
-    const cu = TDG[maTC] || {};
-    const ban = Object.assign({
-      nam_hoc: NAM_HOC,
-      tieu_chi_ma: maTC,
-      dat_m1: cu.dat_m1 || false,
-      dat_m2: cu.dat_m2 || false,
-      hien_trang_m1: cu.hien_trang_m1 || null,
-      hien_trang_m2: cu.hien_trang_m2 || null
-    }, thayDoi, {
-      cap_nhat_boi: window.NGUOI_DUNG ? window.NGUOI_DUNG.id : null
+    return xepHang(async function () {
+      /* Đọc bộ nhớ đệm KHI ĐÃ TỚI LƯỢT, không đọc lúc xếp hàng — đọc sớm thì
+         xếp hàng cũng vô nghĩa vì vẫn cầm bản cũ. */
+      const cu = TDG[maTC] || {};
+      const goc = {
+        nam_hoc: NAM_HOC,
+        tieu_chi_ma: maTC,
+        dat_m1: cu.dat_m1 || false,
+        dat_m2: cu.dat_m2 || false,
+        hien_trang_m1: cu.hien_trang_m1 || null,
+        hien_trang_m2: cu.hien_trang_m2 || null
+      };
+      if (!THIEU_GC) goc.ghi_chu = cu.ghi_chu || null;
+      const ban = Object.assign(goc, thayDoi, {
+        cap_nhat_boi: window.NGUOI_DUNG ? window.NGUOI_DUNG.id : null
+      });
+
+      let r = await sb.from('tu_danh_gia')
+        .upsert(ban, { onConflict: 'nam_hoc,tieu_chi_ma' })
+        .select().single();
+
+      /* Chưa chạy sql/35 mà bảng đang rỗng thì không dò ra được cột ghi_chu,
+         cờ THIEU_GC vẫn tắt và lệnh này bị từ chối. Không có chốt gỡ cờ ở đây
+         thì hỏng cả việc chấm mức lẫn việc nhập hiện trạng, mà bảng cứ rỗng
+         mãi nên tải lại bao nhiêu lần cũng vậy — bế tắc. Gỡ cờ rồi thử lại
+         đúng một lần. */
+      if (r.error && !THIEU_GC && /ghi_chu/.test(String(r.error.message || ''))) {
+        THIEU_GC = true;
+        delete ban.ghi_chu;
+        r = await sb.from('tu_danh_gia')
+          .upsert(ban, { onConflict: 'nam_hoc,tieu_chi_ma' })
+          .select().single();
+      }
+
+      if (r.error) throw r.error;
+      TDG[maTC] = r.data;
+      return r.data;
     });
-
-    const { data, error } = await sb.from('tu_danh_gia')
-      .upsert(ban, { onConflict: 'nam_hoc,tieu_chi_ma' })
-      .select().single();
-
-    if (error) throw error;
-    TDG[maTC] = data;
-    return data;
   }
 
   /* ========================================================================
@@ -329,7 +414,7 @@
           <span class="tdg-luu" id="luu-${c.code}-${muc}">✓ đã lưu</span></label>
         <textarea id="ht-${c.code}-${muc}" ${chamDuoc ? '' : 'disabled'}
           placeholder="${chamDuoc ? 'Nhập mô tả hiện trạng…' : 'Chỉ ban giám hiệu và tổ trưởng nhập được nội dung này'}"
-          onblur="luuHienTrang('${c.code}',${muc},this.value)">${gt ? gt.replace(/</g, '&lt;') : ''}</textarea>
+          onblur="luuHienTrang('${c.code}',${muc},this.value)">${chan(gt || '')}</textarea>
         <div class="goi">${goi}</div>
       </div>`;
   }
@@ -398,6 +483,319 @@
     const daViet = ds.filter(n => String((HT_NH[n.id] || {}).hien_trang || '').trim()).length;
     o.innerHTML = 'Hiện trạng theo từng yêu cầu của Mức ' + muc
       + ' — đã viết <b>' + daViet + '/' + ds.length + '</b> nội hàm';
+
+    /* Cập nhật luôn hai chỗ đếm khác cho khớp: huy hiệu "x/y ý" trên dòng tiêu
+       chí và dòng tiến độ toàn trường. Cùng lối vá tại chỗ, KHÔNG vẽ lại màn
+       hình — vẽ lại là huỷ ô textarea đang gõ dở, bộ gõ tiếng Việt mất phím. */
+    const d = demNoiHamTC(code);
+    const hh = document.querySelector('#kdList .crit-nh[data-ma="' + code + '"]');
+    if (hh && d.tong) {
+      hh.textContent = d.viet + '/' + d.tong + ' ý';
+      /* Đổi cả câu chú giải, không riêng con số — bỏ sót thì di chuột lên huy
+         hiệu "4/5 ý" vẫn đọc ra câu "…cho 3 trên 5 nội hàm" của lần vẽ trước. */
+      hh.title = 'Đã viết mô tả hiện trạng cho ' + d.viet + ' trên ' + d.tong + ' nội hàm';
+      hh.classList.toggle('xong', d.viet >= d.tong);
+    }
+    veTienDoNoiHam();
+  }
+
+  /* ========================================================================
+     HAI CỘT — danh sách tiêu chí bên trái, tiêu chí đang chọn bên phải
+
+     Lối cũ là 15 khối xếp dọc, bấm cái nào thì cái ấy xổ ra tại chỗ. Làm việc
+     kiểu ấy thì mở tiêu chí 4.3 xong muốn quay lại 1.3 phải cuộn ngược cả màn
+     hình. Nay danh sách đứng yên bên trái, nội dung đổi bên phải.
+
+     Ba biến nhớ trạng thái, KHÔNG cất vào giao diện: vẽ lại màn hình sau mỗi
+     lần chấm mức thì trạng thái nằm trong HTML sẽ mất sạch.
+       TC_CHON  mã tiêu chí đang mở bên phải
+       TAB_CT   'nd' nội dung · 'mc' minh chứng · 'kl' kết luận
+       LOC      bộ lọc nhanh của cột trái
+       DANG_SUA đang ở chế độ nhập (ẩn cột trái cho ô nhập giãn hết bề ngang)
+     ======================================================================== */
+  /* MO_HET mặc định BẬT: từ khi hai cột cao bằng nhau, cắt danh sách còn 7
+     dòng chỉ để lại một khoảng trắng dưới đáy cột trái. Mở hết rồi cho danh
+     sách tự cuộn trong cột thì hai khối khép đúng một đường. Nút "Thu gọn"
+     vẫn còn cho ai muốn. */
+  let TC_CHON = '', TAB_CT = 'nd', LOC = 'tat_ca', DANG_SUA = false, MO_HET = true;
+
+  /* Số dòng hiện sẵn ở cột trái trước khi phải bấm "Xem tất cả". Bảy dòng vừa
+     đúng chiều cao cột phải trên màn hình laptop, không phải cuộn cột trái. */
+  const SO_DONG_GON = 7;
+
+  /* Huy hiệu mức — dùng chung cho cột trái và đầu cột phải để hai chỗ không
+     bao giờ nói khác nhau. */
+  function huyHieu(self) {
+    if (self >= 2) return '<span class="badge badge-m2">✓ Đạt Mức 2</span>';
+    if (self >= 1) return '<span class="badge badge-m1">⊙ Đạt Mức 1</span>';
+    return '<span class="badge badge-no">○ Chưa đạt Mức 1</span>';
+  }
+
+  /* Bốn bộ lọc của cột trái. Đếm từ TIEU_CHI thật, không gõ sẵn con số nào —
+     bộ tiêu chí do sql/12 nạp, đổi bộ thì số tự đổi theo. */
+  const BO_LOC = [
+    ['tat_ca',  'Tất cả',       () => true],
+    ['bat_buoc','Bắt buộc',     c => c.bb],
+    ['chua_m2', 'Chưa đạt M2',  c => c.self < 2],
+    ['da_m2',   'Đã đạt M2',    c => c.self >= 2]
+  ];
+
+  function locHienTai() {
+    const b = BO_LOC.find(x => x[0] === LOC);
+    return b ? b[2] : (() => true);
+  }
+
+  function veBoLoc(list) {
+    const o = document.getElementById('kdLoc');
+    if (!o) return;
+    o.innerHTML = BO_LOC.map(([ma, ten, ham]) =>
+      `<button class="${LOC === ma ? 'on' : ''}" onclick="kdDatLoc('${ma}')"
+        >${ten} (${list.filter(ham).length})</button>`).join('');
+  }
+
+  window.kdDatLoc = function (ma) {
+    LOC = ma;
+    renderKdcl();
+  };
+
+  /* Bấm một dòng ở cột trái. Đổi tiêu chí thì trả tab về "Nội dung" — giữ
+     nguyên tab "Kết luận" của tiêu chí trước thì mở tiêu chí mới ra là thấy
+     ngay ô chấm mức mà chưa kịp đọc yêu cầu. */
+  window.kdChon = function (ma) {
+    TC_CHON = ma;
+    TAB_CT = 'nd';
+    DANG_SUA = false;
+    renderKdcl();
+    /* Trên màn hẹp hai cột xếp chồng, cột phải nằm dưới màn hình — cuộn tới
+       cho thầy cô thấy, không thì bấm xong tưởng máy không phản ứng. */
+    if (window.innerWidth < 1000) {
+      const o = document.getElementById('kdChiTiet');
+      if (o) o.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  window.kdDoiTab = function (t) { TAB_CT = t; veChiTiet(); };
+
+  window.kdSua = function (bat) {
+    DANG_SUA = !!bat;
+    const lam = document.getElementById('kdLam');
+    if (lam) lam.classList.toggle('rong', DANG_SUA);
+    veChiTiet();
+    if (!DANG_SUA) {
+      const o = document.getElementById('kdLam');
+      if (o) o.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  function veDanhSachTieuChi(list) {
+    veBoLoc(list);
+    const soTC = document.getElementById('kdSoTC');
+    const ham = locHienTai();
+    const ds = list.filter(ham);
+    if (soTC) {
+      const oStd = document.getElementById('kdStd');
+      soTC.textContent = (oStd && oStd.value)
+        ? '(Tiêu chuẩn ' + oStd.value + ')' : '(4 tiêu chuẩn)';
+    }
+
+    /* Tiêu chí đang chọn mà rơi khỏi bộ lọc thì chọn lại dòng đầu — để nguyên
+       thì cột phải hiện một tiêu chí không còn nằm trong danh sách bên trái,
+       nhìn như máy hỏng. */
+    if (!ds.some(c => c.code === TC_CHON)) TC_CHON = ds.length ? ds[0].code : '';
+
+    const o = document.getElementById('kdList');
+    if (!o) return;
+    if (!ds.length) {
+      o.innerHTML = '<div class="kd-trong">Không có tiêu chí nào hợp với bộ lọc đang chọn.</div>';
+      return;
+    }
+
+    /* Cắt bớt cho cột trái vừa tầm mắt. Tiêu chí đang chọn mà nằm ngoài phần
+       cắt thì mở hết ra — giấu đúng dòng đang làm việc là lỗi khó chịu nhất. */
+    const iChon = ds.findIndex(c => c.code === TC_CHON);
+    const moHet = MO_HET || ds.length <= SO_DONG_GON || iChon >= SO_DONG_GON;
+    const hien = moHet ? ds : ds.slice(0, SO_DONG_GON);
+    const con = ds.length - hien.length;
+
+    o.innerHTML = hien.map(c => {
+      const nh = demNoiHamTC(c.code);
+      return `<button class="tc-hang${c.code === TC_CHON ? ' chon' : ''}" onclick="kdChon('${chan(c.code)}')">
+        <span class="ma">${chan(c.code)}</span>
+        <span class="ten">${chan(c.name)}${c.bb ? ' <span class="tc-bb">Bắt buộc</span>' : ''}</span>
+        ${nh.tong ? `<span class="crit-nh${nh.viet >= nh.tong ? ' xong' : ''}" data-ma="${chan(c.code)}"
+          title="Đã viết mô tả hiện trạng cho ${nh.viet} trên ${nh.tong} nội hàm">${nh.viet}/${nh.tong} ý</span>` : ''}
+        ${huyHieu(c.self)}
+      </button>`;
+    }).join('')
+      + (con > 0
+        ? `<button class="tc-them" onclick="kdMoHet(true)">… và ${con} tiêu chí khác</button>`
+        : (MO_HET && ds.length > SO_DONG_GON
+          ? `<button class="tc-them" onclick="kdMoHet(false)">Thu gọn danh sách</button>` : ''));
+  }
+
+  window.kdMoHet = function (bat) { MO_HET = !!bat; renderKdcl(); };
+
+  /* Một mức trong tab Nội dung: nguyên văn yêu cầu + nút chấm + ô nhập.
+     Chế độ ĐỌC chỉ hiện nguyên văn và số ý đã viết; bấm "Chỉnh sửa" mới bung
+     ô nhập ra — 11 nội hàm mỗi tiêu chí không viết vừa cột 55%. */
+  function khoiMuc(c, muc) {
+    const chamDuoc = coQuyenCham();
+    const datM1 = c.self >= 1;
+    const dat = muc === 1 ? datM1 : c.self >= 2;
+    const khoa = muc === 2 && !datM1;
+    const ds = NOI_HAM[c.code + '|' + muc] || [];
+    const viet = ds.filter(n => String((HT_NH[n.id] || {}).hien_trang || '').trim()).length;
+
+    /* Ô YÊU CẦU — nguyên văn Phụ lục II. Đây là thứ thầy cô phải đọc để viết
+       cho đúng, nên để nền hổ phách cho nổi hẳn khỏi phần nhập. */
+    const oYeuCau = `<div class="yc">
+      <h5>🔖 Yêu cầu tiêu chí (Thông tư 57) — Mức ${muc}</h5>
+      <p>${chan(muc === 1 ? c.m1 : c.m2)}</p>
+      <div class="lv-pick">
+        ${khoa
+          ? `<span class="lv-hoi">Chỉ xem xét Mức 2 khi Mức 1 đã được xác định đạt (Biểu 1, Phụ lục V).</span>`
+          : (chamDuoc
+            ? `<span class="lv-hoi">Nhà trường tự đánh giá Mức ${muc}:</span>
+               <button class="pick${dat ? ' on' : ''}" onclick="setMuc('${chan(c.code)}',${muc},true)">Đạt</button>
+               <button class="pick${!dat ? ' on' : ''}" onclick="setMuc('${chan(c.code)}',${muc},false)">Không đạt</button>`
+            : `<b style="font-size:13.5px;color:${dat ? '#0f7b52' : '#9b2c3a'}">${dat ? 'Đạt' : 'Không đạt'}</b>`)}
+      </div>
+    </div>`;
+
+    if (khoa) return oYeuCau;
+
+    /* Ô THỰC TRẠNG — đọc thì tóm tắt, bấm Chỉnh sửa thì bung ô nhập */
+    let than;
+    if (DANG_SUA || !ds.length) {
+      than = oHienTrang(c, muc);
+    } else if (viet) {
+      than = '<div class="ct-tomtat">'
+        + ds.filter(n => String((HT_NH[n.id] || {}).hien_trang || '').trim())
+            .map(n => '<div>✓ ' + chan(cat(String(HT_NH[n.id].hien_trang), 160)) + '</div>').join('')
+        + '</div>';
+    } else {
+      than = '<div class="goi">Chưa nhập nội dung nào cho mức này.</div>';
+    }
+
+    return oYeuCau + `<div class="tt-box">
+      <div class="tt-dau">
+        <b>Thực trạng &amp; kết quả thực hiện của nhà trường</b>
+        ${ds.length ? `<span class="goi">đã viết ${viet}/${ds.length} nội hàm</span>` : ''}
+        ${(chamDuoc && ds.length && !DANG_SUA)
+          ? '<button class="ct-quaylai" onclick="kdSua(true)">✏ Chỉnh sửa</button>' : ''}
+      </div>
+      ${than}
+    </div>`;
+  }
+
+  function veChiTiet() {
+    const o = document.getElementById('kdChiTiet');
+    if (!o) return;
+    const c = TIEU_CHI.find(x => x.code === TC_CHON);
+    if (!c) {
+      o.innerHTML = '<div class="kd-trong">Chọn một tiêu chí ở danh sách bên trái để xem và nhập nội dung.</div>';
+      return;
+    }
+    const mc = MC_THEO_TC[c.code] || [];
+    const datM1 = c.self >= 1, datM2 = c.self >= 2;
+    const chamDuoc = coQuyenCham();
+    const nh = demNoiHamTC(c.code);
+    const r = TDG[c.code] || {};
+
+    const TABS = [['nd', 'Nội dung'], ['mc', 'Minh chứng'], ['kl', 'Kết luận &amp; Ghi chú']];
+    const dTT = demTrangThai(mc);
+
+    let than = '';
+    if (TAB_CT === 'mc') {
+      than = oMinhChung(mc);
+    } else if (TAB_CT === 'kl') {
+      /* Tab Kết luận CHỈ nhắc lại mức đã chấm và ghi nhận ai chấm, lúc nào.
+         KHÔNG có ô "Điểm mạnh / Hạn chế / Định hướng cải tiến" ở đây: Thông tư
+         57 đặt ba nội dung ấy ở cấp TIÊU CHUẨN (bảng danh_gia_tieu_chuan, Biểu
+         1), còn kế hoạch cải tiến tách hẳn sang Biểu 2. Thêm vào đây là quay
+         về bảng mẫu cũ và bản Word xuất ra sẽ sai Biểu 1. */
+      than = `<div class="ct-kl">
+        <div class="ct-kl-muc ${datM2 ? 'm2' : (datM1 ? 'm1' : 'no')}">
+          Nhà trường tự đánh giá: <b>${datM2 ? 'Đạt Mức 2' : (datM1 ? 'Đạt Mức 1' : 'Không đạt Mức 1')}</b>
+        </div>
+        <div class="goi" style="margin-top:9px">
+          ${r.cap_nhat_luc
+            ? 'Lần chấm gần nhất: ' + chan(gioVN(r.cap_nhat_luc))
+            : 'Chưa có lần chấm nào được ghi lại cho năm học này.'}
+        </div>
+        ${THIEU_GC ? '' : `
+        <div class="tdg-ht" style="margin-top:15px">
+          <label>Ghi chú làm việc của Hội đồng về tiêu chí này
+            <span class="tdg-luu" id="luu-gc-${chan(c.code)}">✓ đã lưu</span></label>
+          <textarea id="gc-${chan(c.code)}" ${chamDuoc ? '' : 'disabled'}
+            placeholder="${chamDuoc
+              ? 'Lý do chấm mức, nội dung hội đồng đã thống nhất, việc còn phải làm rõ…'
+              : 'Chỉ ban giám hiệu và tổ trưởng nhập được nội dung này'}"
+            onblur="luuGhiChuTC('${chan(c.code)}',this.value)">${chan(r.ghi_chu || '')}</textarea>
+          <div class="goi">Ghi chú này <b>không in vào báo cáo tự đánh giá</b> — chỉ để hội đồng
+            theo dõi công việc. Mô tả hiện trạng nằm ở tab Nội dung.</div>
+        </div>`}
+        <div class="ct-kl-nhac">
+          Điểm mạnh, hạn chế và định hướng cải tiến được viết <b>một lần cho cả tiêu chuẩn</b>
+          ở mục “Đánh giá chung về Tiêu chuẩn ${c.std}” bên dưới — chọn Tiêu chuẩn ${c.std}
+          ở ô lọc trên thanh công cụ. Kế hoạch cải tiến nằm ở <b>Biểu 2</b>, mục riêng.
+        </div>
+      </div>`;
+    } else {
+      than = khoiMuc(c, 1) + khoiMuc(c, 2)
+        + `<div class="mc-dong">
+            <span class="ic">🛡</span>
+            <span>Minh chứng: <b>${dTT.co}/${mc.length}</b> đã có trong kho${
+              dTT.chua ? ' · <b style="color:#9b2c3a">' + dTT.chua + ' chưa có</b>' : ''}</span>
+            <button class="ct-quaylai" onclick="kdDoiTab('mc')">📁 Xem minh chứng</button>
+          </div>`;
+    }
+
+    /* Tiêu chí kế tiếp trong danh sách ĐANG LỌC, không phải trong cả 15 — bấm
+       "Tiếp theo" khi đang lọc "Chưa đạt M2" mà nhảy sang tiêu chí đã đạt rồi
+       thì mạch làm việc đứt. */
+    const dsLoc = TIEU_CHI.filter(x => {
+      const oStd2 = document.getElementById('kdStd');
+      const f2 = oStd2 ? oStd2.value : '';
+      return (!f2 || String(x.std) === f2) && locHienTai()(x);
+    });
+    const iNay = dsLoc.findIndex(x => x.code === c.code);
+    const sau = iNay >= 0 && iNay < dsLoc.length - 1 ? dsLoc[iNay + 1] : null;
+
+    o.innerHTML = `
+      <div class="ct-dau">
+        <span class="ct-ma">Tiêu chí ${chan(c.code)}</span>
+        <span class="ct-ten">${chan(c.name)}</span>
+        ${c.bb ? '<span class="tc-bb">Bắt buộc</span>' : ''}
+      </div>
+      <div class="ct-tab">
+        ${TABS.map(([m, t]) => `<button class="${TAB_CT === m ? 'on' : ''}" onclick="kdDoiTab('${m}')">${t}</button>`).join('')}
+        <span class="ct-tab-phai">${huyHieu(c.self)}</span>
+      </div>
+      ${DANG_SUA
+        ? `<div class="ct-thanh"><button class="ct-quaylai" onclick="kdSua(false)">← Xong, về danh sách</button>
+             <span class="goi">Đang ở chế độ nhập — ô nhập giãn hết bề ngang. Nội dung tự lưu khi rời ô.</span></div>`
+        : ''}
+      ${than}
+      <div class="ct-day">
+        <button class="ct-nut nhat" onclick="kdDoiTab('kl')">📝 Ghi chú</button>
+        <button class="ct-nut ${nh.tong && nh.viet >= nh.tong ? 'xong' : 'cho'}"
+          onclick="kdDoiTab('kl')">${nh.tong
+            ? (nh.viet >= nh.tong ? '✓ Đã viết đủ nội dung' : 'Còn ' + (nh.tong - nh.viet) + ' ý chưa viết')
+            : 'Chưa có danh mục nội hàm'}</button>
+        ${sau
+          ? `<button class="ct-nut chinh" onclick="kdChon('${chan(sau.code)}')">Tiếp theo: ${chan(sau.code)} →</button>`
+          : `<button class="ct-nut chinh" disabled>Đã là tiêu chí cuối</button>`}
+      </div>`;
+  }
+
+  /* Ngày giờ Việt Nam cho dòng "lần chấm gần nhất" */
+  function gioVN(s) {
+    const d = new Date(s);
+    if (isNaN(d.getTime())) return '';
+    const hai = n => (n < 10 ? '0' : '') + n;
+    return hai(d.getDate()) + '/' + hai(d.getMonth() + 1) + '/' + d.getFullYear()
+      + ' lúc ' + hai(d.getHours()) + ':' + hai(d.getMinutes());
   }
 
   window.renderKdcl = function () {
@@ -410,66 +808,46 @@
     const oStd = document.getElementById('kdStd');
     const f = oStd ? oStd.value : '';
     const list = TIEU_CHI.filter(c => !f || String(c.std) === f);
-    const chamDuoc = coQuyenCham();
     let no = 0;
     TIEU_CHI.forEach(c => { if (!(c.self >= 1)) no++; });
 
-    document.getElementById('kdList').innerHTML = list.map(c => {
-      const datM1 = c.self >= 1, datM2 = c.self >= 2;
-      const mc = MC_THEO_TC[c.code] || [];
-      return `
-      <div class="crit">
-        <button class="crit-head" onclick="this.parentNode.classList.toggle('open')">
-          <span class="crit-code">${c.code}</span>
-          <span class="crit-ttl">${c.name}${c.bb ? ' <span class="tc-bb">Bắt buộc</span>' : ''}</span>
-          <span class="badge ${datM2 ? 'badge-m2' : (datM1 ? 'badge-m1' : 'badge-no')}">${datM2 ? 'Đạt Mức 2' : (datM1 ? 'Đạt Mức 1' : 'Không đạt Mức 1')}</span>
-          <span class="sub-arrow">▶</span>
-        </button>
-        <div class="crit-body">
-          <div class="lv">
-            <span class="lv-tag">MỨC 1</span><p>${c.m1}</p>
-            <div class="lv-pick">
-              <span class="lv-hoi">Nhà trường tự đánh giá Mức 1:</span>
-              ${chamDuoc
-                ? `<button class="pick${datM1 ? ' on' : ''}" onclick="setMuc('${c.code}',1,true)">Đạt</button>
-                   <button class="pick${!datM1 ? ' on' : ''}" onclick="setMuc('${c.code}',1,false)">Không đạt</button>`
-                : `<b style="font-size:13.5px;color:${datM1 ? '#15803d' : '#b91c1c'}">${datM1 ? 'Đạt' : 'Không đạt'}</b>`}
-            </div>
-            ${oHienTrang(c, 1)}
-          </div>
-          <div class="lv${datM1 ? '' : ' lv-khoa'}">
-            <span class="lv-tag m2">MỨC 2</span><p>${c.m2}</p>
-            <div class="lv-pick">
-              ${!datM1
-                ? `<span class="lv-hoi">Chỉ xem xét Mức 2 khi Mức 1 đã được xác định đạt (Biểu 1, Phụ lục V).</span>`
-                : (chamDuoc
-                  ? `<span class="lv-hoi">Nhà trường tự đánh giá Mức 2:</span>
-                     <button class="pick${datM2 ? ' on' : ''}" onclick="setMuc('${c.code}',2,true)">Đạt</button>
-                     <button class="pick${!datM2 ? ' on' : ''}" onclick="setMuc('${c.code}',2,false)">Không đạt</button>`
-                  : `<b style="font-size:13.5px;color:${datM2 ? '#15803d' : '#b91c1c'}">${datM2 ? 'Đạt' : 'Không đạt'}</b>`)}
-            </div>
-            ${datM1 ? oHienTrang(c, 2) : ''}
-          </div>
-          <div class="ev-box">
-            <b>📎 Minh chứng trong kho Hồ sơ số (${mc.length})</b>
-            ${mc.length ? `<div class="ev-list">
-              ${mc.map(h => `<span class="ev ev-mc" title="${String(h.ten).replace(/"/g, '')}"
-                    onclick="openDrive('${h.ma}','')"><b>${h.ma}</b> ${cat(h.ten, 46)}</span>`).join('')}
-            </div>` : `<div class="tdg-chuadu">Tiêu chí này chưa có minh chứng nào trong danh mục.
-              Vào mục <b>Hồ sơ số</b> để gắn tiêu chí cho minh chứng tương ứng.</div>`}
-          </div>
-        </div>
-      </div>`;
-    }).join('');
+    veDanhSachTieuChi(list);
+    veChiTiet();
 
     const kq = xepMucNhaTruong();
     const bbDat2 = TIEU_CHI.filter(c => c.bb && c.self >= 2).length;
     const soBB = TIEU_CHI.filter(c => c.bb).length || 8;
+    /* Thẻ cuối: số 0 ở đây là chuyện MỪNG (không tiêu chí nào rớt Mức 1), để
+       màu đỏ thì liếc qua tưởng đang cảnh báo. Đỏ chỉ khi thật sự có tiêu chí
+       chưa đạt. */
+    const dat2 = TIEU_CHI.filter(c => c.self >= 2).length;
+    const td = soTienDo();
     document.getElementById('kdStats').innerHTML = `
-      <div class="stat"><b style="font-size:22px">${kq.ketLuan}</b><span>Mức thực hiện hoạt động đảm bảo chất lượng</span></div>
-      <div class="stat ok"><b>${bbDat2}/${soBB}</b><span>tiêu chí bắt buộc đạt Mức 2</span><div class="prog"><i style="width:${Math.round(bbDat2 / soBB * 100)}%"></i></div></div>
-      <div class="stat warn"><b>${kq.clM2}/7</b><span>tiêu chí còn lại đạt Mức 2 <i>(cần ≥ 5)</i></span></div>
-      <div class="stat miss"><b>${no}</b><span>tiêu chí chưa đạt Mức 1</span></div>`;
+      <div class="the navy">
+        <span class="ic">🏫</span>
+        <span class="noi">
+          <span class="nhan" style="margin:0">Mức hiện tại</span>
+          <span class="so">${kq.ketLuan}</span>
+          <span class="them">${no ? no + ' tiêu chí chưa đạt Mức 1' : 'Không tiêu chí nào chưa đạt Mức 1'}</span>
+        </span>
+      </div>
+      <div class="the xanh">
+        <span class="ic">🔖</span>
+        <span class="noi">
+          <span class="so">${TIEU_CHI.length}</span>
+          <span class="nhan">Tiêu chí</span>
+          <span class="them">${dat2} tiêu chí đã đạt Mức 2</span>
+        </span>
+      </div>
+      <div class="the vang">
+        <span class="ic">⭐</span>
+        <span class="noi">
+          <span class="so">${soBB}</span>
+          <span class="nhan">Tiêu chí bắt buộc</span>
+          <span class="them">${bbDat2}/${soBB} đạt Mức 2</span>
+        </span>
+      </div>
+      <div class="the la" id="kdTheTienDo">${theTienDo(td)}</div>`;
 
     document.getElementById('kdGiaiThich').innerHTML = kq.vi
       ? `<b>Vì sao xếp mức này:</b> ${kq.vi}`
@@ -478,6 +856,49 @@
     veDanhGiaChung(f);
     veThongTinBaoCao();
   };
+
+  /* ========================================================================
+     TIẾN ĐỘ VIẾT MÔ TẢ HIỆN TRẠNG — bức tranh CÔNG VIỆC
+
+     Khác hẳn hàng thẻ phía trên: hàng thẻ nói nhà trường đang ở Mức mấy, dòng
+     này nói việc soạn báo cáo đã đi được bao xa. Hai câu hỏi khác nhau, người
+     ngồi nhập cần câu thứ hai mà trước nay không có chỗ nào trả lời.
+
+     Đếm từ dữ liệu thật, không gõ sẵn con số nào: tổng nội hàm lấy từ bảng
+     noi_ham, số đã viết lấy từ tdg_noi_ham của đúng năm học đang chọn.
+     ======================================================================== */
+  function soTienDo() {
+    let tong = 0, viet = 0;
+    TIEU_CHI.forEach(c => { const d = demNoiHamTC(c.code); tong += d.tong; viet += d.viet; });
+    return { tong: tong, viet: viet, pt: tong ? Math.round(viet / tong * 100) : 0 };
+  }
+
+  /* Vòng tròn vẽ bằng conic-gradient, không cần thư viện đồ hoạ nào.
+     Chưa chạy sql/30 (THIEU_NH) hoặc chưa có nội hàm nào thì KHÔNG bịa ra 0% —
+     0% đọc ra là "chưa ai viết gì", trong khi sự thật là "màn hình đang chạy
+     lối nhập cũ, chưa có gì để đếm". Nói thẳng là chưa đếm được. */
+  function theTienDo(d) {
+    if (THIEU_NH || !d.tong) {
+      return `<span class="ic">✍️</span>
+        <span class="noi"><span class="nhan" style="margin:0;font-weight:700;color:var(--ink);font-size:14px">Tiến độ</span>
+          <span class="them">chưa đếm được</span>
+          <span class="them">danh mục nội hàm chưa có</span></span>`;
+    }
+    return `<span class="vong" style="background:conic-gradient(#0f7b52 ${d.pt * 3.6}deg,#d7ebe0 0)">
+        <span>${d.pt}%</span></span>
+      <span class="noi">
+        <span class="nhan" style="margin:0;font-weight:700;color:var(--ink);font-size:14px">Tiến độ</span>
+        <span class="them">đã viết ${d.viet}/${d.tong} nội hàm</span>
+        <span class="them">${d.viet < d.tong ? 'còn ' + (d.tong - d.viet) + ' ý chưa viết' : 'đã viết đủ mọi nội hàm'}</span>
+      </span>`;
+  }
+
+  /* Cập nhật riêng thẻ tiến độ, không vẽ lại cả màn hình — gọi ngay sau mỗi
+     lần lưu một nội hàm, mà lúc ấy con trỏ đang nằm trong ô bên cạnh. */
+  function veTienDoNoiHam() {
+    const o = document.getElementById('kdTheTienDo');
+    if (o) o.innerHTML = theTienDo(soTienDo());
+  }
 
   /* ========================================================================
      ĐÁNH GIÁ CHUNG VỀ TIÊU CHUẨN — Biểu 1 bắt buộc có, viết một lần cho cả
@@ -489,8 +910,12 @@
     if (!hop) {
       hop = document.createElement('div');
       hop.id = 'kdDanhGiaChung';
-      const ds = document.getElementById('kdList');
-      ds.parentNode.insertBefore(hop, ds.nextSibling);
+      /* Đặt sau KHỐI HAI CỘT, không phải sau #kdList. Từ khi có bố cục hai
+         cột, #kdList nằm trong cột trái — chèn cạnh nó thì phần Đánh giá chung
+         của cả một tiêu chuẩn lọt vào cột danh sách rộng 45%. */
+      const neo = document.getElementById('kdLam') || document.getElementById('kdList');
+      if (!neo) return;
+      neo.parentNode.insertBefore(hop, neo.nextSibling);
     }
     if (!soTC) {
       hop.innerHTML = `<div class="legal-note" style="margin-top:20px">
@@ -521,7 +946,7 @@
               <textarea id="dgtc-${so}-${cot}" ${chamDuoc ? '' : 'disabled'}
                 onblur="luuDanhGiaChung(${so},'${cot}',this.value)"
                 placeholder="${chamDuoc ? 'Nhập nội dung…' : 'Chỉ ban giám hiệu và tổ trưởng nhập được'}"
-                >${(r[cot] || '').replace(/</g, '&lt;')}</textarea>
+                >${chan(r[cot] || '')}</textarea>
               <div class="goi">${goi}</div>
             </div>`).join('')}
         </div>
@@ -578,6 +1003,69 @@
   }
 
   /* ========================================================================
+     MINH CHỨNG CỦA MỘT TIÊU CHÍ — nói đúng trạng thái thật
+
+     Cột trang_thai của bảng ho_so có ba giá trị: 'co' (đã có), 'dang' (đang
+     làm), 'chua' (chưa có). Trước đây màn hình lấy cột này về rồi bỏ không
+     dùng, chỉ in ra số đầu minh chứng. Đếm gộp như vậy là bày số dễ chịu:
+     tiêu chí ghi "7 minh chứng" trong khi có thể 4 đã có, 3 chưa có gì —
+     mà chấm mức thì phải dựa trên minh chứng CÓ THẬT.
+     ======================================================================== */
+  const TEN_TT = { co: 'đã có', dang: 'đang làm', chua: 'chưa có' };
+  const DAU_TT = { co: '✓', dang: '◐', chua: '○' };
+
+  function demTrangThai(mc) {
+    const d = { co: 0, dang: 0, chua: 0 };
+    mc.forEach(h => { const k = h.trang_thai; if (d[k] != null) d[k]++; else d.chua++; });
+    return d;
+  }
+
+  function oMinhChung(mc) {
+    if (!mc.length) {
+      return `<div class="ev-box">
+        <b>📎 Minh chứng trong kho Hồ sơ số</b>
+        <div class="tdg-chuadu">Tiêu chí này chưa có minh chứng nào trong danh mục.
+          Vào mục <b>Hồ sơ số</b> để gắn tiêu chí cho minh chứng tương ứng.</div>
+      </div>`;
+    }
+    const d = demTrangThai(mc);
+    /* Chỉ nêu nhóm có số — liệt kê "0 đang làm" chỉ tổ làm dòng đếm dài ra */
+    const phan = ['co', 'dang', 'chua']
+      .filter(k => d[k] > 0)
+      .map(k => `<span class="${k}"><i>${d[k]}</i> ${TEN_TT[k]}</span>`)
+      .join('');
+    return `<div class="ev-box">
+      <b>📎 Minh chứng trong kho Hồ sơ số (${mc.length})</b>
+      <div class="ev-dem">${phan}</div>
+      <div class="ev-list">
+        ${mc.map(h => {
+          const tt = TEN_TT[h.trang_thai] ? h.trang_thai : 'chua';
+          const pt = String(h.nguoi_phu_trach || '').trim();
+          return `<span class="ev ev-mc${tt === 'co' ? '' : ' thieu'}"
+                title="${chan(h.ten)}${pt ? ' — phụ trách: ' + chan(pt) : ''} (${TEN_TT[tt]})"
+                onclick="openDrive('${chan(h.ma)}','')"
+                ><span class="ev-tt ${tt}">${DAU_TT[tt]}</span><b>${chan(h.ma)}</b> ${chan(cat(h.ten, 42))}${
+                  pt ? `<span class="ev-pt">· ${chan(cat(pt, 20))}</span>` : ''}</span>`;
+        }).join('')}
+      </div>
+      ${d.chua ? `<div class="tdg-chuadu">Còn <b>${d.chua}</b> minh chứng chưa có trong kho.
+        Chấm mức cần dựa trên minh chứng có thật — vào mục <b>Hồ sơ số</b> để bổ sung.</div>` : ''}
+    </div>`;
+  }
+
+  /* Đếm nội hàm đã viết của cả một tiêu chí (gộp cả hai mức) */
+  function demNoiHamTC(code) {
+    let tong = 0, viet = 0;
+    [1, 2].forEach(m => {
+      (NOI_HAM[code + '|' + m] || []).forEach(n => {
+        tong++;
+        if (String((HT_NH[n.id] || {}).hien_trang || '').trim()) viet++;
+      });
+    });
+    return { tong: tong, viet: viet };
+  }
+
+  /* ========================================================================
      BẤM ĐẠT / KHÔNG ĐẠT — lưu thật, chấm tuần tự
      ======================================================================== */
   window.setMuc = async function (code, muc, dat) {
@@ -593,12 +1081,13 @@
       ? { dat_m1: dat, dat_m2: dat ? (c.self >= 2) : false }
       : { dat_m1: true, dat_m2: dat };
 
-    const mo = [...document.querySelectorAll('#kdList .crit')].map(e => e.classList.contains('open'));
+    /* Lối cũ nhớ xem những khối nào đang xổ ra rồi mở lại sau khi vẽ. Nay danh
+       sách không xổ nữa nên chỉ cần giữ đúng tiêu chí đang chọn, tab đang xem
+       và chế độ nhập — cả ba đều nằm trong biến, renderKdcl tự dựng lại. */
     try {
       const bg = await luu(code, thayDoi);
       c.self = bg.muc_dat || 0;
       renderKdcl();
-      [...document.querySelectorAll('#kdList .crit')].forEach((e, i) => { if (mo[i]) e.classList.add('open'); });
       if (typeof notify === 'function') {
         notify('Đã lưu: tiêu chí ' + code + ' — '
           + (bg.muc_dat === 2 ? 'Đạt Mức 2' : bg.muc_dat === 1 ? 'Đạt Mức 1' : 'Không đạt Mức 1')
@@ -638,6 +1127,33 @@
   };
 
   /* ========================================================================
+     LƯU GHI CHÚ LÀM VIỆC CỦA MỘT TIÊU CHÍ — tab "Kết luận & Ghi chú"
+     ======================================================================== */
+  window.luuGhiChuTC = async function (code, giaTri) {
+    if (!coQuyenCham()) return;
+    const cu = String((TDG[code] || {}).ghi_chu || '');
+    const moi = String(giaTri || '').trim();
+    if (cu === moi) return;                     // không đổi thì khỏi ghi
+    try {
+      await luu(code, { ghi_chu: moi || null });
+      nhayDaLuu('luu-gc-' + code);
+    } catch (e) {
+      console.error('[Tự đánh giá] Không lưu ghi chú:', e);
+      /* Máy chủ báo thiếu cột thì nói thẳng nguyên nhân, đừng để thầy cô đoán */
+      const s = String(e.message || e);
+      if (/ghi_chu/.test(s) && /column|cột/i.test(s)) {
+        THIEU_GC = true;
+        veChiTiet();
+        if (typeof notify === 'function') {
+          notify('Cơ sở dữ liệu chưa có chỗ lưu ghi chú — cần chạy tệp sql/35 trên Supabase.');
+        }
+        return;
+      }
+      if (typeof notify === 'function') notify('Không lưu được ghi chú: ' + s);
+    }
+  };
+
+  /* ========================================================================
      LƯU HIỆN TRẠNG VÀ MINH CHỨNG CỦA MỘT NỘI HÀM
 
      Cả hai việc ghi vào cùng một dòng (nam_hoc, noi_ham_id), nên luôn gửi ĐỦ
@@ -645,20 +1161,26 @@
      minh chứng là mất câu vừa viết.
      ======================================================================== */
   async function luuNH(id, thayDoi) {
-    const cu = HT_NH[id] || {};
-    const ban = Object.assign({
-      nam_hoc: NAM_HOC,
-      noi_ham_id: id,
-      hien_trang: cu.hien_trang || null,
-      ma_minh_chung: cu.ma_minh_chung || []
-    }, thayDoi, {
-      cap_nhat_boi: window.NGUOI_DUNG ? window.NGUOI_DUNG.id : null
+    /* Xếp hàng như luu(). Ở đây còn cần hơn: chú thích của batMinhChung ngay
+       dưới đã nói rõ thầy cô "thường bấm chọn minh chứng NGAY SAU khi gõ dở một
+       câu ở ô bên cạnh" — đúng thao tác làm hai lệnh chạy song song và câu vừa
+       gõ bị chính bản cũ ghi đè lên. */
+    return xepHang(async function () {
+      const cu = HT_NH[id] || {};
+      const ban = Object.assign({
+        nam_hoc: NAM_HOC,
+        noi_ham_id: id,
+        hien_trang: cu.hien_trang || null,
+        ma_minh_chung: cu.ma_minh_chung || []
+      }, thayDoi, {
+        cap_nhat_boi: window.NGUOI_DUNG ? window.NGUOI_DUNG.id : null
+      });
+      const { data, error } = await sb.from('tdg_noi_ham')
+        .upsert(ban, { onConflict: 'nam_hoc,noi_ham_id' }).select().single();
+      if (error) throw error;
+      HT_NH[id] = data;
+      return data;
     });
-    const { data, error } = await sb.from('tdg_noi_ham')
-      .upsert(ban, { onConflict: 'nam_hoc,noi_ham_id' }).select().single();
-    if (error) throw error;
-    HT_NH[id] = data;
-    return data;
   }
 
   window.luuNoiHam = async function (id, giaTri) {
@@ -707,7 +1229,10 @@
     if (!hop) {
       hop = document.createElement('div');
       hop.id = 'kdBaoCao';
-      const truoc = document.getElementById('kdDanhGiaChung') || document.getElementById('kdList');
+      /* Cùng lý do như kdDanhGiaChung: neo vào khối hai cột, không neo vào
+         #kdList vốn đã nằm trong cột trái. */
+      const truoc = document.getElementById('kdDanhGiaChung')
+        || document.getElementById('kdLam') || document.getElementById('kdList');
       if (!truoc) return;
       truoc.parentNode.insertBefore(hop, truoc.nextSibling);
     }
@@ -798,10 +1323,28 @@
   /* ========================================================================
      KHỞI ĐỘNG SAU KHI ĐĂNG NHẬP XONG
      ======================================================================== */
+  /* Hai lối tắt sang Hội đồng tự đánh giá và Kế hoạch cải tiến. Hai màn hình
+     ấy ĐÃ CÓ SẴN trong Quản trị hệ thống (tệp tt57-hoidong-caitien-cnqg.js),
+     chỉ là nằm khuất nên nhà trường không biết đường vào. Mở lối chứ không
+     dựng màn hình thứ hai cho cùng một bảng — hai chỗ nhập một bảng thì sớm
+     muộn cũng lệch nhau.
+
+     Chỉ hiện với quản trị và ban giám hiệu, đúng như điều kiện mở bảng Quản
+     trị hệ thống. Người khác bấm vào cũng chỉ mở ra bảng mà họ không có quyền
+     đọc, tổ hiện một loạt dòng báo lỗi. */
+  function hienNutQuanTri() {
+    if (!laQuanTri()) return;
+    ['kdNutHD', 'kdNutKH'].forEach(id => {
+      const n = document.getElementById(id);
+      if (n) n.style.display = '';
+    });
+  }
+
   document.addEventListener('dangnhap-xong', async () => {
     sb = window.sbClient;
     if (!sb) return;
     themChonNamHoc();
+    hienNutQuanTri();
     await taiTuDanhGia();
   });
 })();
