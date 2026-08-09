@@ -85,6 +85,45 @@
   .tt-dk.khong{border-left-color:#dc2626;background:#fefafa}
   .tt-dk b{color:#14306b}
   .tt-dk .vb{font-size:12.8px;color:#3b4a63;line-height:1.6;margin:5px 0 7px}
+
+  /* ---- Khối Hội đồng TĐG trên màn hình Trường chuẩn Quốc gia (chỉ để xem) ---- */
+  .hdx{background:#fff;border:1px solid #e2e8f2;border-radius:13px;margin:0 0 18px;
+    overflow:hidden;box-shadow:0 1px 3px rgba(20,48,107,.06)}
+  .hdx-dau{width:100%;text-align:left;background:none;border:0;cursor:pointer;
+    font-family:inherit;padding:13px 16px;display:flex;align-items:center;gap:11px}
+  .hdx-dau:hover{background:#f5f8fd}
+  .hdx-dau .ic{font-size:19px;line-height:1;flex:none}
+  .hdx-dau .tt{font-size:15.5px;font-weight:700;color:#14306b;line-height:1.35}
+  .hdx-dau .phu{display:block;font-size:12.6px;font-weight:400;color:#64748b;margin-top:2px}
+  .hdx-dau .mui{margin-left:auto;flex:none;font-size:14px;color:#64748b;transition:transform .2s}
+  .hdx.mo .hdx-dau{background:#f2f6fd;border-bottom:1px solid #e2e8f2}
+  .hdx.mo .hdx-dau .mui{transform:rotate(180deg)}
+  .hdx-than{display:none;padding:14px 16px 17px}
+  .hdx.mo .hdx-than{display:block}
+  .hdx-kiem{border-radius:10px;padding:10px 14px;font-size:13.4px;line-height:1.65;
+    margin-bottom:11px;border:1px solid}
+  .hdx-kiem.xanh{background:#f2fdf6;border-color:#bfe8cd;color:#1a6437}
+  .hdx-kiem.vang{background:#fff8e8;border-color:#f0d089;color:#7a5410}
+  /* Dòng của chính người đang xem: câu hỏi đầu tiên bao giờ cũng là
+     "phần của mình đâu", nên trả lời ngay trước khi bày ra cả bảng. */
+  .hdx-toi{background:#eef4ff;border:1px solid #cfe0ff;border-left:4px solid #2563eb;
+    border-radius:0 10px 10px 0;padding:11px 14px;font-size:13.8px;line-height:1.7;
+    color:#1d4ed8;margin-bottom:11px}
+  .hdx-toi b{color:#14306b}
+  .hdx-nv{font-size:12.8px;color:#3b4a63;margin-top:4px}
+  .hdx-bang tr.toi td{background:#eef4ff}
+  .hdx-nhan{display:inline-block;background:#2563eb;color:#fff;border-radius:20px;
+    padding:1px 8px;font-size:11px;font-weight:700;vertical-align:middle}
+  .hdx-chan{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-top:11px}
+  @media(max-width:640px){
+    .hdx-dau .tt{font-size:14.6px}
+    .hdx-than{padding:12px 13px 15px}
+  }
+  @media print{
+    .hdx-than{display:block!important}
+    .hdx-dau .mui,.hdx-chan .tt-nut{display:none}
+    .hdx{break-inside:avoid;box-shadow:none;border:1px solid #999}
+  }
   `;
   document.head.insertAdjacentHTML('beforeend', '<style>' + css + '</style>');
 
@@ -214,6 +253,9 @@
   }
 
   function veHD(hop) {
+    /* Bản in Word từ giờ lấy dữ liệu của tab Quản trị — xem chú thích ở
+       window.duLieuHoiDong bên dưới. */
+    NGUON_IN = 'qt';
     const sua = laQuanTri();
     let h = '<div class="tt-canh">Quyết định thành lập hội đồng này là <b>tài liệu phải kèm '
       + 'theo báo cáo tự đánh giá</b> (Phần IV Biểu 1). Hội đồng cũng là bên theo dõi, đánh giá '
@@ -324,11 +366,13 @@
        sao. */
     const nDS = hop.querySelector('#hdInDS');
     if (nDS) nDS.addEventListener('click', function () {
+      NGUON_IN = 'qt';
       if (typeof window.xuatDanhSachHoiDong === 'function') window.xuatDanhSachHoiDong();
       else bao('Chưa nạp được phần xuất Word. Thầy cô tải lại trang.');
     });
     const nPC = hop.querySelector('#hdInPC');
     if (nPC) nPC.addEventListener('click', function () {
+      NGUON_IN = 'qt';
       if (typeof window.xuatPhanCongHoiDong === 'function') window.xuatPhanCongHoiDong();
       else bao('Chưa nạp được phần xuất Word. Thầy cô tải lại trang.');
     });
@@ -1110,6 +1154,257 @@
 
 
   /* ==========================================================================
+     HỘI ĐỒNG TỰ ĐÁNH GIÁ — HIỆN NGAY TRÊN MÀN HÌNH TRƯỜNG CHUẨN QUỐC GIA
+
+     VÌ SAO PHẢI ĐƯA RA NGOÀI
+     Danh sách hội đồng trước đây chỉ nằm trong bảng Quản trị hệ thống, mà bảng
+     ấy chỉ quản trị và ban giám hiệu mở được. Trong khi phần lớn thành viên hội
+     đồng LÀ GIÁO VIÊN: có tên trong quyết định, được giao tiêu chí, nhưng không
+     có đường nào vào xem mình phải làm gì. Hỏi nhau qua Zalo thì mỗi người nhớ
+     một kiểu, và bảng phân công treo trên tường thì không ai cập nhật.
+
+     KHỐI NÀY CHỈ ĐỂ XEM
+     Không một ô nhập nào. Sửa vẫn phải vào Quản trị — hai chỗ cùng ghi một bảng
+     thì sớm muộn cũng lệch. Dòng của chính người đang đăng nhập được tô sáng,
+     vì câu hỏi đầu tiên của thầy cô luôn là "phần của mình đâu".
+
+     TRẠNG THÁI RIÊNG, KHÔNG DÙNG CHUNG VỚI TAB QUẢN TRỊ
+     Khối này bám theo ô Năm học của màn hình Trường chuẩn Quốc gia, còn tab
+     Quản trị bám theo CAU_HINH.NAM_HOC. Dùng chung biến thì thầy xem năm 2025
+     ở ngoài là tab Quản trị bên trong cũng đổi theo mà không ai bảo — nên tách
+     hẳn ra một bộ biến riêng.
+     ========================================================================== */
+  let PN = { nam: null, hd: null, tv: [], kt: null, tienDo: {}, thieuPC: false };
+  let MO_HD = true;         /* khối đang mở hay đang thu */
+  let NGUON_IN = 'qt';      /* bản in Word lấy dữ liệu của bên nào đang hiện */
+
+  /* Bám theo ô Năm học mà tudanhgia-sql.js chèn vào thanh công cụ. Chưa có ô đó
+     (chưa đăng nhập, hoặc tệp kia chưa chạy) thì lấy năm học trong cấu hình. */
+  function namTrangKDCL() {
+    const o = document.getElementById('kdNamHoc');
+    return (o && o.value) || NAM();
+  }
+
+  async function taiHDTrang(nam) {
+    const s = sb();
+    const [hd, tc] = await Promise.all([
+      s.from('hoi_dong_tdg').select('*').eq('nam_hoc', nam),
+      s.from('tieu_chi').select('ma, ten').order('so_tt')
+    ]);
+    if (hd.error) throw hd.error;
+
+    PN = { nam: nam, hd: (hd.data && hd.data[0]) || null, tv: [], kt: null,
+           tienDo: {}, thieuPC: false, tieuChi: tc.error ? [] : (tc.data || []) };
+
+    if (PN.hd) {
+      const tv = await s.from('thanh_vien_hoi_dong').select('*')
+        .eq('hoi_dong_id', PN.hd.id).order('so_tt');
+      if (tv.error) throw tv.error;
+      PN.tv = tv.data || [];
+    }
+    PN.thieuPC = !!PN.tv.length && !('tieu_chi_phu_trach' in PN.tv[0]);
+
+    /* Tiến độ và dải kiểm tra Điều 9 là phần PHỤ. Máy chủ chưa có hàm, hay
+       mạng chớp một nhịp, thì bỏ qua chứ không ném lỗi — mất cột tiến độ không
+       phải cớ để giấu luôn cả danh sách hội đồng đang đọc được bình thường. */
+    const td = await s.rpc('tien_do_thanh_vien', { p_nam_hoc: nam });
+    if (!td.error) (td.data || []).forEach(function (r) { PN.tienDo[r.thanh_vien_id] = r; });
+
+    const kt = await s.rpc('kiem_tra_hoi_dong', { p_nam_hoc: nam });
+    PN.kt = (!kt.error && kt.data && kt.data[0]) ? kt.data[0] : null;
+  }
+
+  /* Dải kiểm tra bản gọn: chỉ một dòng kết luận kèm chỗ nào chưa đạt. Bản đầy
+     đủ với đủ bốn điều kiện vẫn nằm ở tab Quản trị, nơi người ta ngồi sửa. */
+  function daiKiemGon() {
+    const k = PN.kt;
+    if (!k) return '';
+    if (k.hop_le) {
+      let h = '<div class="hdx-kiem xanh">✔ Hội đồng đủ điều kiện của Điều 9 — <b>'
+        + k.so_thanh_vien + '</b> thành viên, đúng 01 Chủ tịch và 01 Thư ký.';
+      const han = k.han_phe_duyet, pd = k.ngay_phe_duyet;
+      if (pd) {
+        h += ' Báo cáo tự đánh giá đã phê duyệt ngày <b>' + ngayVN(pd) + '</b>'
+          + (k.phe_duyet_dung_han ? ', đúng hạn.' : ', QUÁ hạn ' + ngayVN(han) + '.');
+      } else if (han) {
+        const con = Math.ceil((new Date(han) - new Date()) / 86400000);
+        h += ' Hạn phê duyệt báo cáo tự đánh giá <b>' + ngayVN(han) + '</b> — '
+          + (con >= 0 ? 'còn <b>' + con + '</b> ngày.' : 'ĐÃ QUÁ HẠN <b>' + (-con) + '</b> ngày.');
+      }
+      return h + '</div>';
+    }
+    const thieu = [];
+    if (!k.du_so_luong) thieu.push('chưa đủ 05 thành viên (đang có ' + k.so_thanh_vien + ')');
+    if (!k.la_so_le) thieu.push('số thành viên đang là số chẵn');
+    if (k.so_chu_tich !== 1) thieu.push('phải đúng 01 Chủ tịch (đang có ' + k.so_chu_tich + ')');
+    if (k.so_thu_ky !== 1) thieu.push('phải đúng 01 Thư ký (đang có ' + k.so_thu_ky + ')');
+    return '<div class="hdx-kiem vang">Hội đồng chưa đủ điều kiện của Điều 9: '
+      + chan(thieu.join(' · ')) + '.</div>';
+  }
+
+  /* Xếp theo vai trò như văn bản hành chính: Chủ tịch, Phó Chủ tịch, Thư ký,
+     rồi ủy viên. Trên màn hình cũng nên giống bản in để đối chiếu cho nhanh. */
+  const THU_TU_VAI = { 'Chủ tịch': 1, 'Phó Chủ tịch': 2, 'Thư ký': 3, 'Ủy viên': 4 };
+  function xepVai(ds) {
+    return (ds || []).slice().sort(function (a, b) {
+      const va = THU_TU_VAI[a.vai_tro] || 9, vb = THU_TU_VAI[b.vai_tro] || 9;
+      if (va !== vb) return va - vb;
+      return (a.so_tt || 0) - (b.so_tt || 0);
+    });
+  }
+
+  function veHDTrang() {
+    const hop = document.getElementById('kdHoiDong');
+    if (!hop) return;
+    NGUON_IN = 'trang';
+
+    const email = String((window.NGUOI_DUNG && window.NGUOI_DUNG.email) || '').toLowerCase();
+    const ds = xepVai(PN.tv);
+    const cuaToi = ds.find(function (t) {
+      return t.email && String(t.email).toLowerCase() === email;
+    });
+
+    let h = '<div class="hdx' + (MO_HD ? ' mo' : '') + '">'
+      + '<button type="button" class="hdx-dau" id="hdxDau">'
+      + '<span class="ic">👥</span>'
+      + '<span class="tt">Hội đồng tự đánh giá'
+      + '<span class="phu">Năm học ' + chan(PN.nam)
+      + (ds.length ? ' · ' + ds.length + ' thành viên' : ' · chưa lập')
+      + (PN.hd && PN.hd.so_quyet_dinh
+          ? ' · Quyết định số ' + chan(PN.hd.so_quyet_dinh)
+            + (PN.hd.ngay_quyet_dinh ? ' ngày ' + ngayVN(PN.hd.ngay_quyet_dinh) : '')
+          : '')
+      + '</span></span>'
+      + '<span class="mui">▾</span></button>'
+      + '<div class="hdx-than">';
+
+    if (!ds.length) {
+      h += '<div class="hdx-kiem vang">Năm học ' + chan(PN.nam) + ' chưa lập hội đồng tự đánh giá. '
+        + (laQuanTri()
+            ? 'Thầy bấm <b>✏ Sửa hội đồng</b> ở trên để lập.'
+            : 'Thầy cô đề nghị Ban giám hiệu lập hội đồng, hoặc chọn năm học khác ở ô <b>Năm học</b>.')
+        + '</div>';
+    } else {
+      /* Dòng của chính người đang xem đặt LÊN TRÊN CÙNG, tách hẳn khỏi bảng.
+         Thầy cô mở màn hình này ra là để tìm phần việc của mình, không phải để
+         đọc cả danh sách chín người rồi tự dò tên. */
+      if (cuaToi) {
+        const td = PN.tienDo[cuaToi.id];
+        const tc = cuaToi.tieu_chi_phu_trach || [];
+        h += '<div class="hdx-toi"><b>Phần của thầy cô</b> — '
+          + chan(cuaToi.vai_tro) + ' hội đồng'
+          + (cuaToi.nhom ? ', nhóm ' + chan(cuaToi.nhom) : '') + '. '
+          + (tc.length
+              ? 'Phụ trách <b>' + chan(tc.join(', ')) + '</b>'
+                + (td && td.so_tieu_chi
+                    ? ' — đã viết đủ nội hàm <b>' + td.da_du_noi_ham + '/' + td.so_tieu_chi
+                      + '</b> tiêu chí, chấm mức <b>' + td.da_cham_muc + '/' + td.so_tieu_chi + '</b>.'
+                    : '.')
+              : 'Chưa được giao tiêu chí nào.')
+          + (cuaToi.nhiem_vu ? '<div class="hdx-nv">Nhiệm vụ: ' + chan(cuaToi.nhiem_vu) + '</div>' : '')
+          + '</div>';
+      }
+
+      h += daiKiemGon();
+
+      h += '<div class="tbl-wrap"><table class="tt-bang hdx-bang"><thead><tr>'
+        + '<th style="width:34px">TT</th><th>Họ và tên</th>'
+        + '<th style="width:145px">Chức vụ trong trường</th>'
+        + '<th style="width:120px">Vai trò trong hội đồng</th>'
+        + (PN.thieuPC ? '' :
+            '<th style="width:140px">Nhóm công tác</th>'
+          + '<th style="width:140px">Tiêu chí phụ trách</th>'
+          + '<th style="width:150px">Tiến độ</th>')
+        + '</tr></thead><tbody>';
+      ds.forEach(function (t, i) {
+        const td = PN.tienDo[t.id];
+        const tc = t.tieu_chi_phu_trach || [];
+        const toi = cuaToi && t.id === cuaToi.id;
+        h += '<tr' + (toi ? ' class="toi"' : '') + '><td>' + (i + 1) + '</td>'
+          + '<td><b>' + chan(t.ho_ten) + '</b>' + (toi ? ' <span class="hdx-nhan">thầy cô</span>' : '')
+            + (t.nhiem_vu ? '<div class="tt-nho">' + chan(t.nhiem_vu) + '</div>' : '')
+            + '</td>'
+          + '<td>' + chan(t.chuc_vu || '—') + '</td>'
+          + '<td>' + chan(t.vai_tro || '—') + '</td>';
+        if (!PN.thieuPC) {
+          h += '<td>' + chan(t.nhom || '—') + '</td>'
+            + '<td>' + (tc.length ? chan(tc.join(', ')) : '—') + '</td>'
+            /* Chưa giao tiêu chí nào KHÁC với làm chưa xong — để trống chứ
+               không ghi 0/0 rồi tô màu như người này chậm tiến độ. */
+            + '<td>' + (td && td.so_tieu_chi
+                ? '<b>' + td.da_du_noi_ham + '/' + td.so_tieu_chi + '</b> tiêu chí viết đủ'
+                  + '<div class="tt-nho">' + td.da_cham_muc + '/' + td.so_tieu_chi + ' đã chấm mức</div>'
+                : '<span class="tt-nho">chưa được giao</span>') + '</td>';
+        }
+        h += '</tr>';
+      });
+      h += '</tbody></table></div>';
+
+      h += '<div class="hdx-chan">'
+        + '<button class="tt-nut" id="hdxInDS">📄 Danh sách hội đồng (Word)</button>'
+        + '<button class="tt-nut" id="hdxInPC">📄 Bảng phân công nhiệm vụ (Word)</button>'
+        + '<span class="tt-nho">Cột Tiến độ do máy chủ đếm từ số nội hàm đã viết, '
+        + 'không phải người tự đánh dấu. Khối này chỉ để xem.</span>'
+        + '</div>';
+    }
+
+    h += '</div></div>';
+    hop.innerHTML = h;
+
+    const nut = hop.querySelector('#hdxDau');
+    if (nut) nut.addEventListener('click', function () {
+      MO_HD = !MO_HD;
+      this.closest('.hdx').classList.toggle('mo', MO_HD);
+    });
+    const nDS = hop.querySelector('#hdxInDS');
+    if (nDS) nDS.addEventListener('click', function () {
+      NGUON_IN = 'trang';
+      if (typeof window.xuatDanhSachHoiDong === 'function') window.xuatDanhSachHoiDong();
+      else bao('Chưa nạp được phần xuất Word. Thầy cô tải lại trang.');
+    });
+    const nPC = hop.querySelector('#hdxInPC');
+    if (nPC) nPC.addEventListener('click', function () {
+      NGUON_IN = 'trang';
+      if (typeof window.xuatPhanCongHoiDong === 'function') window.xuatPhanCongHoiDong();
+      else bao('Chưa nạp được phần xuất Word. Thầy cô tải lại trang.');
+    });
+  }
+
+  /* Nạp lại khối. Chưa đăng nhập thì để trống hẳn: hàng rào RLS không cho đọc,
+     mà một ô báo lỗi đỏ chình ình lúc chưa đăng nhập chỉ làm người xem tưởng
+     trang hỏng. */
+  window.veHoiDongTrangKDCL = async function () {
+    const hop = document.getElementById('kdHoiDong');
+    if (!hop) return;
+    if (!window.NGUOI_DUNG) { hop.innerHTML = ''; return; }
+    const nam = namTrangKDCL();
+    try {
+      await taiHDTrang(nam);
+    } catch (e) {
+      hop.innerHTML = '<div class="hdx-kiem vang">Chưa đọc được danh sách hội đồng tự đánh giá. '
+        + 'Thầy cô bấm <b>Ctrl+F5</b> tải lại trang; vẫn vậy thì báo bộ phận quản trị.'
+        + '<div class="tt-nho">Chi tiết: ' + chan(e.message || e) + '</div></div>';
+      return;
+    }
+    veHDTrang();
+  };
+
+  /* Nghe qua document chứ không gắn thẳng vào ô chọn năm: ô ấy do
+     tudanhgia-sql.js chèn vào SAU khi đăng nhập xong, nên lúc tệp này chạy thì
+     chưa có gì để gắn. Uỷ nhiệm sự kiện thì thứ tự nạp tệp không còn quan
+     trọng nữa. */
+  document.addEventListener('change', function (e) {
+    if (e.target && e.target.id === 'kdNamHoc') window.veHoiDongTrangKDCL();
+  });
+
+  document.addEventListener('dangnhap-xong', function () {
+    /* Đợi một nhịp cho tudanhgia-sql.js kịp chèn ô Năm học, để lần vẽ đầu tiên
+       đã lấy đúng năm đang chọn thay vì năm trong cấu hình rồi phải vẽ lại. */
+    setTimeout(function () { window.veHoiDongTrangKDCL(); }, 0);
+  });
+
+
+  /* ==========================================================================
      ĐĂNG KÝ BA TAB
      ========================================================================== */
   function boc(tenViec, taiFn, veFn) {
@@ -1134,8 +1429,18 @@
 
   /* Cho tệp xuất Word lấy đúng dữ liệu đang hiện trên màn hình, kể cả dòng vừa
      sửa. Đọc lại cơ sở dữ liệu ở tệp kia thì bản in có thể khác thứ thầy cô
-     đang nhìn. */
+     đang nhìn.
+
+     Hai nơi cùng hiện hội đồng: tab Quản trị và khối trên màn hình Trường chuẩn
+     Quốc gia — và hai nơi có thể đang xem HAI NĂM HỌC KHÁC NHAU. Trả về đúng
+     bên vừa vẽ hoặc vừa bấm nút in, chứ không mặc định lấy tab Quản trị: thầy
+     cô xem năm 2025 ở ngoài mà bấm in ra danh sách năm 2026 thì bản giấy sai mà
+     không có dấu hiệu nào báo. */
   window.duLieuHoiDong = function () {
+    if (NGUON_IN === 'trang') {
+      return { nam_hoc: PN.nam, hd: PN.hd, tv: PN.tv,
+               tieuChi: PN.tieuChi || [], tienDo: PN.tienDo };
+    }
     return { nam_hoc: NAM(), hd: HD, tv: TV, tieuChi: DS_TIEU_CHI, tienDo: TIEN_DO };
   };
 

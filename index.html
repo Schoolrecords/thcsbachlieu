@@ -1366,12 +1366,21 @@ table.data td:last-child, table.data th:last-child,
       <div class="kd-nut">
         <!-- Hai nút này mở thẳng tab đã có sẵn trong Quản trị hệ thống, không
              dựng màn hình thứ hai cho cùng một bảng dữ liệu. tudanhgia-sql.js
-             mở chúng ra cho quản trị và ban giám hiệu. -->
-        <button class="btn btn-out" id="kdNutHD" style="display:none" onclick="moQuanTri('hd')">👥 Hội đồng TĐG</button>
+             mở chúng ra cho quản trị và ban giám hiệu.
+             Riêng danh sách hội đồng thì AI ĐĂNG NHẬP CŨNG XEM ĐƯỢC ở khối
+             #kdHoiDong ngay bên dưới — thành viên hội đồng phần lớn là giáo
+             viên, không vào được bảng Quản trị, mà chính họ mới là người cần
+             biết mình được giao tiêu chí nào. Nút này chỉ còn là lối SỬA. -->
+        <button class="btn btn-out" id="kdNutHD" style="display:none" onclick="moQuanTri('hd')">✏ Sửa hội đồng</button>
         <button class="btn btn-out" id="kdNutKH" style="display:none" onclick="moQuanTri('kh')">📈 Kế hoạch cải tiến</button>
       </div>
     </div>
     <div class="kd-vi" id="kdGiaiThich"></div>
+
+    <!-- Khối Hội đồng tự đánh giá, chỉ để XEM. Nội dung do
+         js/tt57-hoidong-caitien-cnqg.js đổ vào sau khi đăng nhập xong; chưa
+         đăng nhập thì để trống vì hàng rào RLS không cho đọc. -->
+    <div id="kdHoiDong"></div>
 
     <!-- Thanh này giữ class "toolbar" vì hai tệp khác bám vào nó:
          tudanhgia-sql.js chèn ô Năm học vào đây, và xuat-bao-cao-tdg.js tìm
@@ -2917,9 +2926,9 @@ renderDbcl();
 <script src="js/so-lieu-tt57.js?v=202608091918"></script>
 <!-- Ba việc còn lại của Thông tư 57: Hội đồng tự đánh giá (Điều 9), Kế hoạch
      cải tiến theo Biểu 2 (Điều 10) và Điều kiện chuẩn quốc gia (Điều 16). -->
-<script src="js/tt57-hoidong-caitien-cnqg.js?v=202608091918"></script>
+<script src="js/tt57-hoidong-caitien-cnqg.js?v=202608092030"></script>
 <!-- Nạp SAU cùng: hướng dẫn lọc nội dung theo vai trò nên cần window.NGUOI_DUNG -->
-<script src="js/huong-dan.js?v=202608091918"></script>
+<script src="js/huong-dan.js?v=202608092030"></script>
 <!-- Xuất Word để giao việc: phiếu theo hộp hồ sơ và danh sách từng lớp.
      Cần CATS (khai trong index.html) và window.layHoSo (hoso-sql.js). -->
 <script src="js/xuat-giao-viec.js?v=202608091918"></script>
