@@ -178,6 +178,11 @@ input,select{font-family:inherit;font-size:inherit}
 .hstat .ic{width:46px;height:46px;flex:none;border-radius:50%;background:linear-gradient(150deg,#3b82f6,#1d4ed8);display:grid;place-items:center;font-size:20px;box-shadow:0 3px 10px rgba(0,0,0,.25)}
 .hstat b{display:block;font-size:26px;line-height:1.05;color:var(--gold-2);font-family:var(--serif)}
 .hstat span{font-size:12.3px;opacity:.85;display:block}
+/* Ô "lớp · 466 học sinh" có một span lồng bên trong để JS ghi sĩ số vào.
+   Quy tắc display:block ở trên áp cả cho span lồng đó, làm con số rớt xuống
+   dòng riêng và cái <br> ngay sau nó đẩy chữ "học sinh" xuống dòng thứ ba.
+   Trả span lồng về inline để cả cụm nằm đúng một dòng. */
+.hstat span span{display:inline;font-size:inherit;opacity:1}
 @media(max-width:940px){.hero-left{max-width:100%}.hero-anh{display:none}.hero h1{font-size:29px}.hero-tag{font-size:16px}.hero-stats{grid-template-columns:repeat(2,1fr)}}
 
 /* ---- Thẻ mô-đun trên trang chủ ----
