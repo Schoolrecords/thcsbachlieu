@@ -65,24 +65,26 @@
       { t: 'Thầy cô không phải nhớ thêm mật khẩu nào cả. Hệ thống nhận diện thầy cô qua chính hộp thư Gmail nhà trường đã cấp.' },
       { b: [
         'Mở trang web của trường bằng Chrome hoặc Cốc Cốc.',
-        'Bấm nút <b>Đăng nhập</b> ở góc trên bên phải.',
-        'Chọn <b>Đăng nhập bằng Google</b>.',
+        'Trang vừa mở ra là hiện ngay thẻ đăng nhập — bấm <b>Đăng nhập bằng Google</b>.',
         'Chọn đúng hộp thư nhà trường cấp. Máy đang mở sẵn thư cá nhân thì bấm <b>Sử dụng tài khoản khác</b>.',
         'Bấm <b>Tiếp tục</b> khi Google hỏi cho phép.'
       ] },
-      { a: 'dang-nhap.png', ct: 'Nút <b>Đăng nhập</b> nằm ở góc trên bên phải màn hình.' },
-      { d: 'Góc trên bên phải hiện họ tên thầy cô và chức danh — Giáo viên, Tổ trưởng chuyên môn, Ban giám hiệu hoặc Quản trị hệ thống.' },
-      { c: '⚠ Đăng nhập xong mà thấy chữ “Chờ duyệt” thì tài khoản chưa được mở quyền. Thầy cô báo bộ phận quản trị giúp, đăng nhập lại nhiều lần cũng không đổi được gì.' }
+      { a: 'dang-nhap.png', ct: 'Chưa đăng nhập thì cả trang chỉ hiện đúng thẻ này.' },
+      { t: 'Chưa đăng nhập thì thầy cô chưa thấy màn hình nào cả — không có thanh menu, không có nội dung. Đó là cố ý: dữ liệu của nhà trường không để người ngoài mở ra xem được.' },
+      { d: 'Vào đúng rồi thì thanh menu hiện lên, và ở cuối thanh menu bên phải có họ tên thầy cô kèm chức danh — Giáo viên, Tổ trưởng chuyên môn, Ban giám hiệu hoặc Quản trị hệ thống.' },
+      { c: '⚠ Hiện màn hình <b>“Tài khoản đang chờ duyệt”</b> nghĩa là địa chỉ thư ấy chưa có trong danh sách cán bộ, giáo viên, nhân viên. Thầy cô báo bộ phận quản trị; được cấp quyền rồi thì chỉ cần tải lại trang là vào được, đăng nhập lại nhiều lần cũng không đổi được gì.' }
     ] },
 
     { td: 'Không đăng nhập được — làm gì', ai: GV, tim: 'loi khong dang nhap duoc cho duyet', nd: [
       { t: 'Thầy cô đối chiếu dòng chữ hiện trên màn hình với bảng dưới đây là biết ngay phải làm gì.' },
       { k: [['Màn hình báo gì', 'Nghĩa là', 'Thầy cô làm gì'], [
-        ['Chờ duyệt', 'Tài khoản đã tạo nhưng chưa mở quyền', 'Báo bộ phận quản trị mở quyền'],
-        ['Tài khoản không có trong danh sách', 'Đang đăng nhập bằng thư cá nhân', 'Đăng xuất Google rồi vào lại bằng thư nhà trường cấp'],
-        ['Chỉ xem, không sửa được', 'Đúng quyền được giao', 'Cần sửa thì đề nghị quản trị đổi quyền'],
+        ['<b>Tài khoản đang chờ duyệt</b> — kèm địa chỉ thư vừa đăng nhập',
+         'Địa chỉ ấy chưa có trong danh sách cán bộ, giáo viên, nhân viên. Hoặc là chưa được cấp quyền, hoặc là vừa đăng nhập nhầm bằng thư cá nhân',
+         'Nhìn địa chỉ thư ghi trên màn hình: <b>đúng thư nhà trường cấp</b> thì báo quản trị cấp quyền, được duyệt rồi tải lại trang là vào. <b>Là thư cá nhân</b> thì bấm Đăng xuất rồi vào lại bằng thư nhà trường'],
+        ['Vào được nhưng chỉ xem, không sửa được', 'Đúng quyền được giao', 'Cần sửa thì đề nghị quản trị đổi quyền'],
         ['Trang trắng, không có gì', 'Mạng chập lúc tải trang', 'Bấm Ctrl+F5 để tải lại toàn bộ']
-      ]] }
+      ]] },
+      { t: 'Thẻ đăng nhập có báo lỗi ngay dưới nút bấm. Thầy cô đọc dòng chữ đỏ ấy trước khi bấm lại — bấm mãi một nút mà không đọc thì lỗi vẫn thế.' }
     ] },
 
     { td: 'Sáu màn hình của hệ thống', ai: GV, tim: 'man hinh menu tong quan bo cuc', nd: [
@@ -556,8 +558,12 @@
     cursor:pointer;display:flex;align-items:center;gap:11px}
   .hd-dau:hover{background:#f5f8fd}
   .hd-dau .mui{margin-left:auto;font-size:13px;color:var(--muted);transition:transform .2s;flex:none}
-  .hd-muc.mo .hd-dau{background:var(--navy-fill);border-bottom:1px solid var(--line)}
-  .hd-muc.mo .hd-dau .mui{transform:rotate(90deg)}
+  /* Mục đang mở có nền xanh đậm nên chữ phải đổi sang trắng. Để nguyên màu
+     xanh của lúc đóng thì chữ chìm vào nền, thầy cô không đọc được đang mở
+     mục nào — nhất là máy chiếu ở phòng họp vốn đã bợt màu. */
+  .hd-muc.mo .hd-dau{background:var(--navy-fill);border-bottom:1px solid var(--line);color:#fff}
+  .hd-muc.mo .hd-dau:hover{background:var(--navy-fill)}
+  .hd-muc.mo .hd-dau .mui{transform:rotate(90deg);color:#fbbf24}
   .hd-than{display:none;padding:17px 19px 21px;font-size:14.8px;line-height:1.78;color:var(--ink)}
   .hd-muc.mo .hd-than{display:block}
   .hd-than p{margin:0 0 11px}
