@@ -237,6 +237,12 @@
 
     h += '<div class="tt-muc">Thành viên hội đồng'
       + (sua ? ' <button class="tt-nut" id="hdThem">➕ Thêm thành viên</button>' : '')
+      /* Hai nút xuất hiện với MỌI người xem được mục này, không riêng quản trị:
+         in ra bản giấy không sửa gì của ai. */
+      + (TV.length
+        ? ' <button class="tt-nut" id="hdInDS">📄 Danh sách hội đồng (Word)</button>'
+          + ' <button class="tt-nut" id="hdInPC">📄 Bảng phân công nhiệm vụ (Word)</button>'
+        : '')
       + '</div>';
 
     if (!TV.length) {
@@ -312,6 +318,21 @@
       }
     }
     hop.innerHTML = h;
+
+    /* Gắn hai nút in TRƯỚC lệnh thoát sớm bên dưới. Đặt sau thì người không
+       phải quản trị bấm vào không có gì xảy ra — nút chết mà không ai biết vì
+       sao. */
+    const nDS = hop.querySelector('#hdInDS');
+    if (nDS) nDS.addEventListener('click', function () {
+      if (typeof window.xuatDanhSachHoiDong === 'function') window.xuatDanhSachHoiDong();
+      else bao('Chưa nạp được phần xuất Word. Thầy cô tải lại trang.');
+    });
+    const nPC = hop.querySelector('#hdInPC');
+    if (nPC) nPC.addEventListener('click', function () {
+      if (typeof window.xuatPhanCongHoiDong === 'function') window.xuatPhanCongHoiDong();
+      else bao('Chưa nạp được phần xuất Word. Thầy cô tải lại trang.');
+    });
+
     if (!sua) return;
 
     ['hdSo', 'hdNgay', 'hdPD', 'hdGC'].forEach(function (id) {
@@ -1110,6 +1131,13 @@
       veFn(hop);
     };
   }
+
+  /* Cho tệp xuất Word lấy đúng dữ liệu đang hiện trên màn hình, kể cả dòng vừa
+     sửa. Đọc lại cơ sở dữ liệu ở tệp kia thì bản in có thể khác thứ thầy cô
+     đang nhìn. */
+  window.duLieuHoiDong = function () {
+    return { nam_hoc: NAM(), hd: HD, tv: TV, tieuChi: DS_TIEU_CHI, tienDo: TIEN_DO };
+  };
 
   window.qtTabPhu = window.qtTabPhu || [];
   window.qtTabPhu.push({ ma: 'hd', ten: 'Hội đồng TĐG', tt: 36,
