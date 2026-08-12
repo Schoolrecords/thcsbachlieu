@@ -703,8 +703,11 @@
      ĐĂNG KÝ TAB VÀO BẢNG QUẢN TRỊ
      ========================================================================== */
   window.qtTabPhu = window.qtTabPhu || [];
+  /* Mã tab phải KHÁC mọi mã trong TAB_CHINH của dangnhap.js. Trước đây đặt
+     'sl' — trùng đúng mã của tab "Sao lưu", mà veTab() xét TAB_CHINH trước nên
+     bấm "Số liệu báo cáo" lại ra màn hình Sao lưu, cả mục này không mở được. */
   window.qtTabPhu.push({
-    ma: 'sl',
+    ma: 'slbc',
     ten: 'Số liệu báo cáo',
     tt: 35,
     ve: function (hop) { return ve(hop); }
