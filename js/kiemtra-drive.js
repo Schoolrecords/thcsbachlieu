@@ -43,6 +43,16 @@
       var kq = await window.sbClient.rpc('cap_nhat_tu_drive', { du_lieu: soTep });
       if (kq.error) throw kq.error;
 
+      /* Ghi mốc ĐÃ RÀ SOÁT. Khác hẳn cap_nhat_luc của hồ sơ: hàm
+         cap_nhat_tu_drive chỉ chạm vào dòng nào ĐỔI trạng thái, nên rà soát
+         mà không có tệp mới thì không dòng nào được cập nhật và mốc hồ sơ
+         đứng yên — thầy Chung bấm nút xong tưởng nút không ăn (12/8/2026).
+         Đây là mốc riêng của máy này; muốn cả trường thấy chung thì chạy
+         sql/39 rồi đọc từ máy chủ. Phải ghi TRƯỚC khi tải lại dữ liệu, vì
+         chính lượt tải lại đó vẽ lại hộp đang mở. */
+      try { localStorage.setItem('hss_ra_soat_drive', new Date().toISOString()); }
+      catch (e) { /* trình duyệt chặn lưu thì thôi, không phải lỗi chặn việc */ }
+
       /* Tải lại danh mục để số liệu và trạng thái mới hiện lên */
       document.dispatchEvent(new Event('dangnhap-xong'));
 
