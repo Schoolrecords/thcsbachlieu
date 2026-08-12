@@ -2263,9 +2263,28 @@ window.baoTin  = baoTin;
    HỒ SƠ SỐ
    ============================================================ */
 function catStats(c){
-  let tong=0, co=0;
-  c.subs.forEach(s=>s.items.forEach(i=>{ tong++; if(i[3]==='co') co++; }));
-  return {tong, co};
+  let tong=0, co=0, moi=null;
+  c.subs.forEach(s=>s.items.forEach(i=>{
+    tong++; if(i[3]==='co') co++;
+    /* i[6] = cap_nhat_luc. Lấy mốc muộn nhất trong hộp làm "cập nhật gần
+       nhất". Dữ liệu mẫu không có phần tử này nên bỏ qua, không bịa ngày. */
+    const t = i[6] ? Date.parse(i[6]) : NaN;
+    if(!isNaN(t) && (moi===null || t>moi)) moi=t;
+  }));
+  return {tong, co, moi};
+}
+
+/* Ngày giờ kiểu Việt Nam. Trong ngày thì nói giờ cho thầy cô biết vừa chạy
+   xong; khác ngày thì chỉ cần ngày tháng. */
+function ngayVN(mocMs){
+  if(mocMs===null||mocMs===undefined) return null;
+  const d=new Date(mocMs), n=new Date();
+  const ng=`${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()}`;
+  const cungNgay = d.getDate()===n.getDate() && d.getMonth()===n.getMonth()
+                && d.getFullYear()===n.getFullYear();
+  return cungNgay
+    ? `hôm nay ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`
+    : ng;
 }
 
 function renderCats(){
@@ -2349,9 +2368,15 @@ function rowHtml(it){
   </tr>`;
 }
 
+/* Hộp hồ sơ đang mở. Rà soát Drive xong, hoso-sql.js tải lại dữ liệu rồi vẽ
+   lại đúng hộp này — trước đây phải đóng hộp mở lại mới thấy số và ngày mới,
+   nên thầy cô bấm "Kiểm tra ngay" xong tưởng nút không ăn. */
+window.hopDangMo = null;
+
 function openCat(id){
   const c = CATS.find(x=>x.id===id);
   if(!c) return;
+  window.hopDangMo = id;
   const s = catStats(c);
   const shIc = document.getElementById('shIc');
   shIc.textContent = String(c.id).padStart(2,'0');
@@ -2362,7 +2387,7 @@ function openCat(id){
     <div class="sheet-sum">
       <div>
         <div class="big">${s.co}/${s.tong} hồ sơ đã có tệp</div>
-        <div class="sub">Cập nhật gần nhất: 31/7/2026</div>
+        <div class="sub">${ngayVN(s.moi) ? 'Cập nhật gần nhất: '+ngayVN(s.moi) : 'Chưa có mốc cập nhật nào'}</div>
       </div>
       <div class="sp"></div>
       <button class="btn btn-pri" onclick="notify('Đang rà soát các thư mục trên Drive để cập nhật trạng thái…')">🔄 Kiểm tra ngay</button>
@@ -2394,6 +2419,7 @@ function openCat(id){
   document.body.style.overflow='hidden';
 }
 function closeSheet(){
+  window.hopDangMo = null;
   document.getElementById('sheetOverlay').classList.remove('on');
   document.body.style.overflow='';
 }
@@ -2586,6 +2612,7 @@ function showCrit(code){
   if(!c) return;
   document.getElementById('shIc').className='ic';
   document.getElementById('shIc').textContent='✅';
+  window.hopDangMo = null;   /* cửa sổ này không phải hộp hồ sơ, đừng vẽ đè */
   document.getElementById('shTitle').textContent='Tiêu chí '+c.code;
   document.getElementById('shSub').textContent=c.name;
   document.getElementById('shBody').innerHTML = `
@@ -2729,6 +2756,7 @@ function showDsHs(lop, si, gvIdx){
   const nam = ds.filter(h=>h.gt==='Nam').length;
   document.getElementById('shIc').className='ic';
   document.getElementById('shIc').textContent='🎒';
+  window.hopDangMo = null;   /* cửa sổ này không phải hộp hồ sơ, đừng vẽ đè */
   document.getElementById('shTitle').textContent='Lớp '+lop;
   document.getElementById('shSub').textContent='Giáo viên chủ nhiệm: '+GVCN[gvIdx%GVCN.length];
   document.getElementById('shBody').innerHTML = `
@@ -2917,14 +2945,14 @@ renderDbcl();
      Ba tệp dưới đây chỉ hoạt động khi js/cauhinh.js đã được điền địa chỉ
      cơ sở dữ liệu. Chưa điền thì trang chạy y như trước, không đòi đăng nhập. -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/cauhinh.js?v=202608121222"></script>
-<script src="js/dangnhap.js?v=202608121222"></script>
-<script src="js/hoso-sql.js?v=202608121222"></script>
-<script src="js/tudanhgia-sql.js?v=202608121222"></script>
-<script src="js/nhansu-sql.js?v=202608121222"></script>
-<script src="js/kiemtra-drive.js?v=202608121222"></script>
-<script src="js/xuat-bieu-mau.js?v=202608121222"></script>
-<script src="js/xuat-bao-cao-tdg.js?v=202608121222"></script>
+<script src="js/cauhinh.js?v=202608121243"></script>
+<script src="js/dangnhap.js?v=202608121243"></script>
+<script src="js/hoso-sql.js?v=202608121243"></script>
+<script src="js/tudanhgia-sql.js?v=202608121243"></script>
+<script src="js/nhansu-sql.js?v=202608121243"></script>
+<script src="js/kiemtra-drive.js?v=202608121243"></script>
+<script src="js/xuat-bieu-mau.js?v=202608121243"></script>
+<script src="js/xuat-bao-cao-tdg.js?v=202608121243"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <!-- ExcelJS chỉ dùng để TẠO mẫu có trang trí: bản miễn phí của xlsx ở trên
      không viết được màu nền, khung viền hay khổ giấy A4 ngang. Phần ĐỌC tệp
@@ -2932,46 +2960,46 @@ renderDbcl();
 <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 <!-- Bộ tạo mẫu dùng chung: mọi mẫu Excel của hệ thống đi qua đây nên trông
      giống nhau và in ra dùng được ngay. Phải nạp TRƯỚC các màn hình gọi nó. -->
-<script src="js/mau-excel.js?v=202608121222"></script>
-<script src="js/dbcl-sql.js?v=202608121222"></script>
-<script src="js/xuat-phu-luc-dbcl.js?v=202608121222"></script>
-<script src="js/dbcl-excel.js?v=202608121222"></script>
-<script src="js/dbcl-vanhanh.js?v=202608121222"></script>
-<script src="js/dbcl-hocsinh.js?v=202608121222"></script>
+<script src="js/mau-excel.js?v=202608121243"></script>
+<script src="js/dbcl-sql.js?v=202608121243"></script>
+<script src="js/xuat-phu-luc-dbcl.js?v=202608121243"></script>
+<script src="js/dbcl-excel.js?v=202608121243"></script>
+<script src="js/dbcl-vanhanh.js?v=202608121243"></script>
+<script src="js/dbcl-hocsinh.js?v=202608121243"></script>
 <!-- Nạp SAU dbcl-hocsinh.js: dùng lại window.hsChuanNgay và window.hsVeLai -->
-<script src="js/vnedu-nhap.js?v=202608121222"></script>
+<script src="js/vnedu-nhap.js?v=202608121243"></script>
 <!-- Nối màn hình "Quản lý học sinh" với dữ liệu thật, thay bản xem thử -->
-<script src="js/hocsinh-that.js?v=202608121222"></script>
-<script src="js/tinhtien-lop.js?v=202608121222"></script>
-  <script src="js/quy-mo.js?v=202608121222"></script>
-<script src="js/dbcl-phancong.js?v=202608121222"></script>
-<script src="js/dbcl-camket-hs.js?v=202608121222"></script>
+<script src="js/hocsinh-that.js?v=202608121243"></script>
+<script src="js/tinhtien-lop.js?v=202608121243"></script>
+  <script src="js/quy-mo.js?v=202608121243"></script>
+<script src="js/dbcl-phancong.js?v=202608121243"></script>
+<script src="js/dbcl-camket-hs.js?v=202608121243"></script>
 <!-- Các tab thêm vào bảng Quản trị hệ thống. Phải nạp SAU dbcl-hocsinh.js vì
      tab "Danh sách học sinh" dùng lại đúng màn hình của tệp đó, và nạp sau
      dangnhap.js vì chúng tự đăng ký vào window.qtTabPhu. -->
-<script src="js/quantri-nhansu.js?v=202608121222"></script>
-<script src="js/quantri-hocsinh.js?v=202608121222"></script>
-<script src="js/quantri-hoso.js?v=202608121222"></script>
+<script src="js/quantri-nhansu.js?v=202608121243"></script>
+<script src="js/quantri-hocsinh.js?v=202608121243"></script>
+<script src="js/quantri-hoso.js?v=202608121243"></script>
 <!-- Bảng số liệu 03 năm học kèm theo báo cáo tự đánh giá (Biểu 1 Phụ lục V TT57).
      Vừa là tab nhập trong Quản trị, vừa sinh bảng cho bản Word — nên nạp TRƯỚC
      lúc thầy cô bấm xuất báo cáo, còn thứ tự với xuat-bao-cao-tdg.js không quan
      trọng vì hai bên gọi nhau lúc bấm nút, không phải lúc nạp trang. -->
-<script src="js/so-lieu-tt57.js?v=202608121222"></script>
+<script src="js/so-lieu-tt57.js?v=202608121243"></script>
 <!-- Ba việc còn lại của Thông tư 57: Hội đồng tự đánh giá (Điều 9), Kế hoạch
      cải tiến theo Biểu 2 (Điều 10) và Điều kiện chuẩn quốc gia (Điều 16). -->
-<script src="js/tt57-hoidong-caitien-cnqg.js?v=202608121222"></script>
+<script src="js/tt57-hoidong-caitien-cnqg.js?v=202608121243"></script>
 <!-- Nạp SAU cùng: hướng dẫn lọc nội dung theo vai trò nên cần window.NGUOI_DUNG -->
-<script src="js/huong-dan.js?v=202608121222"></script>
+<script src="js/huong-dan.js?v=202608121243"></script>
 <!-- Xuất Word để giao việc: phiếu theo hộp hồ sơ và danh sách từng lớp.
      Cần CATS (khai trong index.html) và window.layHoSo (hoso-sql.js). -->
-<script src="js/xuat-giao-viec.js?v=202608121222"></script>
+<script src="js/xuat-giao-viec.js?v=202608121243"></script>
 <!-- Xuất Word của Hội đồng tự đánh giá: danh sách kèm quyết định thành lập và
      bảng phân công nhiệm vụ. Đọc dữ liệu qua window.duLieuHoiDong do
      tt57-hoidong-caitien-cnqg.js xuất ra, nên phải nạp SAU tệp ấy. -->
-<script src="js/xuat-hoi-dong.js?v=202608121222"></script>
+<script src="js/xuat-hoi-dong.js?v=202608121243"></script>
 <!-- Danh mục minh chứng của mô đun Trường chuẩn Quốc gia: lọc theo tiêu chuẩn
      hoặc theo từng tiêu chí. Đọc qua window.duLieuTuDanhGia nên phải nạp SAU
      tudanhgia-sql.js. -->
-<script src="js/xuat-minh-chung-tdg.js?v=202608121222"></script>
+<script src="js/xuat-minh-chung-tdg.js?v=202608121243"></script>
 </body>
 </html>

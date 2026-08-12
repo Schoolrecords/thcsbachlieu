@@ -49,7 +49,7 @@
       var coTep = Object.keys(soTep).filter(function (k) { return soTep[k] > 0; }).length;
       if (typeof notify === 'function') {
         notify('Rà soát xong: ' + coTep + ' thư mục đã có tệp, ' + kq.data +
-               ' hồ sơ vừa được đổi trạng thái. Mở lại hộp để xem số mới.');
+               ' hồ sơ vừa được đổi trạng thái.');
       }
     } catch (err) {
       console.error('[Kiểm tra Drive]', err);

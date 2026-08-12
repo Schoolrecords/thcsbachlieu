@@ -165,8 +165,11 @@
               .filter(h => h.nhom_con_id === c.id)
               /* [5] là mã cũ theo bảng mã TT 18/2018 — hiện cạnh mã mới để
                  thầy cô đối chiếu với hồ sơ giấy đang dùng */
+              /* [6] là lúc hồ sơ được cập nhật lần cuối. Dòng "Cập nhật gần
+                 nhất" trên đầu mỗi hộp trước đây là chữ gõ cứng nên đứng yên
+                 mãi một ngày; nay lấy từ đây, tự đổi theo dữ liệu thật. */
               .map(h => [h.ma, h.ten, h.nguoi_phu_trach || '—', h.trang_thai,
-                         h.tieu_chi || [], h.ma_cu || ''])
+                         h.tieu_chi || [], h.ma_cu || '', h.cap_nhat_luc || ''])
           }))
       }));
 
@@ -175,6 +178,11 @@
       catsMoi.forEach(c => CATS.push(c));
 
       renderCats();
+      /* Hộp đang mở thì vẽ lại ngay bằng dữ liệu vừa tải, không bắt thầy cô
+         đóng ra mở lại mới thấy trạng thái và mốc cập nhật mới. */
+      if (window.hopDangMo != null && typeof window.openCat === 'function') {
+        window.openCat(window.hopDangMo);
+      }
       /* Không báo gì khi tải xong. Việc tải chạy ngay lúc đăng nhập, khi thầy
          cô còn ở trang chủ — bật thông báo lúc đó là làm phiền vô cớ. Dữ liệu
          hiện ra trên màn hình đã là bằng chứng tải xong rồi. */
