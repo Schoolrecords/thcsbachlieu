@@ -47,9 +47,17 @@
          cap_nhat_tu_drive chỉ chạm vào dòng nào ĐỔI trạng thái, nên rà soát
          mà không có tệp mới thì không dòng nào được cập nhật và mốc hồ sơ
          đứng yên — thầy Chung bấm nút xong tưởng nút không ăn (12/8/2026).
-         Đây là mốc riêng của máy này; muốn cả trường thấy chung thì chạy
-         sql/39 rồi đọc từ máy chủ. Phải ghi TRƯỚC khi tải lại dữ liệu, vì
-         chính lượt tải lại đó vẽ lại hộp đang mở. */
+         Ghi lên máy chủ (sql/39) để cả trường thấy chung, đồng thời ghi vào
+         máy này làm bản lùi khi máy chủ không nhận. Phải ghi TRƯỚC khi tải
+         lại dữ liệu, vì chính lượt tải lại đó vẽ lại hộp đang mở. */
+      try {
+        var mc = await window.sbClient.rpc('ghi_moc_ra_soat');
+        /* Hỏng ở đây KHÔNG được làm hỏng cả lượt rà soát: việc chính đã xong
+           và đã ghi vào cơ sở dữ liệu rồi. Chỉ ghi console rồi đi tiếp. */
+        if (mc.error) console.warn('[Kiểm tra Drive] Không ghi được mốc:', mc.error.message);
+        else window.mocRaSoatDrive = mc.data;
+      } catch (e) { console.warn('[Kiểm tra Drive] Không ghi được mốc:', e); }
+
       try { localStorage.setItem('hss_ra_soat_drive', new Date().toISOString()); }
       catch (e) { /* trình duyệt chặn lưu thì thôi, không phải lỗi chặn việc */ }
 

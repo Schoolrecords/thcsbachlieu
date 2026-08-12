@@ -121,14 +121,22 @@
   async function taiDuLieu() {
     bangTai.classList.add('hien');
     try {
-      const [nhom, nhomCon, hoSo] = await Promise.all([
+      /* Mốc rà soát đi CÙNG mẻ đọc này cho đỡ một vòng mạng, nhưng cố tình
+         KHÔNG gộp vào phép xét lỗi bên dưới: thiếu mốc thì dòng chữ nhỏ dưới
+         tiêu đề hộp cụt đi một vế, còn thiếu danh mục mới là hỏng thật.
+         Chưa chạy sql/39 thì rpc này báo lỗi — vẫn phải vào được danh mục. */
+      const [nhom, nhomCon, hoSo, moc] = await Promise.all([
         sb.from('nhom_ho_so').select('*').order('so_tt'),
         sb.from('nhom_con').select('*').order('so_tt'),
-        sb.from('ho_so').select('*').order('so_tt')
+        sb.from('ho_so').select('*').order('so_tt'),
+        sb.rpc('doc_moc_ra_soat')
       ]);
 
       const loi = nhom.error || nhomCon.error || hoSo.error;
       if (loi) throw loi;
+
+      if (moc.error) console.warn('[Hồ sơ số] Chưa đọc được mốc rà soát:', moc.error.message);
+      else if (moc.data) window.mocRaSoatDrive = moc.data;
 
       /* Không có hồ sơ nào — từ khi siết phân quyền ở tệp sql/18 thì đây có
          HAI nguyên nhân khác hẳn nhau, phải phân biệt:
