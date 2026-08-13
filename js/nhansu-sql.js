@@ -71,6 +71,12 @@
     const nhomNv = NHOM_NS.find(x => x.id === 'nv');
     if (nhomNv) nhomNv.role = 'Kế toán · Thư viện · Thiết bị · Y tế';
 
+    /* Gỡ nhãn cảnh báo — chỉ gỡ ở ĐÂY, sau khi đã thật sự có danh sách trong
+       tay. Gỡ sớm hơn một dòng là màn hình trống mà không còn lời giải thích
+       nào, thầy cô tưởng trường không có ai. */
+    const oCanh = document.getElementById('cbgvCanh');
+    if (oCanh) oCanh.style.display = 'none';
+
     renderTeam();
     /* Vẽ lại danh sách đang mở bên dưới — lúc trang khởi động nó được vẽ
        bằng dữ liệu mẫu (trước khi đăng nhập xong) nên phải thay bằng số thật */

@@ -185,6 +185,15 @@
       CATS.length = 0;
       catsMoi.forEach(c => CATS.push(c));
 
+      /* Chip quy mô ở thẻ "Hồ sơ số" trên trang chủ — đếm từ cơ sở dữ liệu.
+         Trước đây gõ cứng "5 bộ phận · 18 hộp": số của khung cũ trước Thông tư
+         57, sai suốt từ 6/8. Gõ cứng thì thầy Chung thêm một hộp bằng màn "Cây
+         danh mục" là nó sai lại ngay — nên đếm, đừng gõ. */
+      const oChip = document.getElementById('chipQuyMoHoSo');
+      if (oChip) {
+        oChip.textContent = nhom.data.length + ' bộ phận · ' + nhomCon.data.length + ' hộp';
+      }
+
       renderCats();
       /* Hộp đang mở thì vẽ lại ngay bằng dữ liệu vừa tải, không bắt thầy cô
          đóng ra mở lại mới thấy trạng thái và mốc cập nhật mới. */

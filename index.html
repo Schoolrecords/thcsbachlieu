@@ -1092,6 +1092,8 @@ table.data td:last-child, table.data th:last-child,
    Phải nổi hẳn lên: người đọc lướt qua mà tưởng là số thật của trường rồi
    trích đi báo cáo thì tai hại hơn là không có màn hình ấy.
    Gỡ nhãn này khi khối đó đã đọc số thật. */
+.cbgv-cho{padding:30px;text-align:center;color:#94a3b8;font-size:14.5px;
+  border:1.5px dashed #d7dde8;border-radius:12px;background:#fbfcfe}
 .mau-nhac{display:flex;gap:11px;align-items:flex-start;
   background:#fff8e8;border:1.5px solid #e0a72e;border-left-width:6px;
   border-radius:9px;padding:13px 16px;margin:0 0 16px;
@@ -1200,7 +1202,10 @@ table.data td:last-child, table.data th:last-child,
       <button class="mod m-hoso" data-go="hoso">
         <div class="mod-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><rect width="20" height="5" x="2" y="3" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></svg></div>
         <h3>Hồ sơ số</h3>
-        <div class="chips"><span class="chip">5 bộ phận · 18 hộp</span><span class="chip">Điều 21 TT 15/2026</span></div>
+        <!-- Con số do hoso-sql.js đếm từ cơ sở dữ liệu rồi ghi đè. Trước đây gõ
+             cứng "18 hộp" — số của khung cũ trước Thông tư 57, sai từ 6/8 mà
+             không ai để ý vì nó nằm ngay trang chủ, nhìn quen thành đúng. -->
+        <div class="chips"><span class="chip" id="chipQuyMoHoSo">5 bộ phận · 17 hộp</span><span class="chip">Điều 21 TT 15/2026</span></div>
         <p>Danh mục hồ sơ toàn trường có mã hoá đến từng đầu mục. Mỗi hồ sơ biết rõ ai phụ trách, đã có hay chưa, lưu ở thư mục nào và phục vụ tiêu chí nào.</p>
         <span class="mod-go">Mở danh mục</span>
               <span class="mod-hinh" aria-hidden="true"><svg viewBox="0 0 64 64"><path d="M8 14h12v34H8z"/><path d="M22 12h12v36H22z"/><path d="M36 15l11 2-5 34-11-2z"/><path d="M12 22h4M26 22h4"/></svg></span>
@@ -1319,10 +1324,21 @@ table.data td:last-child, table.data th:last-child,
 <!-- ============ HỒ SƠ CBGV-NV ============ -->
 <section class="view" id="view-cbgv">
   <div class="wrap">
+    <!-- Nhãn đặt TRƯỚC tiêu đề, cùng lý do đã ghi ở màn Học sinh: để sau thì
+         thầy cô đọc tên người trong khung sang trọng, tin là thật, rồi mới tới
+         lời cảnh báo — trên điện thoại nó còn bị đẩy khỏi màn hình đầu tiên.
+         nhansu-sql.js gỡ nhãn này ngay khi nạp được danh sách thật. -->
+    <div class="hs-mau-canh" id="cbgvCanh">
+      <b>⚠ Chưa nạp được danh sách thầy cô.</b>
+      Màn hình này chỉ hiện danh sách khi đã đăng nhập và đọc được cơ sở dữ liệu.
+      Nếu thầy cô thấy dòng cảnh báo này mà không thấy tên ai, nghĩa là hệ thống
+      <b>chưa nối được cơ sở dữ liệu</b> — báo quản trị, đừng dùng màn hình này để
+      đối chiếu nhân sự.
+    </div>
     <div class="sec-head">
       <span class="eyebrow">Hồ sơ CBGVNV</span>
       <h2>Hồ sơ CBGV – NV</h2>
-      <p>Đội ngũ cán bộ, giáo viên, nhân viên của nhà trường. Chọn từng thẻ để mở danh sách và hồ sơ cá nhân.</p>
+      <p>Danh sách cán bộ, giáo viên, nhân viên đọc từ cơ sở dữ liệu nhà trường. Chọn từng thẻ để mở danh sách và hồ sơ cá nhân.</p>
     </div>
     <div class="team-grid" id="teamCards"></div>
     <div id="teamList" style="margin-top:28px"></div>
@@ -2040,63 +2056,24 @@ const NHOM_NS = [
     desc:'Đội ngũ phục vụ và hỗ trợ hoạt động dạy học của nhà trường.' }
 ];
 
-const NHAN_SU = [
-  ['bgh','Nguyễn Văn Thành','Hiệu trưởng','12/04/1976','Thạc sĩ Quản lý giáo dục'],
-  ['bgh','Trần Thị Hồng Nhung','Phó Hiệu trưởng phụ trách chuyên môn','25/09/1980','Đại học Sư phạm Ngữ văn'],
-  ['bgh','Phan Đình Hùng','Phó Hiệu trưởng','03/07/1978','Đại học Sư phạm Toán'],
+/* Danh sách CBGV-NV — CỐ Ý ĐỂ RỖNG.
 
-  ['gv','Lê Thị Thanh Mai','Tổ trưởng tổ Ngữ văn','18/03/1979','Đại học Sư phạm Ngữ văn'],
-  ['gv','Nguyễn Thị Hoài Thu','Giáo viên Ngữ văn','07/11/1985','Đại học Sư phạm Ngữ văn'],
-  ['gv','Hoàng Văn Bình','Giáo viên Ngữ văn','22/05/1982','Đại học Sư phạm Ngữ văn'],
-  ['gv','Trần Thị Lệ Quyên','Giáo viên Ngữ văn','14/08/1990','Đại học Sư phạm Ngữ văn'],
-  ['gv','Đinh Thị Vân Anh','Giáo viên Ngữ văn','30/01/1988','Đại học Sư phạm Ngữ văn'],
-  ['gv','Cao Xuân Trường','Tổ trưởng tổ Toán – Tin','09/06/1977','Thạc sĩ Toán học'],
-  ['gv','Nguyễn Đức Long','Giáo viên Toán','16/02/1983','Đại học Sư phạm Toán'],
-  ['gv','Phạm Thị Kim Oanh','Giáo viên Toán','28/10/1986','Đại học Sư phạm Toán'],
-  ['gv','Lê Văn Cường','Giáo viên Toán','05/12/1991','Đại học Sư phạm Toán'],
-  ['gv','Nguyễn Thị Bích Ngọc','Giáo viên Toán','21/07/1989','Đại học Sư phạm Toán'],
-  ['gv','Trần Quốc Việt','Giáo viên Tin học','11/04/1992','Đại học Sư phạm Tin học'],
-  ['gv','Hồ Thị Minh Tâm','Tổ trưởng tổ Khoa học tự nhiên','24/09/1978','Thạc sĩ Sinh học'],
-  ['gv','Nguyễn Văn Sơn','Giáo viên Khoa học tự nhiên','13/03/1984','Đại học Sư phạm Vật lí'],
-  ['gv','Phan Thị Hương Lan','Giáo viên Khoa học tự nhiên','02/08/1987','Đại học Sư phạm Hoá học'],
-  ['gv','Trương Đình Nam','Giáo viên Khoa học tự nhiên','19/11/1985','Đại học Sư phạm Sinh học'],
-  ['gv','Đặng Thị Thu Hà','Giáo viên Khoa học tự nhiên','08/05/1993','Đại học Sư phạm Vật lí'],
-  ['gv','Nguyễn Thị Hồng Vân','Tổ trưởng tổ Khoa học xã hội','27/01/1981','Đại học Sư phạm Lịch sử'],
-  ['gv','Lê Đình Phúc','Giáo viên Lịch sử và Địa lí','15/06/1986','Đại học Sư phạm Địa lí'],
-  ['gv','Trần Thị Ngọc Diệp','Giáo viên Lịch sử và Địa lí','04/09/1990','Đại học Sư phạm Lịch sử'],
-  ['gv','Nguyễn Hữu Đạt','Giáo viên Giáo dục công dân','23/02/1988','Đại học Sư phạm GDCD'],
-  ['gv','Võ Thị Thanh Huyền','Tổ trưởng tổ Ngoại ngữ','10/10/1982','Đại học Sư phạm Tiếng Anh'],
-  ['gv','Nguyễn Thị Phương Thảo','Giáo viên Tiếng Anh','06/03/1989','Đại học Sư phạm Tiếng Anh'],
-  ['gv','Hoàng Thị Mỹ Linh','Giáo viên Tiếng Anh','29/07/1992','Đại học Sư phạm Tiếng Anh'],
-  ['gv','Trần Văn Khánh','Giáo viên Tiếng Anh','17/12/1987','Đại học Sư phạm Tiếng Anh'],
-  ['gv','Bùi Thị Thu Hiền','Tổ trưởng tổ Năng khiếu','01/05/1983','Đại học Sư phạm Âm nhạc'],
-  ['gv','Nguyễn Văn Tuấn','Giáo viên Giáo dục thể chất','20/08/1985','Đại học Thể dục thể thao'],
-  ['gv','Lê Thị Kiều Trang','Giáo viên Mĩ thuật','12/11/1991','Đại học Sư phạm Mĩ thuật'],
-  ['gv','Phạm Văn Đức','Giáo viên Công nghệ','26/04/1984','Đại học Sư phạm Kỹ thuật'],
-  ['gv','Nguyễn Thị Lan Phương','Giáo viên chủ nhiệm khối 6','03/02/1990','Đại học Sư phạm Ngữ văn'],
-  ['gv','Trần Đình Hải','Giáo viên chủ nhiệm khối 7','18/09/1986','Đại học Sư phạm Toán'],
-  ['gv','Nguyễn Thị Thuý Nga','Giáo viên chủ nhiệm khối 8','25/06/1988','Đại học Sư phạm Sinh học'],
-  ['gv','Hoàng Văn Chiến','Giáo viên chủ nhiệm khối 9','07/01/1980','Đại học Sư phạm Vật lí'],
-  ['gv','Đỗ Thị Hồng Thắm','Tổng phụ trách Đội','14/03/1994','Đại học Sư phạm Âm nhạc'],
-  ['gv','Nguyễn Thị Ánh Tuyết','Giáo viên Ngữ văn','09/08/1993','Đại học Sư phạm Ngữ văn'],
-  ['gv','Lê Văn Hoàng','Giáo viên Toán','21/05/1990','Đại học Sư phạm Toán'],
-  ['gv','Trần Thị Mai Trang','Giáo viên Tiếng Anh','30/11/1995','Đại học Sư phạm Tiếng Anh'],
-  ['gv','Nguyễn Đình Quang','Giáo viên Khoa học tự nhiên','16/07/1989','Đại học Sư phạm Hoá học'],
-  ['gv','Phạm Thị Quỳnh Nga','Giáo viên Lịch sử và Địa lí','02/12/1992','Đại học Sư phạm Địa lí'],
-  ['gv','Nguyễn Văn Hiếu','Giáo viên Giáo dục thể chất','11/09/1991','Đại học Thể dục thể thao'],
-  ['gv','Trần Thị Hải Yến','Giáo viên Ngữ văn','24/04/1987','Đại học Sư phạm Ngữ văn'],
-  ['gv','Lê Thị Thu Hằng','Giáo viên Toán','05/10/1994','Đại học Sư phạm Toán'],
-  ['gv','Nguyễn Trọng Nghĩa','Giáo viên Tin học','19/01/1993','Đại học Sư phạm Tin học'],
-  ['gv','Hồ Thị Ngọc Bích','Giáo viên Khoa học tự nhiên','08/06/1986','Đại học Sư phạm Sinh học'],
-  ['gv','Phan Văn Lâm','Giáo viên Công nghệ','27/03/1982','Đại học Sư phạm Kỹ thuật'],
+   Trước đây chỗ này có 53 người BỊA kèm ngày sinh và trình độ đào tạo, còn
+   showPerson bịa thêm số điện thoại và địa chỉ thư. nhansu-sql.js thay bằng
+   38 thầy cô thật sau khi đăng nhập — nhưng renderTeam() chạy ở cuối tệp này,
+   TRƯỚC khi nhansu-sql.js được nạp. Nên bản bịa đã nằm sẵn trong màn hình.
 
-  ['nv','Nguyễn Thị Thuỳ Dương','Kế toán','13/07/1987','Đại học Kế toán'],
-  ['nv','Trần Thị Thanh Hoa','Văn thư – Thủ quỹ','22/02/1991','Cao đẳng Văn thư lưu trữ'],
-  ['nv','Lê Thị Hồng Nhung','Nhân viên thư viện','04/11/1989','Đại học Thông tin – Thư viện'],
-  ['nv','Nguyễn Văn Toàn','Nhân viên thiết bị','16/05/1985','Cao đẳng Kỹ thuật'],
-  ['nv','Phạm Thị Kim Chi','Nhân viên y tế học đường','29/09/1990','Cao đẳng Điều dưỡng'],
-  ['nv','Trần Văn Thắng','Nhân viên bảo vệ','10/12/1978','Trung cấp']
-];
+   Hai đường làm nó lộ ra:
+     · Mất nối cơ sở dữ liệu (khoá Supabase hết hiệu lực) — dangnhap.js thoát
+       ngay, KHÔNG khoá trang, KHÔNG đòi đăng nhập; nhansu-sql.js cũng thoát
+       nên không ghi đè được hai hàm hiển thị. Trang mở toang với tên người
+       không có thật.
+     · Nối được nhưng đọc danh sách hỏng (chưa chạy sql/05, mạng chập) — màn
+       hình giữ nguyên bản bịa, chỉ có một dòng thông báo thoáng qua.
+
+   Thà hiện 'Đang tải danh sách' còn hơn hiện tên người không có thật. Dữ liệu
+   thật do nhansu-sql.js đổ vào sau, đúng lúc. */
+const NHAN_SU = [];
 
 /* ---- Học sinh: quy mô THẬT của trường — 4 khối, mỗi khối 4 lớp, 16 lớp,
    khoảng 636 học sinh. Trước đây dựng 24 lớp và 963 học sinh là số bịa từ
@@ -2711,14 +2688,20 @@ function initials(ten){
   return (w[0][0] + w[w.length-1][0]).toUpperCase();
 }
 
+/* Bản này chỉ chạy khi nhansu-sql.js chưa kịp ghi đè (lúc trang vừa mở) hoặc
+   không chạy được (chưa nối cơ sở dữ liệu). Cả hai trường hợp NHAN_SU đều rỗng
+   — nên nhánh rỗng bên dưới mới là nhánh người dùng thật sự nhìn thấy.
+   Ô thứ tư của mỗi người nay là THƯ ĐIỆN TỬ, không phải ngày sinh: hệ thống
+   không lưu ngày sinh của thầy cô (Nghị định 13/2023/NĐ-CP). */
 function showTeam(id, scroll){
   const n = NHOM_NS.find(x=>x.id===id);
   const ds = NHAN_SU.filter(p=>p[0]===id);
   document.getElementById('teamList').innerHTML = `
     <div class="group-banner">
       <div class="ic">${n.ico}</div>
-      <div><b>${n.name}</b><span>${n.role} · ${ds.length} thành viên</span></div>
+      <div><b>${n.name}</b><span>${n.role}${ds.length ? ' · ' + ds.length + ' thành viên' : ''}</span></div>
     </div>
+    ${ds.length ? `
     <div class="people">
       ${ds.map((p,i)=>`
         <div class="person" onclick="showPerson('${id}',${i})">
@@ -2728,19 +2711,22 @@ function showTeam(id, scroll){
           <div class="person-body">
             <b>${p[1]}</b>
             <div class="pr">${p[2]}</div>
-            <span class="dob">Sinh ngày ${p[3]}</span>
+            <span class="dob">✉ ${p[3]||''}</span>
             <div class="pbtn">📂 Hồ sơ cá nhân</div>
           </div>
         </div>`).join('')}
-    </div>`;
+    </div>` : `
+    <div class="cbgv-cho">Đang tải danh sách từ cơ sở dữ liệu…</div>`}`;
   if(scroll !== false) document.getElementById('teamList').scrollIntoView({behavior:'smooth',block:'start'});
 }
 
 function showPerson(id, idx){
   const n = NHOM_NS.find(x=>x.id===id);
   const p = NHAN_SU.filter(x=>x[0]===id)[idx];
-  const sdt = '09' + String(10+idx).slice(-2) + ' ' + String(200+idx*7).slice(-3) + ' ***';
-  const mail = 'hoso.' + (idx+1) + '@thcsbachlieu.edu.vn';
+  /* Chưa nạp được danh sách thật thì KHÔNG mở ô hồ sơ cá nhân. Trước đây chỗ
+     này tự sinh ra số điện thoại và địa chỉ thư mang tên miền của trường — tự
+     mâu thuẫn với chính dòng ghi chú bên dưới nói hệ thống không lưu chúng. */
+  if (!p) return;
   document.getElementById('pBox').innerHTML = `
     <div class="pmodal">
       <div class="pm-top">
@@ -2751,12 +2737,9 @@ function showPerson(id, idx){
         <span>${p[2]}</span>
       </div>
       <div class="pm-body">
-        <div class="pm-row"><div class="pm-ic">🎂</div><div><div class="lb">Ngày sinh</div><div class="vl">${p[3]}</div></div></div>
-        <div class="pm-row"><div class="pm-ic">🎓</div><div><div class="lb">Trình độ đào tạo</div><div class="vl">${p[4]}</div></div></div>
-        <div class="pm-row"><div class="pm-ic">📞</div><div><div class="lb">Điện thoại</div><div class="vl">${sdt}</div></div></div>
-        <div class="pm-row"><div class="pm-ic">✉</div><div><div class="lb">Thư điện tử</div><div class="vl" style="font-size:13px">${mail}</div></div></div>
+        <div class="pm-row"><div class="pm-ic">✉</div><div><div class="lb">Thư điện tử (đăng nhập hệ thống)</div><div class="vl" style="font-size:13px">${p[3]||''}</div></div></div>
         <button class="pm-btn" onclick="openDrive('Hồ sơ cá nhân — ${p[1]}');closePerson()">📂 Mở hồ sơ cá nhân trên Drive</button>
-        <div class="pm-note">Số điện thoại và thư điện tử được ẩn một phần theo Nghị định 13/2023/NĐ-CP về bảo vệ dữ liệu cá nhân. Đăng nhập tài khoản quản trị để xem đầy đủ.</div>
+        <div class="pm-note">Hệ thống không lưu ngày sinh, số điện thoại hay thông tin cá nhân khác của thầy cô — chỉ dùng thư điện tử để đăng nhập, theo Nghị định 13/2023/NĐ-CP.</div>
       </div>
     </div>`;
   document.getElementById('pOverlay').classList.add('on');
@@ -3003,14 +2986,14 @@ renderDbcl();
      Ba tệp dưới đây chỉ hoạt động khi js/cauhinh.js đã được điền địa chỉ
      cơ sở dữ liệu. Chưa điền thì trang chạy y như trước, không đòi đăng nhập. -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="js/cauhinh.js?v=202608130920"></script>
-<script src="js/dangnhap.js?v=202608130920"></script>
-<script src="js/hoso-sql.js?v=202608130920"></script>
-<script src="js/tudanhgia-sql.js?v=202608130920"></script>
-<script src="js/nhansu-sql.js?v=202608130920"></script>
-<script src="js/kiemtra-drive.js?v=202608130920"></script>
-<script src="js/xuat-bieu-mau.js?v=202608130920"></script>
-<script src="js/xuat-bao-cao-tdg.js?v=202608130920"></script>
+<script src="js/cauhinh.js?v=202608131523"></script>
+<script src="js/dangnhap.js?v=202608131523"></script>
+<script src="js/hoso-sql.js?v=202608131523"></script>
+<script src="js/tudanhgia-sql.js?v=202608131523"></script>
+<script src="js/nhansu-sql.js?v=202608131523"></script>
+<script src="js/kiemtra-drive.js?v=202608131523"></script>
+<script src="js/xuat-bieu-mau.js?v=202608131523"></script>
+<script src="js/xuat-bao-cao-tdg.js?v=202608131523"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <!-- ExcelJS chỉ dùng để TẠO mẫu có trang trí: bản miễn phí của xlsx ở trên
      không viết được màu nền, khung viền hay khổ giấy A4 ngang. Phần ĐỌC tệp
@@ -3018,46 +3001,46 @@ renderDbcl();
 <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 <!-- Bộ tạo mẫu dùng chung: mọi mẫu Excel của hệ thống đi qua đây nên trông
      giống nhau và in ra dùng được ngay. Phải nạp TRƯỚC các màn hình gọi nó. -->
-<script src="js/mau-excel.js?v=202608130920"></script>
-<script src="js/dbcl-sql.js?v=202608130920"></script>
-<script src="js/xuat-phu-luc-dbcl.js?v=202608130920"></script>
-<script src="js/dbcl-excel.js?v=202608130920"></script>
-<script src="js/dbcl-vanhanh.js?v=202608130920"></script>
-<script src="js/dbcl-hocsinh.js?v=202608130920"></script>
+<script src="js/mau-excel.js?v=202608131523"></script>
+<script src="js/dbcl-sql.js?v=202608131523"></script>
+<script src="js/xuat-phu-luc-dbcl.js?v=202608131523"></script>
+<script src="js/dbcl-excel.js?v=202608131523"></script>
+<script src="js/dbcl-vanhanh.js?v=202608131523"></script>
+<script src="js/dbcl-hocsinh.js?v=202608131523"></script>
 <!-- Nạp SAU dbcl-hocsinh.js: dùng lại window.hsChuanNgay và window.hsVeLai -->
-<script src="js/vnedu-nhap.js?v=202608130920"></script>
+<script src="js/vnedu-nhap.js?v=202608131523"></script>
 <!-- Nối màn hình "Quản lý học sinh" với dữ liệu thật, thay bản xem thử -->
-<script src="js/hocsinh-that.js?v=202608130920"></script>
-<script src="js/tinhtien-lop.js?v=202608130920"></script>
-  <script src="js/quy-mo.js?v=202608130920"></script>
-<script src="js/dbcl-phancong.js?v=202608130920"></script>
-<script src="js/dbcl-camket-hs.js?v=202608130920"></script>
+<script src="js/hocsinh-that.js?v=202608131523"></script>
+<script src="js/tinhtien-lop.js?v=202608131523"></script>
+  <script src="js/quy-mo.js?v=202608131523"></script>
+<script src="js/dbcl-phancong.js?v=202608131523"></script>
+<script src="js/dbcl-camket-hs.js?v=202608131523"></script>
 <!-- Các tab thêm vào bảng Quản trị hệ thống. Phải nạp SAU dbcl-hocsinh.js vì
      tab "Danh sách học sinh" dùng lại đúng màn hình của tệp đó, và nạp sau
      dangnhap.js vì chúng tự đăng ký vào window.qtTabPhu. -->
-<script src="js/quantri-nhansu.js?v=202608130920"></script>
-<script src="js/quantri-hocsinh.js?v=202608130920"></script>
-<script src="js/quantri-hoso.js?v=202608130920"></script>
+<script src="js/quantri-nhansu.js?v=202608131523"></script>
+<script src="js/quantri-hocsinh.js?v=202608131523"></script>
+<script src="js/quantri-hoso.js?v=202608131523"></script>
 <!-- Bảng số liệu 03 năm học kèm theo báo cáo tự đánh giá (Biểu 1 Phụ lục V TT57).
      Vừa là tab nhập trong Quản trị, vừa sinh bảng cho bản Word — nên nạp TRƯỚC
      lúc thầy cô bấm xuất báo cáo, còn thứ tự với xuat-bao-cao-tdg.js không quan
      trọng vì hai bên gọi nhau lúc bấm nút, không phải lúc nạp trang. -->
-<script src="js/so-lieu-tt57.js?v=202608130920"></script>
+<script src="js/so-lieu-tt57.js?v=202608131523"></script>
 <!-- Ba việc còn lại của Thông tư 57: Hội đồng tự đánh giá (Điều 9), Kế hoạch
      cải tiến theo Biểu 2 (Điều 10) và Điều kiện chuẩn quốc gia (Điều 16). -->
-<script src="js/tt57-hoidong-caitien-cnqg.js?v=202608130920"></script>
+<script src="js/tt57-hoidong-caitien-cnqg.js?v=202608131523"></script>
 <!-- Nạp SAU cùng: hướng dẫn lọc nội dung theo vai trò nên cần window.NGUOI_DUNG -->
-<script src="js/huong-dan.js?v=202608130920"></script>
+<script src="js/huong-dan.js?v=202608131523"></script>
 <!-- Xuất Word để giao việc: phiếu theo hộp hồ sơ và danh sách từng lớp.
      Cần CATS (khai trong index.html) và window.layHoSo (hoso-sql.js). -->
-<script src="js/xuat-giao-viec.js?v=202608130920"></script>
+<script src="js/xuat-giao-viec.js?v=202608131523"></script>
 <!-- Xuất Word của Hội đồng tự đánh giá: danh sách kèm quyết định thành lập và
      bảng phân công nhiệm vụ. Đọc dữ liệu qua window.duLieuHoiDong do
      tt57-hoidong-caitien-cnqg.js xuất ra, nên phải nạp SAU tệp ấy. -->
-<script src="js/xuat-hoi-dong.js?v=202608130920"></script>
+<script src="js/xuat-hoi-dong.js?v=202608131523"></script>
 <!-- Danh mục minh chứng của mô đun Trường chuẩn Quốc gia: lọc theo tiêu chuẩn
      hoặc theo từng tiêu chí. Đọc qua window.duLieuTuDanhGia nên phải nạp SAU
      tudanhgia-sql.js. -->
-<script src="js/xuat-minh-chung-tdg.js?v=202608130920"></script>
+<script src="js/xuat-minh-chung-tdg.js?v=202608131523"></script>
 </body>
 </html>
