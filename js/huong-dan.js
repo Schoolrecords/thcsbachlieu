@@ -347,7 +347,7 @@
       { a: 'quan-tri-cac-tab.png', ct: 'Cửa sổ <b>Quản trị hệ thống</b> mở ra khi bấm vào tên mình ở góc trên bên phải.' },
       { k: [['Tab', 'Dùng để làm gì'], [
         ['Tổng quan', 'Nhìn nhanh toàn hệ thống'],
-        ['Danh mục Hồ sơ số', 'Sửa danh mục minh chứng, gán người phụ trách, gán link Drive'],
+        ['Danh mục Hồ sơ số', 'Hai màn: <b>Minh chứng</b> — sửa/thêm/xoá từng minh chứng, gán người phụ trách, gán link Drive · <b>Cây danh mục</b> — sửa/thêm tên bộ phận và tên hộp hồ sơ'],
         ['Danh sách CBGV-NV', 'Nhập và sửa hồ sơ cán bộ, giáo viên, nhân viên'],
         ['Số liệu báo cáo', 'Bảng số liệu 03 năm học đính kèm Phần IV báo cáo tự đánh giá'],
         ['Hội đồng TĐG', 'Lập hội đồng, phân công tiêu chí cho từng thành viên'],

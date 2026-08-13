@@ -6,12 +6,22 @@
    chứng mới thì trước nay phải viết SQL — tức là phải qua người làm phần mềm.
    Tab này để ban giám hiệu tự làm.
 
+   HAI MÀN HÌNH
+     · Minh chứng     — sửa / thêm / xoá từng dòng minh chứng
+     · Cây danh mục   — sửa / thêm / xoá BỘ PHẬN và HỘP hồ sơ
+
+   VÌ SAO PHẢI CÓ MÀN "CÂY DANH MỤC"
+   Ngày 13/8/2026 trường đổi tên hai hộp tổ chuyên môn (bỏ chữ "Tổ trưởng").
+   Việc con con ấy phải viết một tệp SQL riêng vì trên app không có chỗ sửa tên
+   hộp. Cái gì nhà trường còn đổi hằng năm — tên tổ, tên ban, thứ tự hộp — thì
+   phải sửa được ngay trên màn hình.
+
    VÌ SAO KHÔNG LÀM TẢI LÊN HÀNG LOẠT Ở ĐÂY
-   Danh mục 138 minh chứng là cái khung mà cả kho Drive, bảng tự đánh giá và
-   bản xuất Phụ lục IV đều bám vào. Ghi đè cả bảng bằng một tệp Excel là rủi
-   ro không cân xứng với cái lợi — sửa vài dòng một năm thì sửa từng dòng an
-   toàn hơn nhiều. Mã minh chứng cũng KHÔNG cho sửa: nó đã in trong báo cáo tự
-   đánh giá và đặt tên thư mục trên Drive.
+   Danh mục minh chứng là cái khung mà cả kho Drive, bảng tự đánh giá và bản
+   xuất Phụ lục IV đều bám vào. Ghi đè cả bảng bằng một tệp Excel là rủi ro
+   không cân xứng với cái lợi — sửa vài dòng một năm thì sửa từng dòng an toàn
+   hơn nhiều. Mã minh chứng cũng KHÔNG cho sửa: nó đã in trong báo cáo tự đánh
+   giá và đặt tên thư mục trên Drive.
    ============================================================================ */
 
 (function () {
@@ -21,6 +31,7 @@
 
   const sb = () => window.sbClient;
   let NHOM = [], NHOM_CON = [], HS = [], TIEU_CHI = [], LOC = '', TC_LOI = '';
+  let MAN = 'mc';   // 'mc' = màn minh chứng · 'cay' = màn cây danh mục
 
   const css = `
   .qh-thanh{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
@@ -45,6 +56,12 @@
   .qh-o input,.qh-o textarea,.qh-o select{width:100%;padding:9px 11px;border:1.5px solid #d7dde8;
     border-radius:9px;font-size:13.6px;font-family:inherit;background:#fff}
   .qh-o textarea{min-height:62px;resize:vertical;line-height:1.6}
+  .qh-man{display:flex;gap:8px;margin-bottom:13px;flex-wrap:wrap}
+  .qh-man button{padding:9px 15px;border:1.5px solid #d7dde8;background:#fff;color:#334155;
+    border-radius:10px;font-size:13.6px;font-weight:600;font-family:inherit;cursor:pointer}
+  .qh-man button.chon{background:#14306b;border-color:#14306b;color:#fff}
+  .qh-bp{background:#f3f7ff;font-weight:700;color:#14306b}
+  .qh-bp td{padding:9px}
   `;
   document.head.insertAdjacentHTML('beforeend', '<style>' + css + '</style>');
 
@@ -112,7 +129,27 @@
         + '<span class="qh-nho">Chi tiết: ' + chan(e.message) + '</span></div>';
       return;
     }
-    veBang(hop);
+    veMan(hop);
+  }
+
+  function veMan(hop) {
+    if (MAN === 'cay') veCay(hop); else veBang(hop);
+  }
+
+  /* Thanh chuyển giữa hai màn. Vẽ lại ở đầu MỖI màn nên luôn bám theo màn đang
+     mở, không cần giữ tham chiếu thẻ nào. */
+  function thanhMan() {
+    return '<div class="qh-man">'
+      + '<button data-man="mc"' + (MAN === 'mc' ? ' class="chon"' : '') + '>📄 Minh chứng</button>'
+      + '<button data-man="cay"' + (MAN === 'cay' ? ' class="chon"' : '') + '>🗂 Cây danh mục — bộ phận &amp; hộp</button>'
+      + '</div>';
+  }
+  function ganThanhMan(hop) {
+    hop.querySelectorAll('[data-man]').forEach(b => b.addEventListener('click', () => {
+      if (MAN === b.dataset.man) return;
+      MAN = b.dataset.man;
+      veMan(hop);
+    }));
   }
 
   function tenHop(id) {
@@ -170,7 +207,8 @@
   function veBang(hop) {
     const ds = locHS();
 
-    let html = '<div class="qh-canh"><b>Sửa được:</b> tên minh chứng · tiêu chí · trạng thái · '
+    let html = thanhMan();
+    html += '<div class="qh-canh"><b>Sửa được:</b> tên minh chứng · tiêu chí · trạng thái · '
       + 'người phụ trách · <b>đường dẫn Drive</b> · ghi chú · thứ tự. '
       + 'Thêm được minh chứng mới vào bất kỳ hộp nào.<br>'
       + '<b>Không sửa được mã minh chứng</b> — mã đã in trong báo cáo tự đánh giá và '
@@ -206,6 +244,314 @@
     hop.querySelector('#qhThem').addEventListener('click', () => veHopSua(hop, null));
     hop.querySelectorAll('[data-sua]').forEach(b =>
       b.addEventListener('click', () => veHopSua(hop, HS.find(x => x.ma === b.dataset.sua))));
+    ganThanhMan(hop);
+  }
+
+
+  /* ==========================================================================
+     MÀN HÌNH "CÂY DANH MỤC" — SỬA BỘ PHẬN VÀ HỘP HỒ SƠ
+
+     Cây có hai tầng: bộ phận (nhom_ho_so) › hộp (nhom_con) › minh chứng.
+     Bảng ho_so giữ thêm hai cột chép sẵn tên bộ phận và tên hộp (bo_phan, hop)
+     để các bản kết xuất Word/Excel và view tra_ma_cu dùng. Đổi tên ở đây thì
+     PHẢI chép sang hai cột đó ngay trong cùng thao tác, không thì bản in ra
+     còn tên cũ mà màn hình đã tên mới — không ai biết bên nào đúng.
+     ========================================================================== */
+
+  function demHS(nhomConId) {
+    return HS.filter(h => h.nhom_con_id === nhomConId).length;
+  }
+
+  function veCay(hop) {
+    let html = thanhMan();
+    html += '<div class="qh-canh"><b>Sửa được:</b> tên bộ phận · tên hộp · thứ tự hiện ra · '
+      + 'mô tả bộ phận. Thêm được bộ phận mới và hộp mới.<br>'
+      + '<b>Mã hộp không sửa được</b> sau khi lưu — mã đã dùng để nối với thư mục Drive '
+      + 'và với các tệp SQL đã chạy.<br>'
+      + '<b>Chỉ xoá được hộp rỗng</b> — hộp còn minh chứng thì xoá là mất luôn cả minh chứng '
+      + 'bên trong. Muốn xoá thì chuyển hết minh chứng sang hộp khác trước.</div>';
+
+    html += '<div class="qh-thanh">'
+      + '<button class="btn btn-pri" id="qhThemHop">➕ Thêm hộp hồ sơ</button>'
+      + '<button class="btn btn-out" id="qhThemBP">➕ Thêm bộ phận</button>'
+      + '</div>';
+
+    html += '<div class="tbl-wrap" style="max-height:58vh;overflow:auto">'
+      + '<table class="qh-bang"><thead><tr>'
+      + '<th style="width:70px">Mã hộp</th><th>Tên hộp</th>'
+      + '<th style="width:70px">Thứ tự</th><th style="width:100px">Minh chứng</th>'
+      + '<th style="width:150px"></th></tr></thead><tbody>';
+
+    const bp = NHOM.slice().sort((a, b) => (a.so_tt || 0) - (b.so_tt || 0));
+    bp.forEach(n => {
+      const con = NHOM_CON.filter(c => c.nhom_id === n.id)
+        .sort((a, b) => (a.so_tt || 0) - (b.so_tt || 0));
+      const tong = con.reduce((s, c) => s + demHS(c.id), 0);
+      html += '<tr class="qh-bp"><td colspan="3">' + chan(n.bieu_tuong || '📁') + ' '
+        + chan(n.ten) + '</td>'
+        + '<td>' + tong + ' minh chứng</td>'
+        + '<td><button class="btn btn-out" data-suabp="' + n.id
+          + '" style="padding:4px 9px;font-size:12.2px">✏ Sửa bộ phận</button></td></tr>';
+
+      if (!con.length) {
+        html += '<tr><td colspan="5" class="qh-nho" style="padding-left:22px">'
+          + 'Bộ phận này chưa có hộp nào.</td></tr>';
+      }
+      con.forEach(c => {
+        const sl = demHS(c.id);
+        html += '<tr>'
+          + '<td class="qh-ma" style="padding-left:22px">' + chan(c.ma) + '</td>'
+          + '<td>' + chan(c.ten) + '</td>'
+          + '<td>' + (c.so_tt || 0) + '</td>'
+          + '<td>' + sl + '</td>'
+          + '<td><button class="btn btn-out" data-suahop="' + c.id
+            + '" style="padding:4px 9px;font-size:12.2px">✏ Sửa</button>'
+          + (sl === 0
+              ? ' <button class="btn btn-out" data-xoahop="' + c.id
+                + '" style="padding:4px 9px;font-size:12.2px;color:#b3261e">🗑</button>'
+              : '')
+          + '</td></tr>';
+      });
+    });
+
+    html += '</tbody></table></div>';
+    hop.innerHTML = html;
+
+    ganThanhMan(hop);
+    hop.querySelector('#qhThemHop').addEventListener('click', () => veSuaHop(hop, null));
+    hop.querySelector('#qhThemBP').addEventListener('click', () => veSuaBP(hop, null));
+    hop.querySelectorAll('[data-suahop]').forEach(b => b.addEventListener('click',
+      () => veSuaHop(hop, NHOM_CON.find(x => x.id === +b.dataset.suahop))));
+    hop.querySelectorAll('[data-xoahop]').forEach(b => b.addEventListener('click',
+      () => xoaHop(hop, NHOM_CON.find(x => x.id === +b.dataset.xoahop))));
+    hop.querySelectorAll('[data-suabp]').forEach(b => b.addEventListener('click',
+      () => veSuaBP(hop, NHOM.find(x => x.id === +b.dataset.suabp))));
+  }
+
+
+  /* ---------- Hộp hồ sơ ---------- */
+
+  function veSuaHop(hop, c) {
+    const moi = !c;
+    const sl = moi ? 0 : demHS(c.id);
+
+    let html = '<div class="qh-canh"><b>' + (moi ? 'Thêm hộp hồ sơ mới' : 'Sửa hộp ' + chan(c.ma))
+      + '</b>' + (moi ? '' : ' — đang chứa ' + sl + ' minh chứng') + '</div><div class="qh-o">';
+
+    if (moi) {
+      html += '<div><label>Mã hộp — chữ và số, không dấu, không đổi được sau khi lưu</label>'
+        + '<input id="qhcMa" placeholder="H19"></div>';
+    }
+    html += '<div><label>Bộ phận chứa hộp này</label><select id="qhcBP">'
+      + NHOM.slice().sort((a, b) => (a.so_tt || 0) - (b.so_tt || 0))
+          .map(n => '<option value="' + n.id + '"'
+            + (c && c.nhom_id === n.id ? ' selected' : '') + '>' + chan(n.ten) + '</option>').join('')
+      + '</select></div>'
+      + '<div><label>Tên hộp — hiện ngay trên đầu bảng ở màn hình Hồ sơ số</label>'
+        + '<input id="qhcTen" value="' + chan(c ? c.ten : '')
+        + '" placeholder="Hộp 19 · Tổ Ngoại ngữ"></div>'
+      + '<div><label>Thứ tự hộp trong bộ phận</label>'
+        + '<input id="qhcStt" type="number" value="' + (c ? (c.so_tt || 0) : 0) + '"></div>';
+
+    if (!moi && sl) {
+      html += '<div><label>Đặt lại Người phụ trách cho CẢ ' + sl + ' minh chứng trong hộp</label>'
+        + '<input id="qhcPT" placeholder="Để trống thì không đụng gì">'
+        + '<div class="qh-nho" style="margin-top:5px">Chỉ điền khi muốn ghi đè. '
+        + 'Điền vào là <b>tất cả ' + sl + ' dòng</b> đổi theo, kể cả dòng đã gán tên riêng.</div></div>';
+    }
+    html += '</div>';
+
+    html += '<div id="qhLoi"></div><div class="qh-thanh" style="margin-top:14px">'
+      + '<button class="btn btn-pri" id="qhcLuu">💾 Lưu</button>'
+      + '<button class="btn btn-out" id="qhcQuay">← Quay lại cây danh mục</button>'
+      + '</div>';
+
+    hop.innerHTML = html;
+    hop.querySelector('#qhcQuay').addEventListener('click', () => veCay(hop));
+    hop.querySelector('#qhcLuu').addEventListener('click', () => luuHop(hop, c));
+  }
+
+  async function luuHop(hop, c) {
+    const moi = !c;
+    const g = id => (hop.querySelector('#' + id) || {}).value || '';
+    const ten = g('qhcTen').trim();
+    if (!ten) return loi(hop, 'Chưa nhập tên hộp.');
+
+    const nhomId = parseInt(g('qhcBP'), 10);
+    if (!nhomId) return loi(hop, 'Chưa chọn bộ phận.');
+    const nhom = NHOM.find(n => n.id === nhomId);
+
+    const ban = { nhom_id: nhomId, ten: ten, so_tt: parseInt(g('qhcStt'), 10) || 0 };
+
+    let r;
+    if (moi) {
+      const ma = g('qhcMa').trim().toUpperCase();
+      if (!ma) return loi(hop, 'Chưa nhập mã hộp.');
+      /* Mã hộp đi vào tên thư mục Drive và vào các câu SQL sau này — chặn dấu
+         cách, dấu tiếng Việt và ký tự lạ ngay từ đây. */
+      if (!/^[A-Z0-9]{1,10}$/.test(ma)) {
+        return loi(hop, 'Mã hộp chỉ gồm chữ cái không dấu và chữ số, tối đa 10 ký tự. '
+          + 'Ví dụ: H19.');
+      }
+      if (NHOM_CON.some(x => x.ma === ma)) return loi(hop, 'Mã hộp ' + ma + ' đã có rồi.');
+      ban.ma = ma;
+      r = await sb().from('nhom_con').insert(ban).select().single();
+    } else {
+      r = await sb().from('nhom_con').update(ban).eq('id', c.id).select().single();
+    }
+    if (r.error) return loi(hop, 'Chưa lưu được hộp: ' + r.error.message);
+
+    /* Chép tên hộp và tên bộ phận sang từng minh chứng bên trong. Hộp mới thì
+       chưa có minh chứng nào nên bỏ qua. */
+    if (!moi && demHS(c.id)) {
+      const dong = { hop: ten, cap_nhat_luc: new Date().toISOString() };
+      if (nhom) dong.bo_phan = nhom.ten;
+
+      const pt = g('qhcPT').trim();
+      if (pt) {
+        const sl = demHS(c.id);
+        if (!window.confirm('Ghi đè Người phụ trách của cả ' + sl + ' minh chứng trong hộp "'
+            + ten + '" thành "' + pt + '"?\n\nDòng nào đang ghi tên riêng cũng bị đổi theo.')) {
+          return loi(hop, 'Đã huỷ — chưa ghi đè Người phụ trách. Tên hộp thì đã lưu rồi.');
+        }
+        dong.nguoi_phu_trach = pt;
+      }
+      const rd = await sb().from('ho_so').update(dong).eq('nhom_con_id', c.id).select('ma');
+      if (rd.error) {
+        return loi(hop, 'Đã đổi tên hộp, nhưng CHƯA chép được tên mới xuống các minh chứng: '
+          + rd.error.message + '. Thầy cô lưu lại lần nữa.');
+      }
+      bao('Đã lưu hộp và cập nhật ' + (rd.data || []).length + ' minh chứng bên trong.');
+    } else {
+      bao(moi ? ('Đã thêm hộp ' + r.data.ma) : ('Đã lưu hộp ' + r.data.ma));
+    }
+
+    await tai();
+    veCay(hop);
+  }
+
+  async function xoaHop(hop, c) {
+    /* Khoá ngoại ho_so.nhom_con_id đặt "on delete cascade" (tệp sql/01): xoá
+       hộp là xoá sạch minh chứng bên trong mà máy chủ không hỏi lại câu nào.
+       Nên chặn ngay ở đây, và đếm lại ngay trước khi xoá chứ không tin con số
+       vẽ trên màn hình — danh sách có thể đã cũ. */
+    const r0 = await sb().from('ho_so').select('ma').eq('nhom_con_id', c.id);
+    if (r0.error) { bao('Chưa kiểm được hộp có rỗng không: ' + r0.error.message); return; }
+    if (r0.data && r0.data.length) {
+      await tai();
+      veCay(hop);
+      bao('Hộp "' + c.ten + '" đang có ' + r0.data.length + ' minh chứng nên không xoá được. '
+        + 'Chuyển hết sang hộp khác rồi hãy xoá.');
+      return;
+    }
+    if (!window.confirm('Xoá hộp "' + c.ten + '" (mã ' + c.ma + ')?\n\n'
+        + 'Hộp đang rỗng nên không mất minh chứng nào. Thư mục trên Drive KHÔNG bị xoá.')) return;
+
+    const r = await sb().from('nhom_con').delete().eq('id', c.id).select('id');
+    if (r.error) { bao('Chưa xoá được: ' + r.error.message); return; }
+    if (!r.data || !r.data.length) { bao('Không xoá được — tài khoản này chưa đủ quyền.'); return; }
+    bao('Đã xoá hộp ' + c.ma + '.');
+    await tai();
+    veCay(hop);
+  }
+
+
+  /* ---------- Bộ phận ---------- */
+
+  function veSuaBP(hop, n) {
+    const moi = !n;
+    const soHop = moi ? 0 : NHOM_CON.filter(c => c.nhom_id === n.id).length;
+
+    let html = '<div class="qh-canh"><b>' + (moi ? 'Thêm bộ phận mới' : 'Sửa bộ phận')
+      + '</b>' + (moi ? '' : ' — đang có ' + soHop + ' hộp') + '</div><div class="qh-o">'
+      + '<div><label>Tên bộ phận — viết hoa như các bộ phận đang có</label>'
+        + '<input id="qhbTen" value="' + chan(n ? n.ten : '') + '" placeholder="NGOẠI NGỮ"></div>'
+      + '<div><label>Mô tả — dòng chữ nhỏ dưới tên bộ phận ở màn hình Hồ sơ số</label>'
+        + '<textarea id="qhbMt">' + chan(n ? (n.mo_ta || '') : '') + '</textarea></div>'
+      + '<div><label>Biểu tượng — một ký tự emoji</label>'
+        + '<input id="qhbBt" value="' + chan(n ? (n.bieu_tuong || '') : '') + '" placeholder="📚"></div>'
+      + '<div><label>Thứ tự bộ phận — mỗi bộ phận một số riêng, không trùng nhau</label>'
+        + '<input id="qhbStt" type="number" value="' + (n ? (n.so_tt || 0) : (NHOM.length + 1)) + '"></div>'
+      + '</div>';
+
+    html += '<div id="qhLoi"></div><div class="qh-thanh" style="margin-top:14px">'
+      + '<button class="btn btn-pri" id="qhbLuu">💾 Lưu</button>'
+      + '<button class="btn btn-out" id="qhbQuay">← Quay lại cây danh mục</button>'
+      + (moi || soHop ? ''
+          : '<button class="btn btn-out" id="qhbXoa" style="margin-left:auto;color:#b3261e">'
+            + '🗑 Xoá bộ phận rỗng này</button>')
+      + '</div>';
+
+    hop.innerHTML = html;
+    hop.querySelector('#qhbQuay').addEventListener('click', () => veCay(hop));
+    hop.querySelector('#qhbLuu').addEventListener('click', () => luuBP(hop, n));
+    const x = hop.querySelector('#qhbXoa');
+    if (x) x.addEventListener('click', () => xoaBP(hop, n));
+  }
+
+  async function luuBP(hop, n) {
+    const moi = !n;
+    const g = id => (hop.querySelector('#' + id) || {}).value || '';
+    const ten = g('qhbTen').trim();
+    if (!ten) return loi(hop, 'Chưa nhập tên bộ phận.');
+
+    const stt = parseInt(g('qhbStt'), 10);
+    if (!Number.isFinite(stt)) return loi(hop, 'Chưa nhập thứ tự bộ phận.');
+    /* nhom_ho_so.so_tt khai báo "not null unique" ở tệp sql/01 — trùng số là
+       máy chủ trả lỗi khoá trùng khó đọc. Bắt trước ở đây cho rõ nghĩa. */
+    const dung = NHOM.find(x => (x.so_tt || 0) === stt && (moi || x.id !== n.id));
+    if (dung) return loi(hop, 'Thứ tự ' + stt + ' đang là của bộ phận "' + dung.ten
+      + '". Mỗi bộ phận phải một số riêng.');
+
+    const ban = {
+      ten: ten,
+      mo_ta: g('qhbMt').trim() || null,
+      bieu_tuong: g('qhbBt').trim() || null,
+      so_tt: stt
+    };
+
+    let r;
+    if (moi) r = await sb().from('nhom_ho_so').insert(ban).select().single();
+    else     r = await sb().from('nhom_ho_so').update(ban).eq('id', n.id).select().single();
+    if (r.error) return loi(hop, 'Chưa lưu được bộ phận: ' + r.error.message);
+
+    /* Chép tên bộ phận xuống mọi minh chứng thuộc các hộp của nó */
+    if (!moi) {
+      const ids = NHOM_CON.filter(c => c.nhom_id === n.id).map(c => c.id);
+      if (ids.length) {
+        const rd = await sb().from('ho_so')
+          .update({ bo_phan: ten, cap_nhat_luc: new Date().toISOString() })
+          .in('nhom_con_id', ids).select('ma');
+        if (rd.error) {
+          return loi(hop, 'Đã đổi tên bộ phận, nhưng CHƯA chép được tên mới xuống các minh '
+            + 'chứng: ' + rd.error.message + '. Thầy cô lưu lại lần nữa.');
+        }
+      }
+    }
+    bao(moi ? 'Đã thêm bộ phận.' : 'Đã lưu bộ phận.');
+    await tai();
+    veCay(hop);
+  }
+
+  async function xoaBP(hop, n) {
+    /* Cùng cái bẫy như xoá hộp: nhom_con.nhom_id cũng "on delete cascade",
+       xoá bộ phận là kéo theo cả hộp lẫn minh chứng. Đếm lại từ máy chủ. */
+    const r0 = await sb().from('nhom_con').select('id').eq('nhom_id', n.id);
+    if (r0.error) { bao('Chưa kiểm được bộ phận có rỗng không: ' + r0.error.message); return; }
+    if (r0.data && r0.data.length) {
+      await tai();
+      veCay(hop);
+      bao('Bộ phận "' + n.ten + '" đang có ' + r0.data.length + ' hộp nên không xoá được.');
+      return;
+    }
+    if (!window.confirm('Xoá bộ phận "' + n.ten + '"?\n\nBộ phận đang không có hộp nào.')) return;
+
+    const r = await sb().from('nhom_ho_so').delete().eq('id', n.id).select('id');
+    if (r.error) { bao('Chưa xoá được: ' + r.error.message); return; }
+    if (!r.data || !r.data.length) { bao('Không xoá được — tài khoản này chưa đủ quyền.'); return; }
+    bao('Đã xoá bộ phận.');
+    await tai();
+    veCay(hop);
   }
 
   /* ==========================================================================
@@ -303,6 +649,16 @@
       cap_nhat_luc: new Date().toISOString(),
       cap_nhat_boi: window.NGUOI_DUNG ? window.NGUOI_DUNG.id : null
     };
+
+    /* Hai cột chép sẵn tên hộp và tên bộ phận phải đi theo hộp vừa chọn. Không
+       ghi thì minh chứng chuyển sang hộp khác vẫn mang nhãn hộp cũ trong bản
+       xuất Word/Excel và trong view tra_ma_cu — màn hình đúng, bản in sai. */
+    const oHop = NHOM_CON.find(x => x.id === ban.nhom_con_id);
+    if (oHop) {
+      ban.hop = oHop.ten;
+      const oBP = NHOM.find(x => x.id === oHop.nhom_id);
+      if (oBP) ban.bo_phan = oBP.ten;
+    }
 
     let r;
     if (moi) {
