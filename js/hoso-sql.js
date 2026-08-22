@@ -135,6 +135,9 @@
       const loi = nhom.error || nhomCon.error || hoSo.error;
       if (loi) throw loi;
 
+      /* Từ sql/43 hàm này trả về khối {lan_cuoi, tu_dong}; trước đó trả về một
+         mốc thời gian trơ. Cứ nhận nguyên si, dongMoc() bên index.html hiểu cả
+         hai kiểu — có thế mới không phải chạy SQL và đẩy web cùng một giây. */
       if (moc.error) console.warn('[Hồ sơ số] Chưa đọc được mốc rà soát:', moc.error.message);
       else if (moc.data) window.mocRaSoatDrive = moc.data;
 

@@ -135,6 +135,7 @@
       ] },
       { a: 'hoso-nop-drive.png', ct: 'Kéo thả tệp vào thư mục Drive, rồi quay lại bấm <b>Kiểm tra ngay</b>.' },
       { d: 'Trạng thái của minh chứng đổi từ <b>Chưa có</b> sang <b>Đã có</b>, và bốn thẻ thống kê ở đầu màn hình đổi số theo.' },
+      { t: 'Không bấm nút cũng không sao: <b>mỗi đêm khoảng 1 giờ sáng hệ thống tự rà soát toàn bộ thư mục Drive một lượt</b>, sáng ra vào là đã đúng trạng thái. Nút <b>Kiểm tra ngay</b> để dùng khi thầy cô vừa nộp tệp và muốn thấy kết quả liền, không phải chờ đến hôm sau. Dòng chữ nhỏ dưới tiêu đề hộp cho biết lần rà soát gần nhất là lúc nào và do máy tự chạy hay do người bấm.' },
       { c: '⚠ Đặt tên tệp có dấu tiếng Việt đầy đủ, ghi rõ năm học. Tên kiểu “scan001.pdf” thì đến lúc đoàn kiểm tra hỏi, cả trường phải mở từng tệp ra dò.' }
     ] },
 
