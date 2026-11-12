@@ -40,7 +40,7 @@ const CAU_HINH = {
   DIA_DANH: 'Yên Thành',                       // đứng trước ngày tháng trong văn bản
   DIA_CHI_TRUONG: 'Xã Yên Thành, tỉnh Nghệ An',
   CO_QUAN_QUAN_LY: 'Sở Giáo dục và Đào tạo Nghệ An',
-  HIEU_TRUONG: 'Nguyễn Phúc Lộc',
+  HIEU_TRUONG: 'Nguyễn Công Phú',
 
   /* Biểu 1 Phụ lục V Thông tư 57 đòi mục "b) Địa chỉ, THÔNG TIN LIÊN HỆ".
      Để trống thì báo cáo chỉ in địa chỉ, không in hai dòng này. */
